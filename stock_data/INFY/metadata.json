@@ -1,0 +1,24 @@
+{
+  "symbol": "INFY",
+  "export_timestamp": "2025-10-27T20:08:41.082684",
+  "files_created": [
+    "current_price.csv",
+    "historical_daily.csv",
+    "intraday_5m.csv",
+    "corporate_actions.csv",
+    "option_chain.csv",
+    "key_metrics.csv",
+    "quarterly_results.csv",
+    "profit_loss.csv",
+    "balance_sheet.csv",
+    "cash_flow.csv",
+    "ratios.csv",
+    "shareholding.csv",
+    "peer_comparison.csv"
+  ],
+  "data_sources": {
+    "nse_available": true,
+    "screener_available": true,
+    "yahoo_fallback_used": false
+  }
+}

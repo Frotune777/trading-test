@@ -1,0 +1,151 @@
+# =========================
+# OS & System Files
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*.swp
+*.swo
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pdb
+
+# =========================
+# Virtual Environments
+# =========================
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+*.env
+
+# =========================
+# Databases & Cache
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+*.log
+*.cache/
+cache/
+tmp/
+temp/
+logs/
+*.pid
+
+# =========================
+# Compiled / Build Artifacts
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# =========================
+# Jupyter / IPython
+# =========================
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+.history/
+*.code-workspace
+
+# =========================
+# OS-Specific Temporary Folders
+# =========================
+.idea/
+*.iml
+
+# =========================
+# Streamlit & Local State
+# =========================
+.streamlit/
+.streamlit/secrets.toml
+.streamlit/config.toml
+
+# =========================
+# Backup / Misc Files
+# =========================
+*.bak
+*.tmp
+*.old
+*.orig
+*.out
+*.log
+
+stock_data.db
+.cache/fundamentals_ASDD.cache
+.cache/fundamentals_AXISBANK.cache
+.cache/fundamentals_BHARTIARTL.cache
+.cache/fundamentals_CARTRADE.cache
+.cache/fundamentals_CESC.cache
+.cache/fundamentals_COFORGE.cache
+.cache/fundamentals_DRREDDY.cache
+.cache/fundamentals_HCLTECH.cache
+.cache/fundamentals_HDFCBANK.cache
+.cache/fundamentals_HINDUNILVR.cache
+.cache/fundamentals_ICICIBANK.cache
+.cache/fundamentals_INFY.cache
+.cache/fundamentals_IRFC.cache
+.cache/fundamentals_ITC.cache
+.cache/fundamentals_JIOFIN.cache
+.cache/fundamentals_KOTAKBANK.cache
+.cache/fundamentals_LT.cache
+.cache/fundamentals_LTIM.cache
+.cache/fundamentals_MARUTI.cache
+.cache/fundamentals_MPHASIS.cache
+.cache/fundamentals_ONGC.cache
+.cache/fundamentals_PERSISTENT.cache
+.cache/fundamentals_PFC.cache
+.cache/fundamentals_RELIANCE.cache
+.cache/fundamentals_SBIN.cache
+.cache/fundamentals_SEGELITY.cache
+.cache/fundamentals_SUNPHARMA.cache
+.cache/fundamentals_TATAMOTORS.cache
+.cache/fundamentals_TCS.cache
+.cache/fundamentals_TECHM.cache
+.cache/fundamentals_WIPRO.cache
+.cache/stock_data_ASDD_True.cache
+.cache/stock_data_BHARTIARTL_True.cache
+.cache/stock_data_CARTRADE_True.cache
+.cache/stock_data_CESC_True.cache
+.cache/stock_data_DRREDDY_True.cache
+.cache/stock_data_HDFCBANK_True.cache
+.cache/stock_data_HINDUNILVR_True.cache
+.cache/stock_data_ICICIBANK_True.cache
+.cache/stock_data_INFY_True.cache
+.cache/stock_data_IRFC_True.cache
+.cache/stock_data_ITC_True.cache
+.cache/stock_data_JIOFIN_True.cache
+.cache/stock_data_KOTAKBANK_True.cache
+.cache/stock_data_MARUTI_True.cache
+.cache/stock_data_ONGC_True.cache
+.cache/stock_data_PFC_True.cache
+.cache/stock_data_RELIANCE_True.cache
+.cache/stock_data_SBIN_True.cache
+.cache/stock_data_SEGELITY_True.cache
+.cache/stock_data_SUNPHARMA_True.cache
+.cache/stock_data_TATAMOTORS_True.cache
+.cache/stock_data_TCS_True.cache
+.cache/stock_data_TECHM_True.cache
+.cache/stock_data_WIPRO_True.cache
+.cache/TCS_complete.cache
+.cache/TCS_quote.cache

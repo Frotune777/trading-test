@@ -1,0 +1,41 @@
+{
+  "symbol": "TCS",
+  "last_updated": "2025-10-27T18:05:25.221392",
+  "files": {
+    "company_info.csv": {
+      "rows": 1,
+      "columns": 10,
+      "size_kb": 2.1552734375
+    },
+    "price_current.csv": {
+      "rows": 1,
+      "price": 3083,
+      "change_pct": 0.646382867589455
+    },
+    "historical_daily.csv": {
+      "rows": 247,
+      "from": "2024-10-28 00:00:00",
+      "to": "2025-10-24 00:00:00"
+    },
+    "historical_weekly.csv": {
+      "rows": 261
+    },
+    "intraday_5m.csv": {
+      "rows": 41,
+      "from": "2025-10-27 09:05:00",
+      "to": "2025-10-27 12:30:00"
+    },
+    "intraday_15m.csv": {
+      "rows": 15
+    },
+    "corporate_actions.csv": {
+      "rows": 55,
+      "cleaned": true
+    },
+    "52week_high_low.csv": {
+      "high": "   3965.00",
+      "low": "   3070.25"
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,47 @@
+{
+  "runner": {
+    "path": "tests/run_all_tests.py",
+    "purpose": "Discover and run all test_*.py files under tests/"
+  },
+  "helpers": [
+    {"path": "tests/_helpers/mock_responses.py", "purpose": "Fake NSE, YF, Screener data"},
+    {"path": "tests/_helpers/fake_dataframes.py", "purpose": "Sample OHLCV, intraday DataFrames"},
+    {"path": "tests/_helpers/fake_streamlit.py", "purpose": "Stubbed streamlit interface"},
+    {"path": "tests/_helpers/temp_dirs.py", "purpose": "Temporary directory context"}
+  ],
+  "core": [
+    {"path": "tests/test_core/test_cache_manager.py", "purpose": "CacheManager unit tests"},
+    {"path": "tests/test_core/test_data_merger.py", "purpose": "DataMerger + DataQualityChecker"},
+    {"path": "tests/test_core/test_hybrid_aggregator.py", "purpose": "HybridAggregator unit + integration"},
+    {"path": "tests/test_core/test_model_data_prep.py", "purpose": "ModelDataPrep data prep"},
+    {"path": "tests/test_core/test_mtf_manager.py", "purpose": "MTFDataManager + TimeFrame"},
+    {"path": "tests/test_core/test_rate_limiter.py", "purpose": "RateLimiter wait logic"}
+  ],
+  "data_sources": [
+    {"path": "tests/test_data_sources/test_base_source.py", "purpose": "DataSource ABC + error handling"},
+    {"path": "tests/test_data_sources/test_nse_complete_unit.py", "purpose": "NSEComplete unit tests"},
+    {"path": "tests/test_data_sources/test_nse_complete_integration.py", "purpose": "NSEComplete integration"},
+    {"path": "tests/test_data_sources/test_screener_enhanced.py", "purpose": "ScreenerEnhanced"},
+    {"path": "tests/test_data_sources/test_yahoo_finance.py", "purpose": "YahooFinance"}
+  ],
+  "database": [
+    {"path": "tests/test_database/test_db_manager.py", "purpose": "DatabaseManager CRUD + price history"},
+    {"path": "tests/test_database/test_schema.py", "purpose": "Schema core tables"},
+    {"path": "tests/test_database/test_updater.py", "purpose": "DataUpdater.update_stock"}
+  ],
+  "dashboard": [
+    {"path": "tests/test_dashboard/test_app.py", "purpose": "App validate_nse_symbol"},
+    {"path": "tests/test_dashboard/test_components.py", "purpose": "Tables + charts rendering"},
+    {"path": "tests/test_dashboard/test_pages.py", "purpose": "Analytics page chart"},
+    {"path": "tests/test_dashboard/test_utils.py", "purpose": "Formatters: currency, time_ago"}
+  ],
+  "examples": [
+    {"path": "tests/test_examples/test_example_basic_usage.py", "purpose": "Example single stock"},
+    {"path": "tests/test_examples/test_example_technical_analysis.py", "purpose": "RSI calculation"}
+  ],
+  "misc": [
+    {"path": "tests/test_misc/test_structure_scripts.py", "purpose": "Project structure scripts"},
+    {"path": "tests/test_misc/test_unified_exporter.py", "purpose": "UnifiedExporter Excel export"},
+    {"path": "tests/test_misc/test_validate_data.py", "purpose": "DataValidator OHLCV validation"}
+  ]
+}

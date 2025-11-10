@@ -1,0 +1,2 @@
+symbol,primary_source,last_price,previous_close,change,change_percent,open,high,low,vwap,week_52_high,week_52_low,source,volume,market_cap,pe_ratio,pb_ratio,dividend_yield,eps
+TCS,nse,3083,3063.2,19.800000000000182,0.646382867589455,3066.5,3094.2,3060.2,3083.94,   3965.00,   3070.25,NSE_Complete,1945582,11161437208576,22.580149,10.488612,2.02,136.62

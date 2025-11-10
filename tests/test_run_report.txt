@@ -1,0 +1,61 @@
+================================================================================
+📊 TESTING ENHANCED SCREENER.IN DATA - DEBUG MODE
+================================================================================
+
+1️⃣  Company Information:
+   symbol: TCS
+   company_name: Tata Consultancy Services Ltd
+
+2️⃣  Key Metrics:
+   Market Cap: ₹11,06,501Cr.
+   Current Price: ₹3,058
+   High / Low: ₹4,495/2,867
+   Stock P/E: 23.1
+   Book Value: ₹235
+   Dividend Yield: 1.96%
+   ROCE: 78.4%
+   ROE: 65.0%
+   Face Value: ₹1.00
+
+3️⃣  Quarterly Results:
+   ✅ Shape: (12, 14)
+   Columns: 14
+   First 3 rows:
+         Unnamed: 0 Sep 2022 Dec 2022 Mar 2023 Jun 2023 Sep 2023 Dec 2023 Mar 2024 Jun 2024 Sep 2024 Dec 2024 Mar 2025 Jun 2025 Sep 2025
+0           Sales +    46819    49275    49780    49862    50165    50844    51488    52844    53990    53883    54136    52788    54531
+1        Expenses +    34037    35759    36910    36726    36363    36481    36942    38269    39432    39156    40067    38031    38863
+2  Operating Profit    12782    13516    12870    13136    13802    14363    14546    14575    14558    14727    14069    14757    15668
+
+4️⃣  Profit & Loss:
+   ✅ Shape: (12, 14)
+   Available years: 14
+
+5️⃣  Balance Sheet:
+   ✅ Shape: (10, 14)
+
+6️⃣  Cash Flow:
+   ✅ Shape: (4, 13)
+
+7️⃣  Detailed Ratios:
+   ✅ Shape: (6, 13)
+
+8️⃣  Shareholding Pattern:
+   ✅ Shape: (6, 13)
+
+9️⃣  Peer Comparison:
+   ✅ Shape: (8, 11)
+
+   Peer companies:
+   S.No.                Name  CMP  Rs.    P/E  Mar Cap  Rs.Cr.  Div Yld  %  NP Qtr  Rs.Cr.  Qtr Profit Var  %  Sales Qtr  Rs.Cr.  Qtr Sales Var  %  ROCE  %
+0    1.0                 TCS   3057.90  23.06       1106500.52        1.96        11828.00              -3.91           54531.00              1.00    78.45
+1    2.0             Infosys   1500.20  22.16        623119.04        2.87         7375.00              13.19           44490.00              8.55    37.50
+2    3.0    HCL Technologies   1522.10  24.33        412966.17        3.55         4236.00               0.00           31942.00             10.67    31.61
+3    4.0               Wipro    242.38  18.82        254118.60        2.48         3262.40               1.17           22697.30              1.77    19.51
+4    5.0         LTIMindtree   5596.00  34.05        165778.70        1.16         1381.20              12.00           10394.30             10.19    27.63
+5    6.0       Tech Mahindra   1447.40  31.61        141775.01        3.11         1201.70              -4.45           13994.90              5.12    18.56
+6    7.0  Persistent Systems   5826.90  55.22         91945.16        0.60          471.47              45.07            3580.72             23.59    30.44
+7    NaN      Median: 71 Co.    267.45  29.80           785.08        0.17            8.29              12.80              53.50             13.46    19.48
+
+================================================================================
+✅ TEST COMPLETE - Check debug files!
+================================================================================

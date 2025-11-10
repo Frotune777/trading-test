@@ -1,0 +1,2 @@
+symbol,last_price,previous_close,change,change_percent,open,high,low,vwap,week_52_high,week_52_low,source
+TCS,3083,3063.2,19.800000000000182,0.646382867589455,3066.5,3094.2,3060.2,3083.94,   3965.00,   3070.25,NSE_Complete
