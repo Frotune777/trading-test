@@ -1235,6 +1235,37 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error saving market breadth: {e}")
     
+    # ==================== TECHNICALS ====================
+
+    def save_technical_indicators(self, symbol: str, records: List[Dict]):
+        """Save technical indicators."""
+        if not records:
+            return
+            
+        try:
+            self.conn.executemany("""
+                INSERT OR REPLACE INTO technical_indicators 
+                (symbol, date, sma_20, sma_50, sma_200, rsi, macd, macd_signal, adx)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, [(
+                symbol,
+                r['date'],
+                r.get('sma_20'),
+                r.get('sma_50'),
+                r.get('sma_200'),
+                r.get('rsi'),
+                r.get('macd'),
+                r.get('macd_signal'),
+                r.get('adx')
+            ) for r in records])
+            
+            self.commit()
+            logger.info(f"Saved {len(records)} technical indicators for {symbol}")
+            
+        except Exception as e:
+            logger.error(f"Error saving technicals: {e}")
+            self.conn.rollback()
+
     # ==================== UTILITY METHODS ====================
     
     def get_table_info(self, table_name: str) -> pd.DataFrame:

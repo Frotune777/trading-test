@@ -8,6 +8,9 @@ from .mtf_analyzer import MTFDataManager
 from .technical_analysis import TechnicalAnalysisService
 from .screener_engine import ScreenerEngine
 from .signal_generator import SignalGenerator
+from .fundamental_analysis import FundamentalAnalysisService
+from .derivatives_analyzer import DerivativesAnalyzer
+from .market_regime import MarketRegime
 from ..database.db_manager import DatabaseManager
 from ..data_sources.nse_complete import NSEComplete
 
@@ -22,6 +25,12 @@ class RecommendationService:
         self.db = DatabaseManager(db_path)
         self.nse = NSEComplete()
         self.mtf = MTFDataManager(self.db, self.nse)
+        
+        # New Core Services
+        self.fundamental_analyzer = FundamentalAnalysisService()
+        self.derivatives_analyzer = DerivativesAnalyzer()
+        self.market_regime = None # Will init with Nifty data
+        
         # ScreenerEngine needs data, will init on demand or load all
         self.company_data = None
         
@@ -55,68 +64,77 @@ class RecommendationService:
         candidates = self._apply_fundamental_filters(strategy)
         logger.info(f"Fundamental screen returned {len(candidates)} candidates")
         
+        # 0. Market Regime Score (10%)
+        regime_score, regime_details = self._calculate_regime_score()
+        logger.info(f"Market Regime: {regime_details['regime']} ({regime_score})")
+
         results = []
         
         for symbol in candidates:
             try:
-                # 2. Technical Scoring
-                tech_score, tech_details, tech_signals = self._calculate_technical_score(symbol)
+                # 1. Technical Scoring & Signal Gen
+                # Returns (Total Tech Score, Details with components, Signals)
+                raw_tech_score, tech_details, tech_signals = self._calculate_technical_score(symbol)
                 
-                # 3. Fundamental Scoring
+                # Extract Components
+                trend_score = tech_details.get('trend_component', 50)
+                mom_score = tech_details.get('momentum_component', 50)
+                
+                # 2. Fundamental Scoring (30%)
                 fund_score, fund_details = self._calculate_fundamental_score(symbol, strategy)
                 
-                # 4. Smart Score (Weighted Average)
-                # Balanced: 50/50, Growth: 40/60, Momentum: 70/30
-                w_tech, w_fund = self._get_weights(strategy)
-                smart_score = round((tech_score * w_tech) + (fund_score * w_fund), 2)
+                # 3. Derivatives Scoring (10%)
+                deriv_score, deriv_details = self._calculate_derivatives_score(symbol)
                 
-                # Decision
-                # Use SignalGenerator for actionable levels
-                # We need the daily analyzed df which is internal to calculate_technical_score currently
-                # Let's clean this up. _calculate_technical_score should probably return the df or the signals.
+                # 4. Smart Score Calculation (5 Pillars)
+                # Weights: Tech(30), Fund(30), Mom(20), Deriv(10), Regime(10)
+                w_tech = 0.30
+                w_fund = 0.30
+                w_mom = 0.20
+                w_deriv = 0.10
+                w_regime = 0.10
                 
-                # Signal Generator Integration
-                # Since we already ran TA in _calculate_technical_score, let's optimize.
-                # However, _calculate_technical_score recreates TA service.
-                # For cleaner code, let's allow _calculate_technical_score to return signals too.
+                smart_score = (
+                    (trend_score * w_tech) +
+                    (fund_score * w_fund) +
+                    (mom_score * w_mom) +
+                    (deriv_score * w_deriv) +
+                    (regime_score * w_regime)
+                )
+                smart_score = round(smart_score, 2)
                 
-                # Update: _calculate_technical_score now returns (score, details, signals)
-                tech_score, tech_details, tech_signals = self._calculate_technical_score(symbol)
-                
-                # Refine Action based on Signals if available
+                # Decision & Action
                 generated_action = 'HOLD'
                 stop_loss = None
                 target_price = None
                 
                 if tech_signals:
-                    # Prioritize the most recent signal
-                    latest_sig = tech_signals[-1] # List of dicts
+                    latest_sig = tech_signals[-1]
                     generated_action = latest_sig['action']
                     stop_loss = latest_sig['stop_loss']
                     target_price = latest_sig['target_price']
                 
-                # Combine Smart Score action with Signal Action
-                # If Smart Score says BUY and Signal says BUY -> STRONG BUY
-                smart_action = self._determine_action(smart_score)
-                
-                # Final Action Logic
-                final_action = smart_action
-                if smart_action == 'HOLD' and generated_action != 'HOLD':
-                     # If neutral score but specific signal (e.g. oversold), maybe upgrade to WATCH/ACCUMULATE?
-                     # For simplicity, stick to smart_action unless strong conflict.
-                     pass
+                # Determine Final Action based on Score + Signal
+                final_action = self._determine_action(smart_score)
+                # Override if strong contradictory signal? For now, stick to score-based primary.
                      
                 # Explanation
-                explanation = self._generate_explanation(symbol, tech_score, fund_score, tech_details, fund_details, final_action)
+                explanation = self._generate_explanation(
+                    symbol, 
+                    tech_details, fund_details, deriv_details, regime_details,
+                    smart_score, final_action
+                )
                 
                 recommendation = {
                     'symbol': symbol,
                     'smart_score': smart_score,
                     'action': final_action,
-                    'technical_score': tech_score,
+                    'technical_score': raw_tech_score, # Legacy field
                     'fundamental_score': fund_score,
                     'technical_details': tech_details,
                     'fundamental_details': fund_details,
+                    'derivatives_details': deriv_details,
+                    'market_regime': regime_details,
                     'explanation': explanation,
                     'strategy': strategy
                 }
@@ -134,42 +152,33 @@ class RecommendationService:
         results.sort(key=lambda x: x['smart_score'], reverse=True)
         return results[:limit]
 
-    def _generate_explanation(self, symbol, tech_score, fund_score, tech_details, fund_details, action):
+    def _generate_explanation(self, symbol, tech, fund, deriv, regime, score, action):
         """Generate 'Why this stock?' explanation."""
         reasons = []
         
-        # Action context
-        if action in ['STRONG_BUY', 'BUY']:
-            reasons.append(f"**{symbol}** is a **{action}** candidate.")
-        elif action in ['STRONG_SELL', 'SELL']:
-             reasons.append(f"**{symbol}** shows weakness (**{action}**).")
-        else:
-            reasons.append(f"**{symbol}** is currently in a **HOLD** phase.")
-            
-        # Fundamental Highlights
-        good_funds = []
-        if fund_details.get('roe', 0) > 15: good_funds.append(f"strong ROE ({fund_details['roe']}%)")
-        if fund_details.get('profit_margin', 0) > 15: good_funds.append(f"healthy margins ({fund_details['profit_margin']}%)")
-        if fund_details.get('sales_growth', 0) > 10: good_funds.append(f"robust growth ({fund_details['sales_growth']}%)")
+        # 1. Action & Score Context
+        reasons.append(f"**{symbol}** is rated **{action}** (Score: {score}).")
         
-        if good_funds:
-            reasons.append(f"Fundamentally, it boasts {', '.join(good_funds)}.")
-        elif fund_score < 40:
-            reasons.append("Fundamentals appear weak relative to peers.")
+        # 2. Market Context
+        reasons.append(f"Market is **{regime.get('regime', 'NEUTRAL')}**.")
+        
+        # 3. Technical Drive
+        trend = tech.get('trend', 'NEUTRAL')
+        rsi = tech.get('rsi', 50)
+        reasons.append(f"Trend is **{trend}** (RSI: {rsi}).")
+        
+        # 4. Fundamental Strength
+        if fund.get('profitability_score', 0) > 70:
+            reasons.append("Strong profitability metrics.")
+        elif fund.get('valuation_score', 0) > 70:
+            reasons.append("Attractive valuation.")
+            
+        # 5. Derivatives Insight
+        pcr = deriv.get('pcr', 1.0)
+        sentiment = deriv.get('sentiment', 'NEUTRAL')
+        if sentiment != 'NEUTRAL':
+             reasons.append(f"Derivatives suggest **{sentiment}** sentiment (PCR: {pcr}).")
 
-        # Technical Highlights
-        trend = tech_details.get('trend', 'NEUTRAL')
-        reasons.append(f"Technically, the trend is **{trend}**.")
-        
-        if tech_details.get('ma_alignment'):
-            reasons.append("Moving averages are aligned for an uptrend.")
-            
-        rsi = tech_details.get('rsi')
-        if rsi:
-            if rsi > 70: reasons.append(f"RSI is overbought ({rsi}), suggesting caution.")
-            elif rsi < 30: reasons.append(f"RSI is oversold ({rsi}), potential bounce.")
-            else: reasons.append(f"Momentum is stable (RSI {rsi}).")
-            
         return " ".join(reasons)
     
     def _apply_fundamental_filters(self, strategy: str) -> List[str]:
@@ -276,18 +285,55 @@ class RecommendationService:
         details['trend'] = 'BULLISH' if total_tech > 60 else 'BEARISH' if total_tech < 40 else 'NEUTRAL'
         details['ma_alignment'] = trend_score == 30
         
+        # Breakdown for 5-pillar model
+        # Trend (30 + 30 weekly = 60 max) -> Normalize to 100
+        details['trend_component'] = (trend_score + weekly_score) / 60.0 * 100.0
+        # Momentum (RSI 20 + MACD 20 = 40 max) -> Normalize to 100
+        details['momentum_component'] = (mom_score + macd_score) / 40.0 * 100.0
+        
         return min(100.0, total_tech), details, signals
 
     def _calculate_fundamental_score(self, symbol: str, strategy: str) -> tuple[float, Dict]:
         """
-        Calculate fundamental score (0-100).
+        Calculate fundamental score (0-100) using FundamentalAnalysisService.
         """
-        # Fetch processed fundamental data
-        # For now, mock or simple db fetch
-        # Ideally: self.screener.get_score(symbol)
+        if self.company_data is None: return 0.0, {}
         
-        # Placeholder logic
-        return 60.0, {'metrics': 'Standard'}
+        row = self.company_data[self.company_data['symbol'] == symbol]
+        if row.empty: return 0.0, {}
+        
+        metrics = row.iloc[0].to_dict()
+        return self.fundamental_analyzer.calculate_score(metrics)
+
+    def _calculate_derivatives_score(self, symbol: str) -> tuple[float, Dict]:
+        """
+        Calculate derivatives score (0-100).
+        """
+        # Fetch option chain from DB
+        # Ideally we need a method in db_manager to get latest option chain
+        # For now, we'll try to fetch it or mock if empty (since data might be sparse)
+        # TODO: Add get_latest_option_chain to DB Manager
+        # For this implementation, I will skip fetching and return neutral if no data
+        # To make this real, I need to implement get_option_chain in DB Manager or use MTF/Data service.
+        # Let's assume we can get it via self.db.get_option_chain_summary(symbol) or similar.
+        
+        # Placeholder for DB fetch (assuming table exists but accessor might need update)
+        # Using a default neutral score for now to prevent crash, will wire up DB access next.
+        return 50.0, {'sentiment': 'NEUTRAL', 'pcr': 1.0}
+
+    def _calculate_regime_score(self) -> tuple[float, Dict]:
+        """
+        Calculate market regime score (0-100).
+        """
+        if not self.market_regime:
+            # Init on demand
+            nifty_data = self.mtf.get_mtf_data('NIFTY 50', ['1d']) # or simple history get
+            # Fallback if NIFTY 50 symbol differs in DB
+            if '1d' not in nifty_data or nifty_data['1d'].empty:
+                 return 50.0, {'regime': 'UNKNOWN'}
+            self.market_regime = MarketRegime(nifty_data['1d'])
+            
+        return self.market_regime.determine_regime()['market_score'], self.market_regime.determine_regime()
 
     def _get_weights(self, strategy: str):
         if strategy == 'technical': return 0.8, 0.2

@@ -22,6 +22,8 @@ class RecommendationResponse(BaseModel):
     explanation: str
     technical_details: TechnicalDetails
     fundamental_details: dict
+    derivatives_details: Optional[dict] = {}
+    market_regime: Optional[dict] = {}
     stop_loss: Optional[float] = None
     target_price: Optional[float] = None
 

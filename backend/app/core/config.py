@@ -7,8 +7,13 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Fortune Trading QUAD"
     API_V1_STR: str = "/api/v1"
     
-    # CORS - More flexible type to prevent parsing errors
-    BACKEND_CORS_ORIGINS: Union[str, List[str]] = []
+    # CORS - Allow localhost for development
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001"
+    ]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Any) -> List[str]:

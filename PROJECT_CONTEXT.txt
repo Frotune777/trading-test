@@ -1,0 +1,571 @@
+============================================================
+PROJECT: trading-test
+ANALYZED: 2025-12-21
+============================================================
+
+## API FILES
+
+• backend/app/api/v1/endpoints/data.py
+  defines: def list_stocks(), def get_indices()
+  uses: fastapi
+
+• backend/app/api/v1/endpoints/health.py
+  defines: def health_check()
+  uses: fastapi
+
+• backend/app/api/v1/endpoints/recommendations.py
+  defines: class TechnicalDetails, class RecommendationResponse, def get_recommendations()
+  uses: fastapi, pydantic, services, typing
+
+• backend/app/api/v1/endpoints/stocks.py
+  defines: def get_db(), def get_stock_profile(), def get_stock_history(), def get_stock_financials()
+  uses: database, fastapi, typing
+
+• backend/app/api/v1/router.py
+  uses: app, fastapi
+
+## CONFIG FILES
+
+• backend/app/core/config.py
+  defines: class Settings
+  uses: os, pydantic, pydantic_settings, typing
+
+• frontend/config.py
+  purpose: Configuration settings for Fortune Trading Dashboard
+  uses: os, pathlib
+
+• legacy/config.py
+  purpose: Central configuration for the stock data system
+  uses: datetime, pathlib
+
+• legacy/dashboard/config.py
+  purpose: Configuration settings for Fortune Trading Dashboard
+  uses: os, pathlib
+
+## DATA FILES
+
+• backend/app/database/db_manager.py
+  purpose: SQLite Database Manager - Hybrid Schema
+  defines: class DatabaseManager
+  uses: datetime, json, logging, pandas, pathlib, schema, sqlite3, typing
+
+• backend/app/database/schema.py
+  purpose: Complete NSE ML Database Schema
+
+• backend/app/database/updater.py
+  purpose: Data Updater - Fetches data from sources and stores in database
+  defines: class DataUpdater
+  uses: data_sources, datetime, db_manager, logging, pandas, re, services, time, typing
+
+• legacy/database/db_manager.py
+  purpose: SQLite Database Manager - Hybrid Schema
+  defines: class DatabaseManager
+  uses: datetime, json, logging, pandas, pathlib, schema, sqlite3, typing
+
+• legacy/database/schema.py
+  purpose: Complete NSE ML Database Schema
+
+• legacy/database/updater.py
+  purpose: Data Updater - Fetches data from sources and stores in database
+  defines: class DataUpdater
+  uses: core, datetime, db_manager, logging, re, time, typing
+
+## LOGIC FILES
+
+• Structure.py
+  purpose: Python Project Structure Analyzer - LLM Compact Edition
+  defines: def find_project_root(), def scan_python_files(), def infer_role(), def extract_summary(), def generate_output(), def main()
+  uses: ast, datetime, os, pathlib, subprocess, sys
+  TODO: todos = [l.strip() for l in content.splitlines() if "TODO" in l or "FIXME" in l]
+
+• backend/app/core/cache.py
+  purpose: Intelligent caching system with TTL and persistence
+  defines: class CacheManager
+  uses: datetime, hashlib, logging, pathlib, pickle, typing
+
+• backend/app/core/data_merger.py
+  defines: class DataMerger, class DataQualityChecker
+  uses: logging, pandas, typing
+
+• backend/app/core/data_normalizer.py
+  purpose: Data Normalizer
+  defines: class DataNormalizer
+  uses: datetime, field_mappers, logging, pandas, schema, typing
+
+• backend/app/core/database.py
+  defines: def get_db()
+  uses: app, sqlalchemy
+
+• backend/app/core/field_mappers.py
+  purpose: Field Mappers for Different Data Sources
+  defines: class YahooFinanceMapper, class NSEMapper, class ScreenerMapper
+  uses: typing
+
+• backend/app/core/rate_limiter.py
+  purpose: Rate limiting to prevent API throttling
+  defines: class RateLimiter
+  uses: collections, logging, threading, time
+
+• backend/app/core/redis.py
+  defines: def get_redis()
+  uses: app, redis
+
+• backend/app/core/source_adapters.py
+  purpose: Source Parameter Adapters
+  defines: class SourceParameterAdapter, class YahooFinanceAdapter, class NSEAdapter, class ScreenerAdapter, def get_adapter(), def adapt_parameters()
+  uses: datetime, logging, typing
+
+• backend/app/data_sources/base.py
+  defines: class DataSource
+  uses: abc, pandas, typing
+
+• backend/app/data_sources/base_source.py
+  purpose: Abstract base class for all data sources
+  defines: class DataSource
+  uses: abc, logging, pandas, typing
+
+• backend/app/data_sources/nse_complete.py
+  purpose: data_sources/nse_complete.py
+  defines: class NSEComplete, class ScreenerMapper
+  uses: base_source, core, datetime, logging, pandas, typing, yfinance
+
+• backend/app/data_sources/nse_complete_ORIGINAL.py
+  purpose: Complete NSE data source combining NseUtils + NSEMasterData
+  defines: class NSEComplete
+  uses: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
+
+• backend/app/data_sources/nse_derivatives.py
+  purpose: data_sources/nse_derivatives.py
+  defines: class NSEDerivatives
+  uses: base_source, datetime, logging, nselib, pandas, requests, typing, yfinance
+  TODO: # TODO: Implement when reliable source available
+
+• backend/app/data_sources/nse_master_data.py
+  purpose: NSE Master Data
+  defines: class NSEMasterData
+  uses: datetime, json, logging, pandas, re, requests, time
+
+• backend/app/data_sources/nse_source.py
+  defines: class NSESource
+  uses: app, httpx, logging, pandas, typing
+
+• backend/app/data_sources/nse_utils.py
+  defines: class NseUtils
+  uses: datetime, io, pandas, requests, zipfile
+
+• backend/app/data_sources/screener_enhanced.py
+  purpose: data_sources/screener_enhanced.py
+  defines: class ScreenerEnhanced
+  uses: base_source, bs4, core, io, logging, pandas, re, requests, typing
+
+• backend/app/data_sources/screener_source.py
+  defines: class ScreenerSource
+  uses: app, bs4, httpx, logging, pandas
+
+• backend/app/data_sources/yahoo_finance.py
+  purpose: Yahoo Finance API wrapper
+  defines: class YahooFinance
+  uses: base_source, datetime, logging, pandas, typing, yfinance
+
+• backend/app/ml/data_prep.py
+  purpose: Model Data Preparation Engine
+  defines: class ModelDataPrep
+  uses: datetime, logging, numpy, pandas, typing
+
+• backend/app/ml/features/feature_pipeline.py
+  defines: class FeatureEngineeringPipeline
+  uses: app, numpy, pandas
+
+• backend/app/ml/serving/predictor.py
+  defines: class PredictorService
+  uses: joblib, os, pandas, typing
+
+• backend/app/workers/celery_app.py
+  uses: app, celery
+
+• frontend/app_v3.py
+  purpose: Fortune Trading Dashboard v3.6 - With Database Explorer
+  defines: def initialize_session_state(), def placeholder_page(), def render_system_status(), def main(), def render_footer()
+  uses: dashboard, datetime, pathlib, streamlit, sys
+
+• frontend/app_v3_copy.py
+  purpose: Fortune Trading Dashboard v3.5 - Production Ready with MTF Analysis
+  defines: def get_dashboard_statistics(), def initialize_session_state(), def render_system_status(), def main(), def placeholder_page(), def render_footer()
+  uses: dashboard, datetime, pathlib, streamlit, sys, time
+
+• frontend/components/charts.py
+  purpose: Chart rendering components
+  defines: def render_price_chart(), def render_shareholding_chart()
+  uses: frontend, pandas, plotly, streamlit
+
+• frontend/components/metrics.py
+  purpose: Metric display components
+  defines: def render_metrics_row()
+  uses: frontend, pandas, streamlit
+
+• frontend/components/navigation.py
+  purpose: Navigation components
+  defines: def render_navigation()
+  uses: streamlit
+
+• frontend/components/tables.py
+  purpose: Table display components
+  defines: def render_period_summary(), def render_quarterly_results(), def render_peer_comparison()
+  uses: frontend, pandas, streamlit
+
+• frontend/pages/analytics.py
+  purpose: Analytics Page - Stock Analysis Dashboard
+  defines: def analytics_page(), def render_price_trend_chart()
+  uses: datetime, frontend, numpy, pandas, plotly, streamlit
+
+• frontend/pages/data_manager.py
+  purpose: Data Manager Page - With Stock Symbol Validation
+  defines: def render_html_table(), def validate_stock_symbol(), def batch_validate_symbols(), def get_safe_update_summary(), def get_sector_statistics(), def get_data_freshness_distribution()
+  uses: datetime, frontend, logging, pandas, streamlit, time, typing
+
+• frontend/pages/database_explorer.py
+  purpose: Database Explorer - View and query database directly from dashboard
+  defines: def database_explorer_page(), def browse_tables_tab(), def display_table_data(), def sql_query_tab(), def schema_viewer_tab(), def quick_stats_tab()
+  uses: datetime, json, pandas, pathlib, sqlite3, streamlit
+
+• frontend/pages/mtf_analysis.py
+  purpose: Multi-Timeframe Analysis Page
+  defines: def mtf_analysis_page(), def display_mtf_analysis(), def render_timeframe_chart()
+  uses: backend, datetime, frontend, pandas, plotly, streamlit
+
+• frontend/pages/portfolio.py
+  purpose: Portfolio page - Holdings and performance
+  defines: def portfolio_page()
+  uses: pandas, plotly, streamlit
+
+• frontend/pages/research.py
+  purpose: Research Page - Stock screening and analysis
+  defines: def research_page(), def screener_tab(), def run_screener(), def sector_analysis_tab(), def custom_research_tab(), def compare_stocks()
+  uses: backend, datetime, frontend, pandas, re, streamlit, time, typing
+
+• frontend/pages/settings.py
+  purpose: Settings Page - Application and database configuration
+  defines: def settings_page(), def general_settings_tab(), def notifications_tab(), def database_management_tab(), def advanced_settings_tab()
+  uses: datetime, frontend, pathlib, shutil, streamlit
+
+• frontend/pages/trading.py
+  purpose: Trading page - Order placement and positions
+  defines: def trading_page()
+  uses: pandas, streamlit
+
+• frontend/styles/theme.py
+  purpose: Fortune Trading Dashboard - Dark Theme CSS
+
+• frontend/utils/data_loader.py
+  purpose: Data loading and caching utilities
+  defines: def get_database(), def get_nse(), def get_updater(), def load_stock_data(), def calculate_metrics()
+  uses: backend, datetime, numpy, pandas, pathlib, streamlit, sys
+
+• frontend/utils/formatters.py
+  purpose: Data Formatting Utilities - Financial Data Presentation
+  defines: def safe_num(), def safe_format_currency(), def safe_format_percent(), def safe_format_number(), def safe_get_dict_value(), def format_time_ago()
+  uses: datetime, numpy, pandas, typing
+
+• legacy/backups/refactor_20251028_001034/nse_complete.py
+  purpose: Complete NSE data source combining NseUtils + NSEMasterData
+  defines: class NSEComplete
+  uses: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
+
+• legacy/backups/refactor_20251028_001034/nse_master_data.py
+  defines: class NSEMasterData
+  uses: datetime, json, pandas, re, requests, time
+
+• legacy/backups/refactor_20251028_001034/nse_utils.py
+  defines: class NseUtils
+  uses: datetime, io, pandas, requests, zipfile
+
+• legacy/backups/refactor_20251028_001402/nse_complete.py
+  purpose: Complete NSE Data Source - Consolidated
+  defines: class NSEComplete
+  uses: base_source, data_sources, datetime, io, json, logging, pandas, pathlib, re, requests, sys, time, typing, zipfile
+
+• legacy/backups/refactor_20251028_001446/nse_complete.py
+  purpose: Complete NSE Data Source - Consolidated
+  defines: class NSEComplete
+  uses: base_source, data_sources, datetime, io, json, logging, pandas, pathlib, re, requests, sys, time, typing, zipfile
+
+• legacy/core/cache_manager.py
+  purpose: Intelligent caching system with TTL and persistence
+  defines: class CacheManager
+  uses: datetime, hashlib, logging, pathlib, pickle, typing
+
+• legacy/core/data_merger.py
+  purpose: Data merging and validation utilities
+  defines: class DataMerger, class DataQualityChecker
+  uses: logging, pandas, typing
+
+• legacy/core/hybrid_aggregator.py
+  purpose: Hybrid data aggregator combining all sources
+  defines: class HybridAggregator
+  uses: concurrent, config, core, data_sources, datetime, logging, pandas, pathlib, sys, typing
+
+• legacy/core/mtf_manager.py
+  purpose: Multi-Timeframe (MTF) Data Manager
+  defines: class TimeFrame, class MTFDataManager
+  uses: datetime, logging, numpy, pandas, pathlib, sqlite3, typing
+
+• legacy/core/rate_limiter.py
+  purpose: Rate limiting to prevent API throttling
+  defines: class RateLimiter
+  uses: collections, logging, threading, time
+
+• legacy/dashboard/app_v3.py
+  purpose: Fortune Trading Dashboard v3.6 - With Database Explorer
+  defines: def initialize_session_state(), def placeholder_page(), def render_system_status(), def main(), def render_footer()
+  uses: dashboard, datetime, pathlib, streamlit, sys
+
+• legacy/dashboard/app_v3_copy.py
+  purpose: Fortune Trading Dashboard v3.5 - Production Ready with MTF Analysis
+  defines: def get_dashboard_statistics(), def initialize_session_state(), def render_system_status(), def main(), def placeholder_page(), def render_footer()
+  uses: dashboard, datetime, pathlib, streamlit, sys, time
+
+• legacy/dashboard/components/charts.py
+  purpose: Chart rendering components
+  defines: def render_price_chart(), def render_shareholding_chart()
+  uses: dashboard, pandas, plotly, streamlit
+
+• legacy/dashboard/components/metrics.py
+  purpose: Metric display components
+  defines: def render_metrics_row()
+  uses: dashboard, pandas, streamlit
+
+• legacy/dashboard/components/navigation.py
+  purpose: Navigation components
+  defines: def render_navigation()
+  uses: streamlit
+
+• legacy/dashboard/components/tables.py
+  purpose: Table display components
+  defines: def render_period_summary(), def render_quarterly_results(), def render_peer_comparison()
+  uses: dashboard, pandas, streamlit
+
+• legacy/dashboard/pages/analytics.py
+  purpose: Analytics Page - Stock Analysis Dashboard
+  defines: def analytics_page(), def render_price_trend_chart()
+  uses: dashboard, datetime, numpy, pandas, plotly, streamlit
+
+• legacy/dashboard/pages/data_manager.py
+  purpose: Data Manager Page - With Stock Symbol Validation
+  defines: def render_html_table(), def validate_stock_symbol(), def batch_validate_symbols(), def get_safe_update_summary(), def get_sector_statistics(), def get_data_freshness_distribution()
+  uses: dashboard, datetime, logging, pandas, streamlit, time, typing
+
+• legacy/dashboard/pages/database_explorer.py
+  purpose: Database Explorer - View and query database directly from dashboard
+  defines: def database_explorer_page(), def browse_tables_tab(), def display_table_data(), def sql_query_tab(), def schema_viewer_tab(), def quick_stats_tab()
+  uses: datetime, json, pandas, pathlib, sqlite3, streamlit
+
+• legacy/dashboard/pages/mtf_analysis.py
+  purpose: Multi-Timeframe Analysis Page
+  defines: def mtf_analysis_page(), def display_mtf_analysis(), def render_timeframe_chart()
+  uses: core, dashboard, datetime, pandas, plotly, streamlit
+
+• legacy/dashboard/pages/portfolio.py
+  purpose: Portfolio page - Holdings and performance
+  defines: def portfolio_page()
+  uses: pandas, plotly, streamlit
+
+• legacy/dashboard/pages/research.py
+  purpose: Research Page - Stock screening and analysis
+  defines: def research_page(), def screener_tab(), def run_screener(), def sector_analysis_tab(), def custom_research_tab(), def compare_stocks()
+  uses: core, dashboard, datetime, pandas, re, streamlit, time, typing
+
+• legacy/dashboard/pages/settings.py
+  purpose: Settings Page - Application and database configuration
+  defines: def settings_page(), def general_settings_tab(), def notifications_tab(), def database_management_tab(), def advanced_settings_tab()
+  uses: dashboard, datetime, pathlib, shutil, streamlit
+
+• legacy/dashboard/pages/trading.py
+  purpose: Trading page - Order placement and positions
+  defines: def trading_page()
+  uses: pandas, streamlit
+
+• legacy/dashboard/styles/theme.py
+  purpose: Fortune Trading Dashboard - Dark Theme CSS
+
+• legacy/dashboard/utils/data_loader.py
+  purpose: Data loading and caching utilities
+  defines: def get_database(), def get_nse(), def get_updater(), def load_stock_data(), def calculate_metrics()
+  uses: data_sources, database, datetime, numpy, pandas, pathlib, streamlit, sys
+
+• legacy/dashboard/utils/formatters.py
+  purpose: Data Formatting Utilities - Financial Data Presentation
+  defines: def safe_num(), def safe_format_currency(), def safe_format_percent(), def safe_format_number(), def safe_get_dict_value(), def format_time_ago()
+  uses: datetime, numpy, pandas, typing
+
+• legacy/data_sources/base_source.py
+  purpose: Abstract base class for all data sources
+  defines: class DataSource
+  uses: abc, logging, pandas, typing
+
+• legacy/data_sources/nse_complete.py
+  purpose: data_sources/nse_complete.py
+  defines: class NSEComplete
+  uses: base_source, datetime, logging, pandas, pathlib, sys, typing
+
+• legacy/data_sources/nse_complete_ORIGINAL.py
+  purpose: Complete NSE data source combining NseUtils + NSEMasterData
+  defines: class NSEComplete
+  uses: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
+
+• legacy/data_sources/screener_enhanced.py
+  purpose: data_sources/screener_enhanced.py
+  defines: class ScreenerEnhanced
+  uses: base_source, bs4, io, logging, pandas, re, requests, typing
+
+• legacy/data_sources/yahoo_finance.py
+  purpose: Yahoo Finance API wrapper
+  defines: class YahooFinance
+  uses: base_source, datetime, logging, pandas, typing, yfinance
+
+• legacy/examples/example_basic_usage.py
+  purpose: Basic usage examples
+  defines: def example_single_stock(), def example_quick_quotes(), def example_batch_fetch(), def example_cache_performance()
+  uses: core, pandas, pathlib, sys
+
+• legacy/examples/example_technical_analysis.py
+  purpose: Technical analysis examples using historical data
+  defines: def calculate_moving_averages(), def calculate_rsi(), def example_moving_averages(), def example_intraday_analysis(), def example_rsi_analysis()
+  uses: core, data_sources, numpy, pandas, pathlib, sys
+
+• legacy/external_libs/nse_master_data.py
+  defines: class NSEMasterData
+  uses: datetime, json, pandas, re, requests, time
+
+• legacy/external_libs/nse_utils.py
+  defines: class NseUtils
+  uses: datetime, io, pandas, requests, zipfile
+
+• legacy/final_cleanup.py
+  purpose: Final Project Cleanup Script
+  defines: class ProjectCleaner
+  uses: argparse, os, pathlib, shutil
+
+• legacy/quick_validate.py
+  purpose: Quick validation for NSE wrapper approach
+  uses: pathlib, sys
+
+• legacy/stock_screener.py
+  purpose: Fundamental Stock Screener using Screener.in data
+  defines: class FundamentalScreener, def main()
+  uses: core, pandas, re, time, typing
+
+• legacy/structure.py
+  purpose: Python Project Structure Analyzer - LLM Optimized
+  defines: def find_git_root(), def find_project_root(), def scan_python_files(), def compact_signature(), def extract_compact_info(), def generate_tree_structure()
+  uses: ast, datetime, os, pathlib, subprocess, sys
+
+• legacy/test_components.py
+  purpose: Test specific components in detail
+  defines: def test_nse_detailed(), def test_yahoo_detailed(), def test_database_detailed(), def test_aggregator_detailed(), def main()
+  uses: argparse, pathlib, sys
+
+• legacy/test_health_check.py
+  purpose: Quick health check for Fortune Trading platform
+  defines: def test_result(), def test_imports(), def test_data_sources(), def test_database(), def test_core_functionality(), def test_dashboard()
+  uses: pathlib, sys, traceback
+
+• legacy/utils/data_status.py
+  defines: def get_db_manager(), def fetch_table_statistics()
+  uses: logging, pandas, sqlite3, typing
+
+• legacy/validate_data.py
+  purpose: Comprehensive data validation for all exported CSVs
+  defines: class DataValidator, def main()
+  uses: datetime, numpy, pandas, pathlib
+
+• ml/features/feature_pipeline.py
+  defines: class FeatureEngineeringPipeline
+  uses: app, numpy, pandas
+
+• ml/serving/predictor.py
+  defines: class PredictorService
+  uses: joblib, os, pandas, typing
+
+• unified_exporter.py
+  purpose: Master Unified Exporter - Combines NSE + Screener + Validation
+  defines: class UnifiedExporter, def main()
+  uses: core, datetime, json, pandas, pathlib, sys
+
+• update_database.py
+  purpose: Database Update CLI Tool
+  defines: def main(), def show_status(), def list_sectors(), def print_result()
+  uses: argparse, database, logging, pathlib, sys
+
+## MODEL FILES
+
+• backend/app/core/schema.py
+  purpose: Standard Schema Definition
+  defines: class StandardSchema
+  uses: datetime, typing
+
+• frontend/pages/models.py
+  purpose: Financial Models Page
+  defines: def models_page(), def price_prediction_tab(), def volatility_models_tab(), def sentiment_analysis_tab(), def event_driven_tab(), def portfolio_optimization_tab()
+  uses: backend, datetime, frontend, json, pandas, streamlit
+
+• legacy/core/model_data_prep.py
+  purpose: Model Data Preparation Engine
+  defines: class ModelDataPrep
+  uses: datetime, logging, numpy, pandas, typing
+
+• legacy/dashboard/pages/models.py
+  purpose: Financial Models Page
+  defines: def models_page(), def price_prediction_tab(), def volatility_models_tab(), def sentiment_analysis_tab(), def event_driven_tab(), def portfolio_optimization_tab()
+  uses: core, dashboard, datetime, json, pandas, streamlit
+
+## SERVICE FILES
+
+• backend/app/services/backtester.py
+  defines: class Backtester
+  uses: pandas, typing
+
+• backend/app/services/data_aggregator.py
+  defines: class HybridAggregator
+  uses: core, datetime, logging, pandas, typing, unified_data_service
+
+• backend/app/services/derivatives_analyzer.py
+  defines: class DerivativesAnalyzer
+  uses: numpy, pandas, typing
+
+• backend/app/services/fundamental_analysis.py
+  defines: class FundamentalAnalysisService
+  uses: logging, typing
+
+• backend/app/services/market_regime.py
+  defines: class MarketRegime
+  uses: pandas, technical_analysis, typing
+
+• backend/app/services/mtf_analyzer.py
+  purpose: Multi-Timeframe (MTF) Data Manager
+  defines: class TimeFrame, class MTFDataManager
+  uses: datetime, logging, numpy, pandas, pathlib, sqlite3, typing
+
+• backend/app/services/nse_utils_wrapper.py
+  defines: class NseUtilsWrapper
+  uses: core, data_sources, logging, pandas, typing
+
+• backend/app/services/recommendation_service.py
+  defines: class RecommendationService
+  uses: data_sources, database, datetime, derivatives_analyzer, fundamental_analysis, logging, market_regime, mtf_analyzer, pandas, screener_engine, signal_generator, technical_analysis, typing
+  TODO: # TODO: Add get_latest_option_chain to DB Manager
+
+• backend/app/services/screener_engine.py
+  defines: class ScreenerEngine
+  uses: pandas, typing
+
+• backend/app/services/signal_generator.py
+  defines: class SignalType, class SignalGenerator
+  uses: enum, pandas, technical_analysis, typing
+
+• backend/app/services/technical_analysis.py
+  defines: class TechnicalAnalysisService
+  uses: numpy, pandas, talib, typing
+
+• backend/app/services/unified_data_service.py
+  defines: class UnifiedDataService
+  uses: concurrent, core, data_sources, logging, nse_utils_wrapper, pandas, typing

@@ -41,8 +41,16 @@ class UnifiedDataService:
             nse_complete_data = future_nse_complete.result()
             screener_data = future_screener.result()
             
-        # 1. Price Data (Priority: NseUtils > NseComplete)
-        price_data = nse_complete_data.get('price_data', {})
+        # 1. Price Data (Priority: NseUtils > NseComplete > Screener)
+        price_data = nse_complete_data.get('price_data', {}) or {}
+        
+        # Fallback to Screener price data (often has 52W high/low if NSE missing)
+        screener_price = screener_data.get('price_data', {})
+        if screener_price:
+            for k, v in screener_price.items():
+                if k not in price_data or price_data[k] is None:
+                    price_data[k] = v
+        
         if nse_utils_price:
             for k, v in nse_utils_price.items():
                 if v is not None:

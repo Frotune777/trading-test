@@ -1,376 +1,882 @@
 ======================================================================
 PROJECT: trading-test
 PATH: /home/zohra/Documents/Stock_analysis/trading-test
-ANALYZED: 2025-12-20 20:22
+ANALYZED: 2025-12-21 16:57
 ======================================================================
 
-📊 SUMMARY: 121 files, 24,871 lines
-📦 DEPENDENCIES: abc, app, argparse, ast, base_source, bs4, cache_manager, celery, collections, concurrent, config, core, csv, dashboard, data_sources, database, datetime, db_manager, enum, examples, fastapi, hashlib, httpx, io, joblib, json, logging, nse_complete, nse_master_data, nse_utils, numpy, os, pandas, pathlib, pickle, plotly, pydantic, pydantic_settings, rate_limiter, re, redis, requests, schema, shutil, sqlalchemy, sqlite3, streamlit, structure, subprocess, sys, talib, tempfile, tests, threading, time, tkinter, traceback, typing, unified_exporter, unittest, updater, validate_data, yfinance, zipfile
+SUMMARY: 182 files | 39,046 lines
 
-📁 FILE TREE:
-  unified_exporter.py (261 lines)
-  update_database.py (196 lines)
+📄 Structure.py
+   role: general
+   doc: Python Project Structure Analyzer - LLM Complete Edition
+   imports: ast, datetime, json, os, pathlib, subprocess, sys
+   globals: EXCLUDE_DIRS
+   TODOS:
+     - if "TODO" in line or "FIXME" in line:
+     - lines.append(f"   TODOS:")
+   def find_git_root(start_path=None)
+   def find_project_root()
+   def scan_python_files(base_dir)
+   def infer_file_role(rel_path)
+   def extract_globals(tree)
+   def extract_todos(content)
+   def compact_signature(func_node)
+   def extract_compact_info(file_path, project_root)
+   def generate_text(project_root, files)
+   def generate_json(project_root, files)
+   def main()
 
-backend/app/
-  main.py (25 lines)
+📄 backend/__init__.py
+   role: general
+   doc: Backend package
 
-backend/app/api/v1/
-  router.py (6 lines)
-
-backend/app/api/v1/endpoints/
-  data.py (7 lines)
-  health.py (10 lines)
-
-backend/app/core/
-  config.py (48 lines)
-  database.py (19 lines)
-  redis.py (11 lines)
-
-backend/app/data_sources/
-  base.py (30 lines)
-  nse_source.py (49 lines)
-  screener_source.py (42 lines)
-
-backend/app/services/
-  backtester.py (32 lines)
-  data_aggregator.py (34 lines)
-  screener_engine.py (38 lines)
-  signal_generator.py (37 lines)
-  technical_analysis.py (112 lines)
-
-backend/app/workers/
-  celery_app.py (28 lines)
-
-legacy/
-  Refactoring.py (714 lines)
-  auto_fix_tests.py (73 lines)
-  auto_fix_tests_v2.py (90 lines)
-  auto_fix_tests_v4.py (109 lines)
-  config.py (60 lines)
-  debug_master.py (70 lines)
-  final_cleanup.py (178 lines)
-  fix_corporate_actions.py (77 lines)
-  fix_nse_merge.py (289 lines)
-  fix_streamlit_warnings.py (72 lines)
-  quick_validate.py (166 lines)
-  restaurant_shift_manager.py (183 lines)
-  restaurant_shift_manager_v5.py (769 lines)
-  restaurant_shift_manager_v6_grok.py (548 lines)
-  stock_screener.py (152 lines)
-  structure.py (382 lines)
-  test_components.py (187 lines)
-  test_health_check.py (376 lines)
-  validate_data.py (347 lines)
-
-legacy/backups/refactor_20251028_001034/
-  nse_complete.py (258 lines)
-  nse_master_data.py (306 lines)
-  nse_utils.py (1185 lines)
-
-legacy/backups/refactor_20251028_001402/
-  nse_complete.py (1425 lines)
-
-legacy/backups/refactor_20251028_001446/
-  nse_complete.py (1425 lines)
-
-legacy/core/
-  __init__.py (8 lines)
-  cache_manager.py (131 lines)
-  data_merger.py (102 lines)
-  hybrid_aggregator.py (402 lines)
-  model_data_prep.py (652 lines)
-  mtf_manager.py (571 lines)
-  rate_limiter.py (43 lines)
-
-legacy/dashboard/
-  __init__.py (3 lines)
-  app.py (1315 lines)
-  app_v3.py (422 lines)
-  app_v3_copy.py (454 lines)
-  config.py (362 lines)
-
-legacy/dashboard/components/
-  charts.py (128 lines)
-  metrics.py (43 lines)
-  navigation.py (62 lines)
-  tables.py (73 lines)
-
-legacy/dashboard/pages/
-  analytics.py (346 lines)
-  data_manager.py (831 lines)
-  database_explorer.py (552 lines)
-  models.py (416 lines)
-  mtf_analysis.py (273 lines)
-  portfolio.py (38 lines)
-  research.py (229 lines)
-  settings.py (365 lines)
-  trading.py (60 lines)
-
-legacy/dashboard/styles/
-  theme.py (475 lines)
-
-legacy/dashboard/utils/
-  data_loader.py (131 lines)
-  formatters.py (277 lines)
-
-legacy/data_sources/
-  __init__.py (8 lines)
-  base_source.py (53 lines)
-  nse_complete.py (171 lines)
-  nse_complete_ORIGINAL.py (258 lines)
-  screener_enhanced.py (127 lines)
-  yahoo_finance.py (97 lines)
-
-legacy/database/
-  __init__.py (9 lines)
-  db_manager.py (809 lines)
-  schema.py (1101 lines)
-  updater.py (448 lines)
-
-legacy/examples/
-  example_basic_usage.py (121 lines)
-  example_technical_analysis.py (138 lines)
-
-legacy/external_libs/
-  __init__.py (3 lines)
-  nse_master_data.py (181 lines)
-  nse_utils.py (1185 lines)
-
-legacy/tests/
-  conftest.py (38 lines)
-  run_all_tests.py (24 lines)
-  test_core_modules.py (67 lines)
-  test_data_sources.py (38 lines)
-  test_database_mtf.py (51 lines)
-  test_screener_enhanced.py (112 lines)
-
-legacy/tests/_helpers/
-  fake_dataframes.py (14 lines)
-  fake_streamlit.py (8 lines)
-  mock_responses.py (30 lines)
-  temp_dirs.py (10 lines)
-
-legacy/tests/test_core/
-  test_cache_manager.py (29 lines)
-  test_data_merger.py (22 lines)
-  test_hybrid_aggregator.py (24 lines)
-  test_model_data_prep.py (22 lines)
-  test_mtf_manager.py (20 lines)
-  test_rate_limiter.py (11 lines)
-
-legacy/tests/test_dashboard/
-  test_app.py (11 lines)
-  test_components.py (9 lines)
-  test_pages.py (10 lines)
-  test_utils.py (12 lines)
-
-legacy/tests/test_data_sources/
-  test_base_source.py (17 lines)
-  test_nse_complete_integration.py (14 lines)
-  test_nse_complete_unit.py (26 lines)
-  test_screener_enhanced.py (14 lines)
-  test_yahoo_finance.py (22 lines)
-
-legacy/tests/test_database/
-  test_db_manager.py (25 lines)
-  test_schema.py (8 lines)
-  test_updater.py (18 lines)
-
-legacy/tests/test_examples/
-  test_example_basic_usage.py (9 lines)
-  test_example_technical_analysis.py (9 lines)
-
-legacy/tests/test_misc/
-  test_structure_scripts.py (11 lines)
-  test_unified_exporter.py (18 lines)
-  test_validate_data.py (10 lines)
-
-legacy/utils/
-  data_status.py (114 lines)
-
-ml/features/
-  feature_pipeline.py (58 lines)
-
-ml/serving/
-  predictor.py (37 lines)
-
-======================================================================
-📋 DETAILED STRUCTURE
-======================================================================
+📄 backend/app/__init__.py
+   role: general
+   doc: Backend application package
 
 📄 backend/app/api/v1/endpoints/data.py
+   role: api
    imports: fastapi
+   def async list_stocks()
+   def async get_indices()
 
 📄 backend/app/api/v1/endpoints/health.py
+   role: api
    imports: fastapi
+   def async health_check()
+
+📄 backend/app/api/v1/endpoints/recommendations.py
+   role: api
+   imports: fastapi, pydantic, services, typing
+   class TechnicalDetails(BaseModel)
+   class RecommendationResponse(BaseModel)
+   def get_recommendations(strategy:str=Query('balanced', enum=['growth', 'value', 'momentum', 'balanced']), limit:int=Query(10, ge=1, le=100))
+
+📄 backend/app/api/v1/endpoints/stocks.py
+   role: api
+   imports: database, fastapi, typing
+   def get_db()
+   def async get_stock_profile(symbol:str)
+   def async get_stock_history(symbol:str, days:int=Query(365, ge=1, le=2000), start_date:Optional[str]=None, end_date:Optional[str]=None)
+   def async get_stock_financials(symbol:str, limit:int=12)
 
 📄 backend/app/api/v1/router.py
+   role: api
    imports: app, fastapi
 
+📄 backend/app/core/__init__.py
+   role: general
+   doc: Core utilities for data processing and normalization
+   imports: data_normalizer, field_mappers, schema, source_adapters
+
+📄 backend/app/core/cache.py
+   role: general
+   doc: Intelligent caching system with TTL and persistence
+   imports: datetime, hashlib, logging, pathlib, pickle, typing
+   class CacheManager  # Multi-layer cache system with TTL.
+       __init__(self, enabled:bool=True, cache_dir:str='.cache')
+       _get_cache_key(self, key:str) -> str
+       _get_cache_file(self, key:str) -> Path
+       get(self, key:str) -> Optional[Any]
+       set(self, key:str, value:Any, ttl:int=3600)
+       clear(self)
+       get_stats(self) -> dict
+
 📄 backend/app/core/config.py
+   role: config
    imports: os, pydantic, pydantic_settings, typing
    class Settings(BaseSettings)
-       assemble_cors_origins(cls, v:Any)
-       assemble_db_connection(cls, v:Optional[str], values:dict)
-       assemble_redis_uri(cls, v:Optional[str], values:dict)
+       assemble_cors_origins(cls, v:Any) -> List[str]
+       assemble_db_connection(cls, v:Optional[str], values:dict) -> str
+       assemble_redis_uri(cls, v:Optional[str], values:dict) -> str
+
+📄 backend/app/core/data_merger.py
+   role: general
+   imports: logging, pandas, typing
+   class DataMerger  # Utility for merging data from multiple sources based on priority.
+       merge_price_data(sources:List[Dict[str, Any]], priority:List[str]=None) -> Optional[Dict[str, Any]]
+   class DataQualityChecker  # Utility for checking data quality.
+       check_price_data(data:Dict[str, Any]) -> bool
+
+📄 backend/app/core/data_normalizer.py
+   role: general
+   doc: Data Normalizer
+   imports: datetime, field_mappers, logging, pandas, schema, typing
+   class DataNormalizer  # Normalizes data from different sources to standard schema
+       __init__(self)
+       normalize_price_data(self, data:Dict[str, Any], source:str) -> Dict[str, Any]
+       normalize_company_data(self, data:Dict[str, Any], source:str) -> Dict[str, Any]
+       normalize_fundamental_data(self, data:Dict[str, Any], source:str) -> Dict[str, Any]
+       normalize_complete_data(self, data:Dict[str, Any], source:str) -> Dict[str, Any]
+       _convert_type(self, value:Any, target_type:Optional[Type]) -> Any
+       merge_normalized_data(self) -> Dict[str, Any]
 
 📄 backend/app/core/database.py
+   role: general
    imports: app, sqlalchemy
+   def async get_db()
+
+📄 backend/app/core/field_mappers.py
+   role: general
+   doc: Field Mappers for Different Data Sources
+   imports: typing
+   globals: REVERSE_MAPPERS
+   class YahooFinanceMapper  # Maps Yahoo Finance (yfinance) fields to standard schema
+   class NSEMapper  # Maps NSE fields to standard schema
+   class ScreenerMapper  # Maps Screener.in fields to standard schema
+
+📄 backend/app/core/rate_limiter.py
+   role: general
+   doc: Rate limiting to prevent API throttling
+   imports: collections, logging, threading, time
+   class RateLimiter  # Token bucket rate limiter.
+       __init__(self, calls_per_minute:int=30)
+       wait_if_needed(self)
 
 📄 backend/app/core/redis.py
+   role: general
    imports: app, redis
+   def async get_redis()
+
+📄 backend/app/core/schema.py
+   role: model
+   doc: Standard Schema Definition
+   imports: datetime, typing
+   class StandardSchema  # Standard internal schema for stock data across all sources
+       get_all_fields(cls) -> Dict[str, Type]
+
+📄 backend/app/core/source_adapters.py
+   role: general
+   doc: Source Parameter Adapters
+   imports: datetime, logging, typing
+   globals: ADAPTERS
+   class SourceParameterAdapter  # Base class for parameter adaptation
+       period_to_dates(period:str) -> Tuple[datetime, datetime]
+   class YahooFinanceAdapter(SourceParameterAdapter)  # Yahoo Finance parameter adapter
+       adapt_parameters(cls, period:str, interval:str) -> Dict[str, str]
+   class NSEAdapter(SourceParameterAdapter)  # NSE parameter adapter
+       adapt_parameters(cls, period:str, interval:str) -> Dict[str, Any]
+       supports_interval(cls, interval:str) -> bool
+   class ScreenerAdapter(SourceParameterAdapter)  # Screener.in parameter adapter
+       adapt_parameters(cls, period:str, interval:str) -> Dict[str, Any]
+       supports_historical(cls) -> bool
+   def get_adapter(source:str) -> SourceParameterAdapter
+   def adapt_parameters(source:str, period:str, interval:str) -> Dict[str, Any]
+
+📄 backend/app/data_sources/__init__.py
+   role: general
+   doc: Data sources package
+   imports: base_source, nse_complete
 
 📄 backend/app/data_sources/base.py
+   role: general
    imports: abc, pandas, typing
-   class DataSource(ABC)  # Abstract base class for all data sources (NSE, Yahoo, Screen
+   class DataSource(ABC)  # Abstract base class for all data sources (NSE, Yahoo, Screener, etc.)
        __init__(self, name:str)
 
+📄 backend/app/data_sources/base_source.py
+   role: general
+   doc: Abstract base class for all data sources
+   imports: abc, logging, pandas, typing
+   class DataSource(ABC)  # Base class for all data sources.
+       __init__(self, name:str)
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+       test_connection(self) -> bool
+       handle_error(self, error:Exception, context:str='') -> None
+
+📄 backend/app/data_sources/nse_complete.py
+   role: general
+   doc: data_sources/nse_complete.py
+   imports: base_source, core, datetime, logging, pandas, typing, yfinance
+   class NSEComplete(DataSource)
+       __init__(self)
+       nse_master(self)
+       _get_nse_ticker(self, symbol:str) -> str
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d', source:str='auto') -> pd.DataFrame
+       _get_nse_historical(self, symbol:str, period:str, interval:str) -> pd.DataFrame
+       _get_yahoo_historical(self, symbol:str, period:str, interval:str) -> pd.DataFrame
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Dict[str, Any]
+   class ScreenerMapper  # Field mapping for Screener.in data source
+       normalize_key_metrics(metrics_dict:dict) -> dict
+       search(self, symbol:str, exchange='NSE', match:bool=False) -> pd.DataFrame
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       test_connection(self)
+
+📄 backend/app/data_sources/nse_complete_ORIGINAL.py
+   role: general
+   doc: Complete NSE data source combining NseUtils + NSEMasterData
+   imports: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
+   class NSEComplete(DataSource)  # Complete NSE data source using:
+       __init__(self)
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+       get_intraday_data(self, symbol:str, interval:str='5m') -> Optional[pd.DataFrame]
+       get_futures_data(self, symbol:str, expiry:str=None, period:str='1m', interval:str='1d') -> Optional[pd.DataFrame]
+       get_options_data(self, symbol:str, strike:int, option_type:str, expiry:str=None, interval:str='5m') -> Optional[pd.DataFrame]
+       get_option_chain(self, symbol:str, indices:bool=True) -> Optional[pd.DataFrame]
+       get_market_depth(self, symbol:str) -> Optional[Dict]
+       get_corporate_actions(self, from_date:str=None, to_date:str=None, filter:str=None) -> Optional[pd.DataFrame]
+       get_bulk_deals(self, from_date:str=None, to_date:str=None) -> Optional[pd.DataFrame]
+       get_insider_trading(self, from_date:str=None, to_date:str=None) -> Optional[pd.DataFrame]
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
+
+📄 backend/app/data_sources/nse_derivatives.py
+   role: general
+   doc: data_sources/nse_derivatives.py
+   imports: base_source, datetime, logging, nselib, pandas, requests, typing, yfinance
+   TODOS:
+     - # TODO: Implement when reliable source available
+   class NSEDerivatives(DataSource)  # Data source for NSE Derivatives, Institutional Activity, and Market Stats.
+       __init__(self)
+       get_fii_dii_activity(self) -> Optional[Dict[str, Any]]
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+       get_market_breadth(self) -> Optional[Dict[str, int]]
+       _parse_float(self, val)
+       get_option_chain(self, symbol:str)
+
+📄 backend/app/data_sources/nse_master_data.py
+   role: general
+   doc: NSE Master Data
+   imports: datetime, json, logging, pandas, re, requests, time
+   class NSEMasterData  # NSE Master Data class for fetching NSE symbols and historical data
+       __init__(self)
+       search(self, symbol, exchange='NSE', match=False)
+       get_nse_symbol_master(self, url)
+       download_symbol_master(self)
+       search_symbol(self, symbol, exchange='NSE')
+       get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')
+
 📄 backend/app/data_sources/nse_source.py
+   role: general
    imports: app, httpx, logging, pandas, typing
    class NSESource(DataSource)  # NSE India data source with cookie and session management
        __init__(self)
 
-📄 backend/app/data_sources/screener_source.py
-   imports: app, bs4, httpx, logging, pandas
-   class ScreenerSource(DataSource)  # Screener.in HTML scraper for detailed fundamental data
-       __init__(self)
-       _parse_soup(self, soup:BeautifulSoup)
-
-📄 backend/app/main.py
-   imports: app, fastapi
-
-📄 backend/app/services/backtester.py
-   imports: pandas, typing
-   class Backtester  # PILLAR 3: Decision Engine (D) - Backtesting Framework
-       __init__(self, initial_capital:float=1000000)
-       run(self, df:pd.DataFrame, signals:pd.Series)  # Simple vectorized or loop-based backtest
-
-📄 backend/app/services/data_aggregator.py
-   imports: app, pandas, typing
-   class DataAggregatorService  # Orchestrates data fetching and analysis from multiple source
-       __init__(self)
-
-📄 backend/app/services/screener_engine.py
-   imports: pandas, typing
-   class ScreenerEngine  # PILLAR 2: Analytics Engine (A)
-       __init__(self, stocks_df:pd.DataFrame)
-       run_screen(self, conditions:List[Dict[str, Any]])  # Executes a screen based on a list of conditions.
-
-📄 backend/app/services/signal_generator.py
-   imports: app, enum, typing
-   class SignalType(Enum)
-   class SignalGenerator  # PILLAR 3: Decision Engine (D)
-       __init__(self, analyzed_df:pd.DataFrame)
-       generate_signals(self)
-
-📄 backend/app/services/technical_analysis.py
-   imports: numpy, pandas, talib, typing
-   class TechnicalAnalysisService  # Pillar 1: Quantitative Engine (Q)
-       __init__(self, data:pd.DataFrame)
-       _preprocess(self)  # Ensure columns are lowercase and numeric
-       calculate_all(self)  # Run all indicator categories
-       add_trend_indicators(self)
-       add_momentum_indicators(self)
-       add_volatility_indicators(self)
-       add_volume_indicators(self)
-       add_patterns(self)  # Recognize 40+ candlestick patterns using TA-Lib
-       calculate_stats(self)  # PILLAR 1: Statistical Analysis Functions
-       _calculate_max_drawdown(self)
-
-📄 backend/app/workers/celery_app.py
-   imports: app, celery
-
-📄 legacy/Refactoring.py
-   imports: ast, datetime, os, pathlib, re, shutil, subprocess, sys, typing
-   class NSERefactoringTool  # Automated refactoring tool for NSE consolidation
-       __init__(self, project_root:str=None)
-       log(self, message:str, level:str='INFO')  # Log message to file and console
-       create_backup(self)  # Create backup of all files to be modified
-       create_rollback_script(self)  # Create a script to rollback changes if needed
-       analyze_dependencies(self)  # Find all files that import NSE modules
-       extract_methods(self, file_path:Path)  # Extract all methods from a Python file
-       merge_nse_files(self)  # Merge nse_utils.py and nse_master_data.py into nse_complete.
-       generate_consolidated_nse_complete(self, current, utils_content, master_content, utils_methods, master_methods)  # Generate the consolidated nse_complete.py content
-       extract_imports(self, content:str)  # Extract import statements from Python code
-       convert_to_class_method(self, function_code:str)  # Convert standalone function to class method
-       ensure_proper_indentation(self, code:str)  # Ensure code has proper class method indentation
-       validate_python_syntax(self, file_path:Path)  # Validate Python file syntax
-       update_imports(self, new_nse_complete:Path)  # Update import statements in all dependent files
-       run_tests(self)  # Run tests to verify refactoring didn't break anything
-       finalize_refactoring(self, new_nse_complete:Path)  # Finalize refactoring by replacing old file and cleaning up
-       generate_report(self)  # Generate final refactoring report
-       run(self, skip_tests:bool=False)  # Run complete refactoring process
-   def main()  # Main entry point
-
-📄 legacy/auto_fix_tests.py
-   imports: pathlib, re
-   def replace_in_file(path, replacements)
-   def main()
-
-📄 legacy/auto_fix_tests_v2.py
-   imports: pathlib, re
-   def replace_in_file(path:Path, replacements)
-   def main()
-
-📄 legacy/auto_fix_tests_v4.py
-   imports: pathlib, re, subprocess
-   def replace_in_file(path:Path, replacements)
-   def patch_tests()
-   def run_tests()
-
-📄 legacy/backups/refactor_20251028_001034/nse_complete.py
-   imports: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
-   class NSEComplete(DataSource)  # Complete NSE data source using:
-       __init__(self)
-       get_company_info(self, symbol:str)  # Get company information.
-       get_price_data(self, symbol:str)  # Get current price data.
-       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')  # Get historical OHLCV data.
-       get_intraday_data(self, symbol:str, interval:str='5m')  # Get today's intraday data.
-       get_futures_data(self, symbol:str, expiry:str=None, period:str='1m', interval:str='1d')  # Get futures historical data.
-       get_options_data(self, symbol:str, strike:int, option_type:str, expiry:str=None, interval:str='5m')  # Get options historical data.
-       get_option_chain(self, symbol:str, indices:bool=True)  # Get full option chain.
-       get_market_depth(self, symbol:str)  # Get bid/ask depth.
-       get_corporate_actions(self, from_date:str=None, to_date:str=None, filter:str=None)  # Get corporate actions.
-       get_bulk_deals(self, from_date:str=None, to_date:str=None)  # Get bulk deals.
-       get_insider_trading(self, from_date:str=None, to_date:str=None)  # Get insider trading data.
-       get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
-
-📄 legacy/backups/refactor_20251028_001034/nse_master_data.py
-   imports: datetime, json, pandas, re, requests, time
-   class NSEMasterData
-       __init__(self)
-       search(self, symbol, exchange, match=False)  # Search for symbols in the specified exchange.
-       get_nse_symbol_master(self, url)
-       download_symbol_master(self)  # Download NSE and NFO master data.
-       search_symbol(self, symbol, exchange)  # Search for a symbol in the specified exchange and return the
-       get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')  # Get historical data for a symbol.
-
-📄 legacy/backups/refactor_20251028_001034/nse_utils.py
+📄 backend/app/data_sources/nse_utils.py
+   role: utility
    imports: datetime, io, pandas, requests, zipfile
    class NseUtils
        __init__(self)
        pre_market_info(self, category='All')
        get_index_details(self, category, list_only=False)
-       clearing_holidays(self, list_only=False)  # Returns the list of NSE clearing holidays
-       trading_holidays(self, list_only=False)  # Returns the list of NSE trading holidays
-       is_nse_trading_holiday(self, date_str=None)  # Return True if the date supplied in a NSE trading holiday, e
-       is_nse_clearing_holiday(self, date_str=None)  # Return True if the date supplied in a NSE clearing holiday, 
-       equity_info(self, symbol)  # Extracts the full details of a symbol as see on NSE website
-       price_info(self, symbol)  # Gets all key price related information for a given stock
-       futures_data(self, symbol, indices=False)  # Returns the list of futures instruments for a given stock an
-       get_option_chain(self, symbol, indices=False)  # Returns the full option chain table as seen on NSE website f
-       get_52week_high_low(self, stock=None)  # Get 52 Week High and Low data.  If stock is provided, the Hi
-       fno_bhav_copy(self, trade_date:str='')  # Get the NSE FNO bhav copy data as per the traded date
-       bhav_copy_with_delivery(self, trade_date:str)  # Get the NSE bhav copy with delivery data as per the traded d
-       equity_bhav_copy(self, trade_date:str)  # Extract Equity Bhav Copy per the traded date provided
-       bhav_copy_indices(self, trade_date:str)  # Get nse bhav copy as per the traded date provided
-       fii_dii_activity(self)  # FII and DII trading activity of the day in data frame
-       get_live_option_chain(self, symbol:str, expiry_date:str=None, oi_mode:str='full', indices=False)  # get live nse option chain.
-       get_market_depth(self, symbol)  # Function to retrieve market depth for a given symbol
-       get_index_historic_data(self, index:str, from_date:str=None, to_date:str=None)  # get historical index data set for the specific time period.
+       clearing_holidays(self, list_only=False)
+       trading_holidays(self, list_only=False)
+       is_nse_trading_holiday(self, date_str=None)
+       is_nse_clearing_holiday(self, date_str=None)
+       equity_info(self, symbol)
+       price_info(self, symbol)
+       futures_data(self, symbol, indices=False)
+       get_option_chain(self, symbol, indices=False)
+       get_52week_high_low(self, stock=None)
+       fno_bhav_copy(self, trade_date:str='')
+       bhav_copy_with_delivery(self, trade_date:str)
+       equity_bhav_copy(self, trade_date:str)
+       bhav_copy_indices(self, trade_date:str)
+       fii_dii_activity(self)
+       get_live_option_chain(self, symbol:str, expiry_date:str=None, oi_mode:str='full', indices=False)
+       get_market_depth(self, symbol)
+       get_index_historic_data(self, index:str, from_date:str=None, to_date:str=None)
        get_index_data(self, index:str, from_date:str, to_date:str)
-       get_equity_full_list(self, list_only=False)  # get list of all equity available to trade in NSE
-       get_fno_full_list(self, list_only=False)  # get a dataframe of all listed derivative list with the recen
+       get_equity_full_list(self, list_only=False)
+       get_fno_full_list(self, list_only=False)
+       get_gainers_losers(self)
+       get_corporate_action(self, from_date_str:str=None, to_date_str:str=None, filter:str=None)
+       get_corporate_announcement(self, from_date_str:str=None, to_date_str:str=None)
+       get_index_pe_ratio(self)
+       get_index_pb_ratio(self)
+       get_index_div_yield(self)
+       get_advance_decline(self)
+       most_active_equity_stocks_by_volume(self)
+       most_active_equity_stocks_by_value(self)
+       most_active_index_calls(self)
+       most_active_index_puts(self)
+       most_active_stock_calls(self)
+       most_active_stock_puts(self)
+       most_active_contracts_by_oi(self)
+       most_active_contracts_by_volume(self)
+       most_active_futures_contracts_by_volume(self)
+       most_active_options_contracts_by_volume(self)
+       get_insider_trading(self, from_date:str=None, to_date:str=None)
+       get_upcoming_results_calendar(self)
+       get_etf_list(self)
+       get_bulk_deals(self, from_date:str=None, to_date:str=None)
+       get_block_deals(self, from_date:str=None, to_date:str=None)
+       get_short_selling(self, from_date:str=None, to_date:str=None)
+
+📄 backend/app/data_sources/screener_enhanced.py
+   role: general
+   doc: data_sources/screener_enhanced.py
+   imports: base_source, bs4, core, io, logging, pandas, re, requests, typing
+   class ScreenerEnhanced(DataSource)  # Enhanced Screener.in scraper with complete data extraction.
+       __init__(self)
+       _parse_number(self, value:Any) -> Optional[float]
+       _get_company_page(self, symbol:str) -> Optional[BeautifulSoup]
+       _get_warehouse_id(self, soup:BeautifulSoup) -> Optional[str]
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
+       _extract_company_info(self, soup:BeautifulSoup, symbol:str) -> Dict
+       _extract_key_metrics(self, soup:BeautifulSoup) -> Dict
+       _extract_table(self, soup:BeautifulSoup, table_id:str, is_peers:bool=False) -> Optional[pd.DataFrame]
+       _extract_peers_via_api(self, warehouse_id:str) -> Optional[pd.DataFrame]
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> pd.DataFrame
+
+📄 backend/app/data_sources/screener_source.py
+   role: general
+   imports: app, bs4, httpx, logging, pandas
+   class ScreenerSource(DataSource)  # Screener.in HTML scraper for detailed fundamental data
+       __init__(self)
+       _parse_soup(self, soup:BeautifulSoup) -> dict
+
+📄 backend/app/data_sources/yahoo_finance.py
+   role: general
+   doc: Yahoo Finance API wrapper
+   imports: base_source, datetime, logging, pandas, typing, yfinance
+   class YahooFinance(DataSource)  # Yahoo Finance API wrapper.
+       __init__(self)
+       _get_ticker(self, symbol:str)
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+
+📄 backend/app/database/__init__.py
+   role: data
+   doc: Database package initializer.
+   imports: db_manager, updater
+
+📄 backend/app/database/db_manager.py
+   role: data
+   doc: SQLite Database Manager - Hybrid Schema
+   imports: datetime, json, logging, pandas, pathlib, schema, sqlite3, typing
+   class DatabaseManager  # Manage SQLite database operations with hybrid schema.
+       __init__(self, db_path:str='stock_data.db')
+       _initialize_db(self)
+       _verify_schema(self)
+       execute(self, query:str, params:tuple=None) -> sqlite3.Cursor
+       executemany(self, query:str, params_list:List[tuple]) -> sqlite3.Cursor
+       commit(self)
+       rollback(self)
+       begin_transaction(self)
+       add_company(self, symbol:str, company_name:str=None, sector:str=None, industry:str=None, isin:str=None, listing_date:str=None)
+       get_company(self, symbol:str) -> Optional[Dict]
+       get_all_companies(self, sector:str=None) -> List[Dict]
+       get_sectors(self) -> List[str]
+       update_snapshot(self, symbol:str, data:Dict)
+       get_snapshot(self, symbol:str) -> Optional[Dict]
+       get_all_snapshots(self) -> pd.DataFrame
+       save_price_history(self, symbol:str, df:pd.DataFrame)
+       get_price_history(self, symbol:str, days:int=365, start_date:str=None, end_date:str=None) -> pd.DataFrame
+       get_latest_price_date(self, symbol:str) -> Optional[datetime]
+       save_quarterly_results(self, symbol:str, df:pd.DataFrame)
+       get_quarterly_results(self, symbol:str, limit:int=12) -> pd.DataFrame
+       save_annual_results(self, symbol:str, df:pd.DataFrame)
+       get_annual_results(self, symbol:str, limit:int=10) -> pd.DataFrame
+       save_balance_sheet(self, symbol:str, df:pd.DataFrame)
+       get_latest_fundamentals(self, symbol:str) -> Optional[Dict]
+       save_cash_flow(self, symbol:str, df:pd.DataFrame)
+       save_financial_ratios(self, symbol:str, df:pd.DataFrame)
+       save_shareholding(self, symbol:str, df:pd.DataFrame)
+       get_shareholding(self, symbol:str, limit:int=8) -> pd.DataFrame
+       save_peers(self, symbol:str, df:pd.DataFrame)
+       get_peers(self, symbol:str) -> pd.DataFrame
+       save_custom_metric(self, symbol:str, metric_name:str, metric_value:Any, metric_type:str='text', period:str=None, category:str='custom')
+       get_custom_metrics(self, symbol:str, category:str=None, period:str=None) -> List[Dict]
+       add_portfolio_holding(self, symbol:str, quantity:int, avg_price:float, purchase_date:str=None, notes:str=None)
+       get_portfolio_holdings(self) -> List[Dict]
+       remove_portfolio_holding(self, symbol:str)
+       log_update(self, symbol:str, table_name:str, record_count:int=0, status:str='success', message:str=None, execution_time:float=None)
+       get_last_update(self, symbol:str, table_name:str=None) -> Optional[datetime]
+       get_update_summary(self) -> pd.DataFrame
+       needs_update(self, symbol:str, hours:int=24) -> bool
+       _parse_number(self, value) -> Optional[float]
+       _parse_percentage(self, value) -> Optional[float]
+       save_fii_dii_activity(self, data:Dict)
+       save_corporate_actions(self, df:pd.DataFrame)
+       save_option_chain(self, df:pd.DataFrame)
+       save_market_breadth(self, data:Dict)
+       get_table_info(self, table_name:str) -> pd.DataFrame
+       get_row_count(self, table_name:str) -> int
+       get_database_stats(self) -> Dict
+       vacuum(self)
+       close(self)
+
+📄 backend/app/database/schema.py
+   role: data
+   doc: Complete NSE ML Database Schema
+   globals: CREATE_TABLES, DROP_ALL_TABLES, ALL_TABLES, CORE_TABLES, ML_CRITICAL_TABLES, TABLE_CATEGORIES
+
+📄 backend/app/database/updater.py
+   role: data
+   doc: Data Updater - Fetches data from sources and stores in database
+   imports: data_sources, datetime, db_manager, logging, pandas, re, services, time, typing
+   class DataUpdater  # Update database with fresh data from all sources.
+       __init__(self, db_path:str='stock_data.db')
+       update_stock(self, symbol:str, force:bool=False) -> Dict[str, any]
+       _update_company_info(self, symbol:str, data:Dict)
+       _update_snapshot(self, symbol:str, data:Dict)
+       _update_price_history(self, symbol:str, data:Dict) -> int
+       _update_quarterly_results(self, symbol:str, data:Dict)
+       _update_annual_results(self, symbol:str, data:Dict)
+       _update_shareholding(self, symbol:str, data:Dict)
+       _update_balance_sheet(self, symbol:str, data:Dict)
+       _update_cash_flow(self, symbol:str, data:Dict)
+       _update_ratios(self, symbol:str, data:Dict)
+       _update_peers(self, symbol:str, data:Dict) -> int
+       _update_corporate_actions(self, symbol:str, data:Dict)
+       _update_derivatives(self, symbol:str)
+       _update_technicals(self, symbol:str)
+       update_all_corporate_actions(self)
+       update_multiple(self, symbols:List[str], force:bool=False, delay:float=2.0)
+       update_market_data(self) -> Dict[str, any]
+       _extract_number(self, value) -> Optional[float]
+
+📄 backend/app/main.py
+   role: general
+   imports: app, fastapi
+
+📄 backend/app/ml/__init__.py
+   role: general
+   doc: Machine learning package
+
+📄 backend/app/ml/data_prep.py
+   role: general
+   doc: Model Data Preparation Engine
+   imports: datetime, logging, numpy, pandas, typing
+   class ModelDataPrep  # Prepare data for financial models
+       __init__(self, nse, db)
+       prepare_price_prediction_data(self, symbol:str, lookback_days:int=365) -> Dict
+       prepare_volatility_model_data(self, symbol:str, lookback_days:int=180) -> Dict
+       prepare_sentiment_data(self, symbol:str, lookback_days:int=90) -> Dict
+       prepare_portfolio_data(self, symbols:List[str], lookback_days:int=365) -> Dict
+       prepare_options_trading_data(self, symbol:str, expiry:Optional[str]=None) -> Dict
+       prepare_event_driven_data(self, symbol:str, lookback_days:int=180) -> Dict
+       _calculate_quality_score(self, quality_dict:Dict) -> float
+       export_for_talib(self, price_history:pd.DataFrame) -> Dict
+
+📄 backend/app/ml/features/feature_pipeline.py
+   role: general
+   imports: app, numpy, pandas
+   class FeatureEngineeringPipeline  # PILLAR 4: Prediction Engine (P)
+       __init__(self, price_data:pd.DataFrame, fundamental_data:dict)
+       generate_features(self) -> pd.DataFrame
+       _add_return_features(self)
+       _add_time_features(self)
+       _add_fundamental_features(self)
+       _add_targets(self)
+
+📄 backend/app/ml/serving/predictor.py
+   role: general
+   imports: joblib, os, pandas, typing
+   class PredictorService  # Handles model loading and inference for direction and volatility.
+       __init__(self)
+       _load_model(self, filename:str)
+       predict(self, feature_row:pd.DataFrame) -> Dict[str, Any]
+
+📄 backend/app/services/__init__.py
+   role: service
+   doc: Services package
+
+📄 backend/app/services/backtester.py
+   role: service
+   imports: pandas, typing
+   class Backtester  # PILLAR 3: Decision Engine (D) - Backtesting Framework
+       __init__(self, initial_capital:float=1000000)
+       run(self, df:pd.DataFrame, signals:pd.Series) -> Dict[str, Any]
+
+📄 backend/app/services/data_aggregator.py
+   role: service
+   imports: core, datetime, logging, pandas, typing, unified_data_service
+   class HybridAggregator  # Intelligent data aggregator refactored to use UnifiedDataService.
+       __init__(self, use_cache:bool=True)
+       get_stock_data(self, symbol:str, include_historical:bool=True) -> Dict[str, Any]
+       get_fundamental_data(self, symbol:str) -> Dict[str, Any]
+       get_complete_analysis(self, symbol:str) -> Dict[str, Any]
+       get_quick_quote(self, symbol:str) -> Optional[Dict]
+       batch_fetch(self, symbols:List[str], max_workers:int=5) -> Dict[str, Dict]
+
+📄 backend/app/services/derivatives_analyzer.py
+   role: service
+   imports: numpy, pandas, typing
+   class DerivativesAnalyzer  # Analyzes Derivatives Data (Options & Futures).
+       __init__(self)
+       analyze_option_chain(self, chain_df:pd.DataFrame) -> Dict[str, Any]
+       analyze_futures_buildup(self, current_price:float, prev_price:float, current_oi:int, prev_oi:int) -> str
+
+📄 backend/app/services/fundamental_analysis.py
+   role: service
+   imports: logging, typing
+   class FundamentalAnalysisService  # Formalized service for Fundamental Analysis.
+       calculate_score(self, metrics:Dict[str, Any]) -> Tuple[float, Dict[str, Any]]
+
+📄 backend/app/services/market_regime.py
+   role: service
+   imports: pandas, technical_analysis, typing
+   class MarketRegime  # Analyzes Market Condition (Trend vs Range).
+       __init__(self, index_df:pd.DataFrame)
+       determine_regime(self) -> Dict[str, Any]
+
+📄 backend/app/services/mtf_analyzer.py
+   role: service
+   doc: Multi-Timeframe (MTF) Data Manager
+   imports: datetime, logging, numpy, pandas, pathlib, sqlite3, typing
+   class TimeFrame  # Timeframe definitions and conversions
+       get_minutes(cls, timeframe:str) -> int
+       get_higher_timeframe(cls, timeframe:str) -> Optional[str]
+       get_lower_timeframe(cls, timeframe:str) -> Optional[str]
+   class MTFDataManager  # Multi-Timeframe Data Manager
+       __init__(self, db_manager, nse_source)
+       get_mtf_data(self, symbol:str, timeframes:List[str], lookback_days:int=30) -> Dict[str, pd.DataFrame]
+       _get_timeframe_data(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _get_daily_plus_data(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _get_intraday_data(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _fetch_from_nse(self, symbol:str, interval:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _get_intraday_from_db(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _save_intraday_to_db(self, symbol:str, timeframe:str, df:pd.DataFrame)
+       _resample_ohlcv(self, df:pd.DataFrame, rule:str) -> pd.DataFrame
+       _resample_to_timeframe(self, df:pd.DataFrame, target_timeframe:str) -> pd.DataFrame
+       align_mtf_data(self, mtf_data:Dict[str, pd.DataFrame], reference_tf:str='1d') -> Dict[str, pd.DataFrame]
+       get_htf_value_at_ltf(self, htf_data:pd.DataFrame, ltf_timestamp:datetime, column:str='close')
+       calculate_mtf_trend(self, mtf_data:Dict[str, pd.DataFrame], ma_period:int=20) -> Dict[str, str]
+       is_mtf_aligned(self, mtf_data:Dict[str, pd.DataFrame], direction:str='UP', min_timeframes:int=3) -> bool
+       validate_mtf_data(self, mtf_data:Dict[str, pd.DataFrame]) -> Dict[str, Dict]
+
+📄 backend/app/services/nse_utils_wrapper.py
+   role: service
+   imports: core, data_sources, logging, pandas, typing
+   class NseUtilsWrapper(DataSource)  # Wrapper for NseUtils to align with DataSource interface and provide normalized d
+       __init__(self)
+       get_price_data(self, symbol:str) -> Dict[str, Any]
+       get_company_info(self, symbol:str) -> Dict[str, Any]
+       get_option_chain(self, symbol:str, indices:bool=False) -> Optional[Any]
+       get_corporate_actions(self, symbol:Optional[str]=None)
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+
+📄 backend/app/services/recommendation_service.py
+   role: service
+   imports: data_sources, database, datetime, derivatives_analyzer, fundamental_analysis, logging, market_regime, mtf_analyzer, pandas, screener_engine, signal_generator, technical_analysis, typing
+   TODOS:
+     - # TODO: Add get_latest_option_chain to DB Manager
+   class RecommendationService  # Orchestrates Fundamental and Technical analysis to generate stock recommendation
+       __init__(self, db_path:str='stock_data.db')
+       _load_fundamental_data(self)
+       generate_recommendations(self, strategy:str='balanced', limit:int=10) -> List[Dict]
+       _generate_explanation(self, symbol, tech, fund, deriv, regime, score, action)
+       _apply_fundamental_filters(self, strategy:str) -> List[str]
+       _calculate_fundamental_score(self, symbol:str, strategy:str) -> tuple[float, Dict]
+       _calculate_technical_score(self, symbol:str) -> tuple[float, Dict, List[Dict]]
+       _calculate_fundamental_score(self, symbol:str, strategy:str) -> tuple[float, Dict]
+       _calculate_derivatives_score(self, symbol:str) -> tuple[float, Dict]
+       _calculate_regime_score(self) -> tuple[float, Dict]
+       _get_weights(self, strategy:str)
+       _determine_action(self, score:float) -> str
+
+📄 backend/app/services/screener_engine.py
+   role: service
+   imports: pandas, typing
+   class ScreenerEngine  # PILLAR 2: Analytics Engine (A)
+       __init__(self, stocks_df:pd.DataFrame)
+       run_screen(self, conditions:List[Dict[str, Any]]) -> pd.DataFrame
+
+📄 backend/app/services/signal_generator.py
+   role: service
+   imports: enum, pandas, technical_analysis, typing
+   class SignalType(Enum)
+   class SignalGenerator  # PILLAR 3: Decision Engine (D)
+       __init__(self, analyzed_df:pd.DataFrame)
+       generate_signals(self) -> List[Dict[str, Any]]
+       _create_signal(self, sig_type:SignalType, action:str, reason:str, price:float, atr:float, rr_ratio:float=2.0) -> Dict
+
+📄 backend/app/services/technical_analysis.py
+   role: service
+   imports: numpy, pandas, talib, typing
+   class TechnicalAnalysisService  # Pillar 1: Quantitative Engine (Q)
+       __init__(self, data:pd.DataFrame)
+       _preprocess(self)
+       calculate_all(self) -> pd.DataFrame
+       add_trend_indicators(self)
+       add_momentum_indicators(self)
+       add_volatility_indicators(self)
+       add_volume_indicators(self)
+       add_patterns(self)
+       calculate_stats(self) -> Dict[str, float]
+       _calculate_max_drawdown(self) -> float
+
+📄 backend/app/services/unified_data_service.py
+   role: service
+   imports: concurrent, core, data_sources, logging, nse_utils_wrapper, pandas, typing
+   class UnifiedDataService  # Central service to aggregate data from multiple sources with fallback logic.
+       __init__(self)
+       get_comprehensive_data(self, symbol:str) -> Dict[str, Any]
+       get_historical_data(self, symbol:str, interval:str='1d', period:str='1y', source:str='auto')
+       get_options_data(self, symbol:str, indices:bool=False)
+
+📄 backend/app/workers/celery_app.py
+   role: general
+   imports: app, celery
+
+📄 frontend/__init__.py
+   role: general
+   doc: Dashboard package
+
+📄 frontend/app.py
+   role: general
+   doc: Fortune Trading Dashboard - Professional Light Theme
+   imports: backend, datetime, io, pandas, pathlib, plotly, sqlite3, streamlit, sys
+   globals: POPULAR_NSE_STOCKS, SQL_EXAMPLES
+   def get_database()
+   def get_updater()
+   def get_nse()
+   def validate_nse_symbol(symbol:str) -> bool
+   def download_historical_data(symbol:str, period:str, interval:str, source:str='auto')
+   def download_intraday_data(symbol:str, interval:str)
+   def convert_df_to_csv(df)
+   def convert_df_to_excel(df)
+   def get_all_suggestions()
+   def execute_sql_query(query:str, db_path:str=None)
+   def get_recommendations(strategy='balanced')
+
+📄 frontend/app_v3.py
+   role: general
+   doc: Fortune Trading Dashboard v3.6 - With Database Explorer
+   imports: dashboard, datetime, pathlib, streamlit, sys
+   def initialize_session_state()
+   def placeholder_page(page_name:str)
+   def render_system_status()
+   def main()
+   def render_footer()
+
+📄 frontend/app_v3_copy.py
+   role: general
+   doc: Fortune Trading Dashboard v3.5 - Production Ready with MTF Analysis
+   imports: dashboard, datetime, pathlib, streamlit, sys, time
+   def get_dashboard_statistics()
+   def initialize_session_state()
+   def render_system_status()
+   def main()
+   def placeholder_page(page_name:str)
+   def render_footer()
+
+📄 frontend/components/charts.py
+   role: general
+   doc: Chart rendering components
+   imports: frontend, pandas, plotly, streamlit
+   def render_price_chart(price_history:pd.DataFrame, symbol:str)
+   def render_shareholding_chart(shareholding:pd.DataFrame)
+
+📄 frontend/components/metrics.py
+   role: general
+   doc: Metric display components
+   imports: frontend, pandas, streamlit
+   def render_metrics_row(metrics:dict)
+
+📄 frontend/components/navigation.py
+   role: general
+   doc: Navigation components
+   imports: streamlit
+   def render_navigation()
+
+📄 frontend/components/tables.py
+   role: general
+   doc: Table display components
+   imports: frontend, pandas, streamlit
+   def render_period_summary(snapshot:dict, last_update)
+   def render_quarterly_results(quarterly:pd.DataFrame)
+   def render_peer_comparison(peers:pd.DataFrame)
+
+📄 frontend/config.py
+   role: config
+   doc: Configuration settings for Fortune Trading Dashboard
+   imports: os, pathlib
+   globals: APP_NAME, VERSION, AUTHOR, PAGE_CONFIG, PAGES, PROJECT_ROOT, DB_PATH, DB_PATH_STR, BACKUP_DIR, DATA_DIR, CACHE_DIR, EXPORT_DIR, LOG_DIR, CACHE_TTL, CACHE_TTL_DETAILED, COLORS, CHART_COLORS, CANDLESTICK_COLORS, MODEL_TYPES, DEFAULT_TIMEFRAMES, MTF_TIMEFRAMES, POPULAR_STOCKS, STOCK_CATEGORIES, TECHNICAL_INDICATORS, CHART_HEIGHT, TABLE_HEIGHT, MAX_TABLE_ROWS, NUMBER_FORMAT, DATE_FORMAT, DATETIME_FORMAT, RATE_LIMIT, API_ENDPOINTS, ALERT_THRESHOLDS, NOTIFICATION_CHANNELS, DB_EXPLORER, VALIDATION_RULES, EXPORT_CONFIG, DEBUG, LOGGING, FEATURES
+
+📄 frontend/pages/analytics.py
+   role: general
+   doc: Analytics Page - Stock Analysis Dashboard
+   imports: datetime, frontend, numpy, pandas, plotly, streamlit
+   def analytics_page()
+   def render_price_trend_chart(price_history:pd.DataFrame, symbol:str)
+
+📄 frontend/pages/data_manager.py
+   role: general
+   doc: Data Manager Page - With Stock Symbol Validation
+   imports: datetime, frontend, logging, pandas, streamlit, time, typing
+   def render_html_table(df:pd.DataFrame, height:int=None) -> str
+   def validate_stock_symbol(symbol:str, nse) -> Tuple[bool, str, Dict]
+   def batch_validate_symbols(symbols:List[str], nse) -> Dict[str, Tuple[bool, str, Dict]]
+   def get_safe_update_summary(db) -> pd.DataFrame
+   def get_sector_statistics(db) -> Dict[str, int]
+   def get_data_freshness_distribution(db, companies:List[Dict]) -> Dict[str, int]
+   def data_manager_page()
+   def add_new_stock_tab(db, updater, nse)
+   def add_and_download_stocks(symbols:List[str], existing:List[str], db, updater)
+   def download_data_tab(db, updater)
+   def update_database_tab(db, updater)
+   def database_stats_tab(db)
+   def update_log_tab(db)
+   def download_stocks(symbols, force, delay, updater)
+   def update_all_stocks(companies, updater)
+   def update_stale_stocks(hours, updater)
+   def show_summary(results)
+
+📄 frontend/pages/database_explorer.py
+   role: general
+   doc: Database Explorer - View and query database directly from dashboard
+   imports: datetime, json, pandas, pathlib, sqlite3, streamlit
+   def database_explorer_page()
+   def browse_tables_tab(conn)
+   def display_table_data(conn, table_name)
+   def sql_query_tab(conn)
+   def schema_viewer_tab(conn)
+   def quick_stats_tab(conn)
+
+📄 frontend/pages/models.py
+   role: model
+   doc: Financial Models Page
+   imports: backend, datetime, frontend, json, pandas, streamlit
+   def models_page()
+   def price_prediction_tab(model_prep, db)
+   def volatility_models_tab(model_prep, db)
+   def sentiment_analysis_tab(model_prep, db)
+   def event_driven_tab(model_prep, db)
+   def portfolio_optimization_tab(model_prep, db)
+   def options_trading_tab(model_prep, db)
+   def display_model_data(data:dict, model_type:str)
+
+📄 frontend/pages/mtf_analysis.py
+   role: general
+   doc: Multi-Timeframe Analysis Page
+   imports: backend, datetime, frontend, pandas, plotly, streamlit
+   def mtf_analysis_page()
+   def display_mtf_analysis(mtf_data:dict, symbol:str, chart_type:str, mtf_manager:MTFDataManager)
+   def render_timeframe_chart(df:pd.DataFrame, symbol:str, timeframe:str, chart_type:str, trend:str)
+
+📄 frontend/pages/portfolio.py
+   role: general
+   doc: Portfolio page - Holdings and performance
+   imports: pandas, plotly, streamlit
+   def portfolio_page()
+
+📄 frontend/pages/research.py
+   role: general
+   doc: Research Page - Stock screening and analysis
+   imports: backend, datetime, frontend, pandas, re, streamlit, time, typing
+   def research_page()
+   def screener_tab()
+   def run_screener(symbols:List[str], min_roe:float, max_pe:float, min_roce:float, min_div_yield:float)
+   def sector_analysis_tab()
+   def custom_research_tab()
+   def compare_stocks(symbols:List[str])
+   def extract_number(value:str) -> float
+
+📄 frontend/pages/settings.py
+   role: config
+   doc: Settings Page - Application and database configuration
+   imports: datetime, frontend, pathlib, shutil, streamlit
+   def settings_page()
+   def general_settings_tab()
+   def notifications_tab()
+   def database_management_tab()
+   def advanced_settings_tab()
+
+📄 frontend/pages/trading.py
+   role: general
+   doc: Trading page - Order placement and positions
+   imports: pandas, streamlit
+   def trading_page()
+
+📄 frontend/styles/theme.py
+   role: general
+   doc: Fortune Trading Dashboard - Dark Theme CSS
+   globals: DARK_THEME_CSS
+
+📄 frontend/utils/data_loader.py
+   role: utility
+   doc: Data loading and caching utilities
+   imports: backend, datetime, numpy, pandas, pathlib, streamlit, sys
+   def get_database()
+   def get_nse()
+   def get_updater()
+   def load_stock_data(symbol:str)
+   def calculate_metrics(price_history:pd.DataFrame, snapshot:dict)
+
+📄 frontend/utils/formatters.py
+   role: utility
+   doc: Data Formatting Utilities - Financial Data Presentation
+   imports: datetime, numpy, pandas, typing
+   def safe_num(value:Any, default:float=0) -> float
+   def safe_format_currency(value:Any, decimals:int=2, default:str='N/A', symbol:str='₹') -> str
+   def safe_format_percent(value:Any, decimals:int=2, default:str='N/A', include_sign:bool=False) -> str
+   def safe_format_number(value:Any, decimals:int=0, default:str='N/A', abbreviate:bool=False) -> str
+   def safe_get_dict_value(data:dict, key:str, default:str='N/A', format_func:Optional[callable]=None) -> Any
+   def format_time_ago(dt:Union[datetime, str, None]) -> str
+   def format_large_number(value:Any) -> str
+   def parse_indian_number(value:str) -> Optional[float]
+   def format_market_cap(value:Any) -> str
+   def color_code_change(value:float) -> str
+
+📄 legacy/backups/refactor_20251028_001034/nse_complete.py
+   role: general
+   doc: Complete NSE data source combining NseUtils + NSEMasterData
+   imports: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
+   class NSEComplete(DataSource)  # Complete NSE data source using:
+       __init__(self)
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+       get_intraday_data(self, symbol:str, interval:str='5m') -> Optional[pd.DataFrame]
+       get_futures_data(self, symbol:str, expiry:str=None, period:str='1m', interval:str='1d') -> Optional[pd.DataFrame]
+       get_options_data(self, symbol:str, strike:int, option_type:str, expiry:str=None, interval:str='5m') -> Optional[pd.DataFrame]
+       get_option_chain(self, symbol:str, indices:bool=True) -> Optional[pd.DataFrame]
+       get_market_depth(self, symbol:str) -> Optional[Dict]
+       get_corporate_actions(self, from_date:str=None, to_date:str=None, filter:str=None) -> Optional[pd.DataFrame]
+       get_bulk_deals(self, from_date:str=None, to_date:str=None) -> Optional[pd.DataFrame]
+       get_insider_trading(self, from_date:str=None, to_date:str=None) -> Optional[pd.DataFrame]
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
+
+📄 legacy/backups/refactor_20251028_001034/nse_master_data.py
+   role: general
+   imports: datetime, json, pandas, re, requests, time
+   class NSEMasterData
+       __init__(self)
+       search(self, symbol, exchange, match=False)
+       get_nse_symbol_master(self, url)
+       download_symbol_master(self)
+       search_symbol(self, symbol, exchange)
+       get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')
+
+📄 legacy/backups/refactor_20251028_001034/nse_utils.py
+   role: utility
+   imports: datetime, io, pandas, requests, zipfile
+   class NseUtils
+       __init__(self)
+       pre_market_info(self, category='All')
+       get_index_details(self, category, list_only=False)
+       clearing_holidays(self, list_only=False)
+       trading_holidays(self, list_only=False)
+       is_nse_trading_holiday(self, date_str=None)
+       is_nse_clearing_holiday(self, date_str=None)
+       equity_info(self, symbol)
+       price_info(self, symbol)
+       futures_data(self, symbol, indices=False)
+       get_option_chain(self, symbol, indices=False)
+       get_52week_high_low(self, stock=None)
+       fno_bhav_copy(self, trade_date:str='')
+       bhav_copy_with_delivery(self, trade_date:str)
+       equity_bhav_copy(self, trade_date:str)
+       bhav_copy_indices(self, trade_date:str)
+       fii_dii_activity(self)
+       get_live_option_chain(self, symbol:str, expiry_date:str=None, oi_mode:str='full', indices=False)
+       get_market_depth(self, symbol)
+       get_index_historic_data(self, index:str, from_date:str=None, to_date:str=None)
+       get_index_data(self, index:str, from_date:str, to_date:str)
+       get_equity_full_list(self, list_only=False)
+       get_fno_full_list(self, list_only=False)
        get_gainers_losers(self)
        get_corporate_action(self, from_date_str:str=None, to_date_str:str=None, filter:str=None)
        get_corporate_announcement(self, from_date_str:str=None, to_date_str:str=None)
@@ -396,444 +902,536 @@ ml/serving/
        get_short_selling(self, from_date:str=None, to_date:str=None)
 
 📄 legacy/backups/refactor_20251028_001402/nse_complete.py
+   role: general
+   doc: Complete NSE Data Source - Consolidated
    imports: base_source, data_sources, datetime, io, json, logging, pandas, pathlib, re, requests, sys, time, typing, zipfile
-   class NSEComplete(DataSource)  # Complete NSE data source with all functionality consolidated
+   class NSEComplete(DataSource)  # Complete NSE data source with all functionality consolidated.
        __init__(self)
-       _initialize_session(self)  # Initialize session with NSE cookies
-       get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
+       _initialize_session(self)
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
 
 📄 legacy/backups/refactor_20251028_001446/nse_complete.py
+   role: general
+   doc: Complete NSE Data Source - Consolidated
    imports: base_source, data_sources, datetime, io, json, logging, pandas, pathlib, re, requests, sys, time, typing, zipfile
-   class NSEComplete(DataSource)  # Complete NSE data source with all functionality consolidated
+   class NSEComplete(DataSource)  # Complete NSE data source with all functionality consolidated.
        __init__(self)
-       _initialize_session(self)  # Initialize session with NSE cookies
-       get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
+       _initialize_session(self)
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
 
 📄 legacy/config.py
+   role: config
+   doc: Central configuration for the stock data system
    imports: datetime, pathlib
+   globals: BASE_DIR, DATA_DIR, CACHE_DIR, EXPORT_DIR, CACHE_TTL_PRICE, CACHE_TTL_REALTIME, CACHE_TTL_INTRADAY, CACHE_TTL_DAILY, CACHE_TTL_HISTORICAL, CACHE_TTL_FUNDAMENTAL, RATE_LIMIT_NSE, RATE_LIMIT_SCREENER, RATE_LIMIT_YAHOO, DEFAULT_HISTORICAL_PERIOD, DEFAULT_HISTORICAL_INTERVAL, DEFAULT_INTRADAY_INTERVAL, MAX_RETRIES, RETRY_DELAY, EXPORT_CSV_ENCODING, EXPORT_EXCEL_ENGINE, LOG_LEVEL, LOG_FORMAT, LOG_FILE, INDICES, IT_STOCKS, BANK_STOCKS, AUTO_STOCKS, PHARMA_STOCKS, FMCG_STOCKS, ALL_POPULAR_STOCKS
 
 📄 legacy/core/__init__.py
+   role: general
+   doc: Core utilities package
    imports: cache_manager, rate_limiter
 
 📄 legacy/core/cache_manager.py
+   role: general
+   doc: Intelligent caching system with TTL and persistence
    imports: datetime, hashlib, logging, pathlib, pickle, typing
    class CacheManager  # Multi-layer cache system with TTL.
        __init__(self, enabled:bool=True, cache_dir:str='.cache')
-       _get_cache_key(self, key:str)  # Generate safe cache key.
-       _get_cache_file(self, key:str)  # Get cache file path.
-       get(self, key:str)  # Get cached value.
-       set(self, key:str, value:Any, ttl:int=3600)  # Set cache value with TTL.
-       clear(self)  # Clear all cache.
-       get_stats(self)  # Get cache statistics.
+       _get_cache_key(self, key:str) -> str
+       _get_cache_file(self, key:str) -> Path
+       get(self, key:str) -> Optional[Any]
+       set(self, key:str, value:Any, ttl:int=3600)
+       clear(self)
+       get_stats(self) -> dict
 
 📄 legacy/core/data_merger.py
+   role: general
+   doc: Data merging and validation utilities
    imports: logging, pandas, typing
    class DataMerger  # Intelligent data merging with conflict resolution.
-       merge_price_data(sources:List[Dict[str, Any]], priority:List[str])  # Merge price data from multiple sources.
-       validate_price_data(data:Dict[str, Any])  # Validate and clean price data.
+       merge_price_data(sources:List[Dict[str, Any]], priority:List[str]) -> Dict[str, Any]
+       validate_price_data(data:Dict[str, Any]) -> Dict[str, Any]
    class DataQualityChecker  # Check data quality and completeness.
-       assess_quality(data:Dict[str, Any])  # Assess overall data quality.
-       _get_grade(score:float)  # Convert score to letter grade.
+       assess_quality(data:Dict[str, Any]) -> Dict[str, Any]
+       _get_grade(score:float) -> str
 
 📄 legacy/core/hybrid_aggregator.py
+   role: general
+   doc: Hybrid data aggregator combining all sources
    imports: concurrent, config, core, data_sources, datetime, logging, pandas, pathlib, sys, typing
    class HybridAggregator  # Intelligent data aggregator combining multiple sources.
        __init__(self, use_cache:bool=True)
-       _test_sources(self)  # Test all data sources.
-       get_stock_data(self, symbol:str, include_historical:bool=True)  # Get comprehensive stock data from NSE and Yahoo.
-       get_fundamental_data(self, symbol:str)  # Get comprehensive fundamental data from Screener.
-       get_complete_analysis(self, symbol:str)  # Get EVERYTHING: NSE price data + Screener fundamentals + Yah
-       _fetch_from_source(self, symbol:str, source_name:str)  # Fetch all available data from a single source.
-       _merge_data(self, symbol:str, raw_data:Dict)  # Intelligently merge data from multiple sources.
-       _merge_company_info(self, raw_data:Dict)  # Merge company information from all sources.
-       _merge_price_data(self, raw_data:Dict)  # Merge price data with priority.
-       _select_best_historical(self, raw_data:Dict)  # Select best historical data.
-       get_quick_quote(self, symbol:str)  # Get only price data (fast).
-       batch_fetch(self, symbols:List[str], max_workers:int=5)  # Fetch data for multiple symbols in parallel.
+       _test_sources(self)
+       get_stock_data(self, symbol:str, include_historical:bool=True) -> Dict[str, Any]
+       get_fundamental_data(self, symbol:str) -> Dict[str, Any]
+       get_complete_analysis(self, symbol:str) -> Dict[str, Any]
+       _fetch_from_source(self, symbol:str, source_name:str) -> Dict
+       _merge_data(self, symbol:str, raw_data:Dict) -> Dict
+       _merge_company_info(self, raw_data:Dict) -> Dict
+       _merge_price_data(self, raw_data:Dict) -> Optional[Dict]
+       _select_best_historical(self, raw_data:Dict) -> Dict
+       get_quick_quote(self, symbol:str) -> Optional[Dict]
+       batch_fetch(self, symbols:List[str], max_workers:int=5) -> Dict[str, Dict]
 
 📄 legacy/core/model_data_prep.py
+   role: model
+   doc: Model Data Preparation Engine
    imports: datetime, logging, numpy, pandas, typing
    class ModelDataPrep  # Prepare data for financial models
        __init__(self, nse, db)
-       prepare_price_prediction_data(self, symbol:str, lookback_days:int=365)  # Prepare data for price prediction models (LSTM, ARIMA, etc.)
-       prepare_volatility_model_data(self, symbol:str, lookback_days:int=180)  # Prepare data for volatility models (GARCH, Stochastic Vol, e
-       prepare_sentiment_data(self, symbol:str, lookback_days:int=90)  # Prepare data for sentiment analysis
-       prepare_portfolio_data(self, symbols:List[str], lookback_days:int=365)  # Prepare data for portfolio optimization (Markowitz, Black-Li
-       prepare_options_trading_data(self, symbol:str, expiry:Optional[str]=None)  # Prepare data for options trading strategies
-       prepare_event_driven_data(self, symbol:str, lookback_days:int=180)  # Prepare data for event-driven strategies
-       _calculate_quality_score(self, quality_dict:Dict)  # Calculate overall data quality score
-       export_for_talib(self, price_history:pd.DataFrame)  # Export price data in format ready for TA-Lib
+       prepare_price_prediction_data(self, symbol:str, lookback_days:int=365) -> Dict
+       prepare_volatility_model_data(self, symbol:str, lookback_days:int=180) -> Dict
+       prepare_sentiment_data(self, symbol:str, lookback_days:int=90) -> Dict
+       prepare_portfolio_data(self, symbols:List[str], lookback_days:int=365) -> Dict
+       prepare_options_trading_data(self, symbol:str, expiry:Optional[str]=None) -> Dict
+       prepare_event_driven_data(self, symbol:str, lookback_days:int=180) -> Dict
+       _calculate_quality_score(self, quality_dict:Dict) -> float
+       export_for_talib(self, price_history:pd.DataFrame) -> Dict
 
 📄 legacy/core/mtf_manager.py
+   role: general
+   doc: Multi-Timeframe (MTF) Data Manager
    imports: datetime, logging, numpy, pandas, pathlib, sqlite3, typing
    class TimeFrame  # Timeframe definitions and conversions
-       get_minutes(cls, timeframe:str)  # Get minutes for a timeframe
-       get_higher_timeframe(cls, timeframe:str)  # Get the next higher timeframe
-       get_lower_timeframe(cls, timeframe:str)  # Get the next lower timeframe
+       get_minutes(cls, timeframe:str) -> int
+       get_higher_timeframe(cls, timeframe:str) -> Optional[str]
+       get_lower_timeframe(cls, timeframe:str) -> Optional[str]
    class MTFDataManager  # Multi-Timeframe Data Manager
        __init__(self, db_manager, nse_source)
-       get_mtf_data(self, symbol:str, timeframes:List[str], lookback_days:int=30)  # Get data for multiple timeframes
-       _get_timeframe_data(self, symbol:str, timeframe:str, lookback_days:int)  # Get data for a specific timeframe
-       _get_daily_plus_data(self, symbol:str, timeframe:str, lookback_days:int)  # Get daily, weekly, or monthly data
-       _get_intraday_data(self, symbol:str, timeframe:str, lookback_days:int)  # Get intraday data (1m, 5m, 15m, 30m, 1h, 4h)
-       _fetch_from_nse(self, symbol:str, interval:str, lookback_days:int)  # Fetch intraday data from NSE
-       _get_intraday_from_db(self, symbol:str, timeframe:str, lookback_days:int)  # Get intraday data from database
-       _save_intraday_to_db(self, symbol:str, timeframe:str, df:pd.DataFrame)  # Save intraday data to database
-       _resample_ohlcv(self, df:pd.DataFrame, rule:str)  # Resample OHLCV data to higher timeframe
-       _resample_to_timeframe(self, df:pd.DataFrame, target_timeframe:str)  # Resample to specific timeframe
-       align_mtf_data(self, mtf_data:Dict[str, pd.DataFrame], reference_tf:str='1d')  # Align multiple timeframes to same datetime index
-       get_htf_value_at_ltf(self, htf_data:pd.DataFrame, ltf_timestamp:datetime, column:str='close')  # Get higher timeframe value at a lower timeframe timestamp
-       calculate_mtf_trend(self, mtf_data:Dict[str, pd.DataFrame], ma_period:int=20)  # Calculate trend direction for each timeframe
-       is_mtf_aligned(self, mtf_data:Dict[str, pd.DataFrame], direction:str='UP', min_timeframes:int=3)  # Check if multiple timeframes are aligned in same direction
-       validate_mtf_data(self, mtf_data:Dict[str, pd.DataFrame])  # Validate data quality across timeframes
+       get_mtf_data(self, symbol:str, timeframes:List[str], lookback_days:int=30) -> Dict[str, pd.DataFrame]
+       _get_timeframe_data(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _get_daily_plus_data(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _get_intraday_data(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _fetch_from_nse(self, symbol:str, interval:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _get_intraday_from_db(self, symbol:str, timeframe:str, lookback_days:int) -> Optional[pd.DataFrame]
+       _save_intraday_to_db(self, symbol:str, timeframe:str, df:pd.DataFrame)
+       _resample_ohlcv(self, df:pd.DataFrame, rule:str) -> pd.DataFrame
+       _resample_to_timeframe(self, df:pd.DataFrame, target_timeframe:str) -> pd.DataFrame
+       align_mtf_data(self, mtf_data:Dict[str, pd.DataFrame], reference_tf:str='1d') -> Dict[str, pd.DataFrame]
+       get_htf_value_at_ltf(self, htf_data:pd.DataFrame, ltf_timestamp:datetime, column:str='close')
+       calculate_mtf_trend(self, mtf_data:Dict[str, pd.DataFrame], ma_period:int=20) -> Dict[str, str]
+       is_mtf_aligned(self, mtf_data:Dict[str, pd.DataFrame], direction:str='UP', min_timeframes:int=3) -> bool
+       validate_mtf_data(self, mtf_data:Dict[str, pd.DataFrame]) -> Dict[str, Dict]
 
 📄 legacy/core/rate_limiter.py
+   role: general
+   doc: Rate limiting to prevent API throttling
    imports: collections, logging, threading, time
    class RateLimiter  # Token bucket rate limiter.
        __init__(self, calls_per_minute:int=30)
-       wait_if_needed(self)  # Wait if rate limit would be exceeded.
+       wait_if_needed(self)
 
 📄 legacy/dashboard/__init__.py
+   role: general
+   doc: Dashboard package
 
 📄 legacy/dashboard/app.py
+   role: general
+   doc: Fortune Trading Dashboard - Professional Light Theme
    imports: data_sources, database, datetime, io, pandas, pathlib, plotly, sqlite3, streamlit, sys
-   def get_database()  # Get database connection (cached).
-   def get_updater()  # Get data updater (cached).
-   def get_nse()  # Get NSE data source (cached).
-   def validate_nse_symbol(symbol:str)  # Validate if symbol exists in NSE.
-   def download_historical_data(symbol:str, period:str, interval:str)  # Download historical data from NSE.
-   def download_intraday_data(symbol:str, interval:str)  # Download intraday data from NSE.
-   def convert_df_to_csv(df)  # Convert DataFrame to CSV.
-   def convert_df_to_excel(df)  # Convert DataFrame to Excel.
-   def get_all_suggestions()  # Get all popular stocks as flat list.
-   def execute_sql_query(query:str, db_path:str=None)  # Execute SQL query and return results.
+   globals: POPULAR_NSE_STOCKS, SQL_EXAMPLES
+   def get_database()
+   def get_updater()
+   def get_nse()
+   def validate_nse_symbol(symbol:str) -> bool
+   def download_historical_data(symbol:str, period:str, interval:str)
+   def download_intraday_data(symbol:str, interval:str)
+   def convert_df_to_csv(df)
+   def convert_df_to_excel(df)
+   def get_all_suggestions()
+   def execute_sql_query(query:str, db_path:str=None)
 
 📄 legacy/dashboard/app_v3.py
+   role: general
+   doc: Fortune Trading Dashboard v3.6 - With Database Explorer
    imports: dashboard, datetime, pathlib, streamlit, sys
-   def initialize_session_state()  # Initialize all session state variables
-   def placeholder_page(page_name:str)  # Placeholder page when actual page fails to load
-   def render_system_status()  # Render system status indicators in sidebar
-   def main()  # Main application entry point
-   def render_footer()  # Render application footer
+   def initialize_session_state()
+   def placeholder_page(page_name:str)
+   def render_system_status()
+   def main()
+   def render_footer()
 
 📄 legacy/dashboard/app_v3_copy.py
+   role: general
+   doc: Fortune Trading Dashboard v3.5 - Production Ready with MTF Analysis
    imports: dashboard, datetime, pathlib, streamlit, sys, time
-   def get_dashboard_statistics()  # Fetches table statistics from the database.
-   def initialize_session_state()  # Initialize all session state variables and fetch initial dat
-   def render_system_status()  # Render system status indicators in sidebar
-   def main()  # Main application entry point
-   def placeholder_page(page_name:str)  # Placeholder page when actual page fails to load
-   def render_footer()  # Render application footer
+   def get_dashboard_statistics()
+   def initialize_session_state()
+   def render_system_status()
+   def main()
+   def placeholder_page(page_name:str)
+   def render_footer()
 
 📄 legacy/dashboard/components/charts.py
+   role: general
+   doc: Chart rendering components
    imports: dashboard, pandas, plotly, streamlit
-   def render_price_chart(price_history:pd.DataFrame, symbol:str)  # Render price and volume charts
-   def render_shareholding_chart(shareholding:pd.DataFrame)  # Render shareholding pie chart
+   def render_price_chart(price_history:pd.DataFrame, symbol:str)
+   def render_shareholding_chart(shareholding:pd.DataFrame)
 
 📄 legacy/dashboard/components/metrics.py
+   role: general
+   doc: Metric display components
    imports: dashboard, pandas, streamlit
-   def render_metrics_row(metrics:dict)  # Render key metrics in a row
+   def render_metrics_row(metrics:dict)
 
 📄 legacy/dashboard/components/navigation.py
+   role: general
+   doc: Navigation components
    imports: streamlit
-   def render_navigation()  # Render top navigation bar
+   def render_navigation()
 
 📄 legacy/dashboard/components/tables.py
+   role: general
+   doc: Table display components
    imports: dashboard, pandas, streamlit
-   def render_period_summary(snapshot:dict, last_update)  # Render period summary table
-   def render_quarterly_results(quarterly:pd.DataFrame)  # Render quarterly results table
-   def render_peer_comparison(peers:pd.DataFrame)  # Render peer comparison table
+   def render_period_summary(snapshot:dict, last_update)
+   def render_quarterly_results(quarterly:pd.DataFrame)
+   def render_peer_comparison(peers:pd.DataFrame)
 
 📄 legacy/dashboard/config.py
+   role: config
+   doc: Configuration settings for Fortune Trading Dashboard
    imports: os, pathlib
+   globals: APP_NAME, VERSION, AUTHOR, PAGE_CONFIG, PAGES, PROJECT_ROOT, DB_PATH, DB_PATH_STR, BACKUP_DIR, DATA_DIR, CACHE_DIR, EXPORT_DIR, LOG_DIR, CACHE_TTL, CACHE_TTL_DETAILED, COLORS, CHART_COLORS, CANDLESTICK_COLORS, MODEL_TYPES, DEFAULT_TIMEFRAMES, MTF_TIMEFRAMES, POPULAR_STOCKS, STOCK_CATEGORIES, TECHNICAL_INDICATORS, CHART_HEIGHT, TABLE_HEIGHT, MAX_TABLE_ROWS, NUMBER_FORMAT, DATE_FORMAT, DATETIME_FORMAT, RATE_LIMIT, API_ENDPOINTS, ALERT_THRESHOLDS, NOTIFICATION_CHANNELS, DB_EXPLORER, VALIDATION_RULES, EXPORT_CONFIG, DEBUG, LOGGING, FEATURES
 
 📄 legacy/dashboard/pages/analytics.py
+   role: general
+   doc: Analytics Page - Stock Analysis Dashboard
    imports: dashboard, datetime, numpy, pandas, plotly, streamlit
-   def analytics_page()  # Main analytics dashboard with price trends
-   def render_price_trend_chart(price_history:pd.DataFrame, symbol:str)  # Render comprehensive price trend analysis
+   def analytics_page()
+   def render_price_trend_chart(price_history:pd.DataFrame, symbol:str)
 
 📄 legacy/dashboard/pages/data_manager.py
+   role: general
+   doc: Data Manager Page - With Stock Symbol Validation
    imports: dashboard, datetime, logging, pandas, streamlit, time, typing
-   def render_html_table(df:pd.DataFrame, height:int=None)  # Render DataFrame as HTML table with dark theme
-   def validate_stock_symbol(symbol:str, nse)  # Validate if stock symbol exists on NSE
-   def batch_validate_symbols(symbols:List[str], nse)  # Validate multiple symbols
-   def get_safe_update_summary(db)  # Safely retrieve update summary
-   def get_sector_statistics(db)  # Get sector counts
-   def get_data_freshness_distribution(db, companies:List[Dict])  # Calculate freshness
-   def data_manager_page()  # Main data management dashboard
-   def add_new_stock_tab(db, updater, nse)  # Add new stocks with validation
-   def add_and_download_stocks(symbols:List[str], existing:List[str], db, updater)  # Add validated stocks and download their data
-   def download_data_tab(db, updater)  # Bulk download interface
-   def update_database_tab(db, updater)  # Update operations
-   def database_stats_tab(db)  # Statistics
-   def update_log_tab(db)  # Update log
-   def download_stocks(symbols, force, delay, updater)  # Batch download
+   def render_html_table(df:pd.DataFrame, height:int=None) -> str
+   def validate_stock_symbol(symbol:str, nse) -> Tuple[bool, str, Dict]
+   def batch_validate_symbols(symbols:List[str], nse) -> Dict[str, Tuple[bool, str, Dict]]
+   def get_safe_update_summary(db) -> pd.DataFrame
+   def get_sector_statistics(db) -> Dict[str, int]
+   def get_data_freshness_distribution(db, companies:List[Dict]) -> Dict[str, int]
+   def data_manager_page()
+   def add_new_stock_tab(db, updater, nse)
+   def add_and_download_stocks(symbols:List[str], existing:List[str], db, updater)
+   def download_data_tab(db, updater)
+   def update_database_tab(db, updater)
+   def database_stats_tab(db)
+   def update_log_tab(db)
+   def download_stocks(symbols, force, delay, updater)
    def update_all_stocks(companies, updater)
    def update_stale_stocks(hours, updater)
-   def show_summary(results)  # Show summary
+   def show_summary(results)
 
 📄 legacy/dashboard/pages/database_explorer.py
+   role: general
+   doc: Database Explorer - View and query database directly from dashboard
    imports: datetime, json, pandas, pathlib, sqlite3, streamlit
-   def database_explorer_page()  # Database Explorer - Browse tables and run SQL queries
-   def browse_tables_tab(conn)  # Browse database tables
-   def display_table_data(conn, table_name)  # Display data from a selected table
-   def sql_query_tab(conn)  # SQL Query executor
-   def schema_viewer_tab(conn)  # View database schema
-   def quick_stats_tab(conn)  # Quick database statistics
+   def database_explorer_page()
+   def browse_tables_tab(conn)
+   def display_table_data(conn, table_name)
+   def sql_query_tab(conn)
+   def schema_viewer_tab(conn)
+   def quick_stats_tab(conn)
 
 📄 legacy/dashboard/pages/models.py
+   role: model
+   doc: Financial Models Page
    imports: core, dashboard, datetime, json, pandas, streamlit
-   def models_page()  # Financial models configuration and data export
-   def price_prediction_tab(model_prep, db)  # Price prediction model configuration
-   def volatility_models_tab(model_prep, db)  # Volatility modeling configuration
-   def sentiment_analysis_tab(model_prep, db)  # Sentiment analysis configuration
-   def event_driven_tab(model_prep, db)  # Event-driven strategy configuration
-   def portfolio_optimization_tab(model_prep, db)  # Portfolio optimization configuration
-   def options_trading_tab(model_prep, db)  # Options trading configuration
-   def display_model_data(data:dict, model_type:str)  # Display prepared model data with quality assessment
+   def models_page()
+   def price_prediction_tab(model_prep, db)
+   def volatility_models_tab(model_prep, db)
+   def sentiment_analysis_tab(model_prep, db)
+   def event_driven_tab(model_prep, db)
+   def portfolio_optimization_tab(model_prep, db)
+   def options_trading_tab(model_prep, db)
+   def display_model_data(data:dict, model_type:str)
 
 📄 legacy/dashboard/pages/mtf_analysis.py
+   role: general
+   doc: Multi-Timeframe Analysis Page
    imports: core, dashboard, datetime, pandas, plotly, streamlit
-   def mtf_analysis_page()  # Multi-Timeframe Analysis Dashboard
-   def display_mtf_analysis(mtf_data:dict, symbol:str, chart_type:str, mtf_manager:MTFDataManager)  # Display comprehensive MTF analysis
-   def render_timeframe_chart(df:pd.DataFrame, symbol:str, timeframe:str, chart_type:str, trend:str)  # Render chart for single timeframe
+   def mtf_analysis_page()
+   def display_mtf_analysis(mtf_data:dict, symbol:str, chart_type:str, mtf_manager:MTFDataManager)
+   def render_timeframe_chart(df:pd.DataFrame, symbol:str, timeframe:str, chart_type:str, trend:str)
 
 📄 legacy/dashboard/pages/portfolio.py
+   role: general
+   doc: Portfolio page - Holdings and performance
    imports: pandas, plotly, streamlit
-   def portfolio_page()  # Portfolio management
+   def portfolio_page()
 
 📄 legacy/dashboard/pages/research.py
+   role: general
+   doc: Research Page - Stock screening and analysis
    imports: core, dashboard, datetime, pandas, re, streamlit, time, typing
-   def research_page()  # Research and screening dashboard
-   def screener_tab()  # Stock screener
-   def run_screener(symbols:List[str], min_roe:float, max_pe:float, min_roce:float, min_div_yield:float)  # Execute screening
-   def sector_analysis_tab()  # Sector analysis
-   def custom_research_tab()  # Custom tools
-   def compare_stocks(symbols:List[str])  # Compare stocks
-   def extract_number(value:str)  # Extract number from string
+   def research_page()
+   def screener_tab()
+   def run_screener(symbols:List[str], min_roe:float, max_pe:float, min_roce:float, min_div_yield:float)
+   def sector_analysis_tab()
+   def custom_research_tab()
+   def compare_stocks(symbols:List[str])
+   def extract_number(value:str) -> float
 
 📄 legacy/dashboard/pages/settings.py
+   role: config
+   doc: Settings Page - Application and database configuration
    imports: dashboard, datetime, pathlib, shutil, streamlit
-   def settings_page()  # Application settings and configuration
-   def general_settings_tab()  # General application settings
-   def notifications_tab()  # Notification preferences
-   def database_management_tab()  # Database maintenance tools
-   def advanced_settings_tab()  # Advanced settings
+   def settings_page()
+   def general_settings_tab()
+   def notifications_tab()
+   def database_management_tab()
+   def advanced_settings_tab()
 
 📄 legacy/dashboard/pages/trading.py
+   role: general
+   doc: Trading page - Order placement and positions
    imports: pandas, streamlit
-   def trading_page()  # Trading interface
+   def trading_page()
 
 📄 legacy/dashboard/styles/theme.py
+   role: general
+   doc: Fortune Trading Dashboard - Dark Theme CSS
+   globals: DARK_THEME_CSS
 
 📄 legacy/dashboard/utils/data_loader.py
+   role: utility
+   doc: Data loading and caching utilities
    imports: data_sources, database, datetime, numpy, pandas, pathlib, streamlit, sys
-   def get_database()  # Get cached database instance
-   def get_nse()  # Get cached NSE data source - NOW EXPORTED
-   def get_updater()  # Get cached updater instance
-   def load_stock_data(symbol:str)  # Load complete stock data with caching
-   def calculate_metrics(price_history:pd.DataFrame, snapshot:dict)  # Calculate key performance metrics
+   def get_database()
+   def get_nse()
+   def get_updater()
+   def load_stock_data(symbol:str)
+   def calculate_metrics(price_history:pd.DataFrame, snapshot:dict)
 
 📄 legacy/dashboard/utils/formatters.py
+   role: utility
+   doc: Data Formatting Utilities - Financial Data Presentation
    imports: datetime, numpy, pandas, typing
-   def safe_num(value:Any, default:float=0)  # Safely convert any value to float
-   def safe_format_currency(value:Any, decimals:int=2, default:str='N/A', symbol:str='₹')  # Format value as currency with symbol
-   def safe_format_percent(value:Any, decimals:int=2, default:str='N/A', include_sign:bool=False)  # Format value as percentage
-   def safe_format_number(value:Any, decimals:int=0, default:str='N/A', abbreviate:bool=False)  # Format value as number with thousand separators
-   def safe_get_dict_value(data:dict, key:str, default:str='N/A', format_func:Optional[callable]=None)  # Safely retrieve and optionally format dictionary value
-   def format_time_ago(dt:Union[datetime, str, None])  # Format datetime as human-readable "time ago"
-   def format_large_number(value:Any)  # Format large numbers with Indian numbering system
-   def parse_indian_number(value:str)  # Parse Indian formatted numbers
-   def format_market_cap(value:Any)  # Format market cap in standard financial notation
-   def color_code_change(value:float)  # Return color class based on value (for price changes)
+   def safe_num(value:Any, default:float=0) -> float
+   def safe_format_currency(value:Any, decimals:int=2, default:str='N/A', symbol:str='₹') -> str
+   def safe_format_percent(value:Any, decimals:int=2, default:str='N/A', include_sign:bool=False) -> str
+   def safe_format_number(value:Any, decimals:int=0, default:str='N/A', abbreviate:bool=False) -> str
+   def safe_get_dict_value(data:dict, key:str, default:str='N/A', format_func:Optional[callable]=None) -> Any
+   def format_time_ago(dt:Union[datetime, str, None]) -> str
+   def format_large_number(value:Any) -> str
+   def parse_indian_number(value:str) -> Optional[float]
+   def format_market_cap(value:Any) -> str
+   def color_code_change(value:float) -> str
 
 📄 legacy/data_sources/__init__.py
+   role: general
+   doc: Data sources package
    imports: base_source, nse_complete
 
 📄 legacy/data_sources/base_source.py
+   role: general
+   doc: Abstract base class for all data sources
    imports: abc, logging, pandas, typing
    class DataSource(ABC)  # Base class for all data sources.
        __init__(self, name:str)
-       get_company_info(self, symbol:str)  # Get basic company information.
-       get_price_data(self, symbol:str)  # Get current price and market data.
-       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')  # Get historical price data.
-       test_connection(self)  # Test if the data source is accessible.
-       handle_error(self, error:Exception, context:str='')  # Standardized error handling.
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+       test_connection(self) -> bool
+       handle_error(self, error:Exception, context:str='') -> None
 
 📄 legacy/data_sources/nse_complete.py
+   role: general
+   doc: data_sources/nse_complete.py
    imports: base_source, datetime, logging, pandas, pathlib, sys, typing
    class NSEComplete(DataSource)
        __init__(self)
-       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')  # Fulfills abstract method by mapping to self.master.get_histo
-       get_price_data(self, symbol:str)  # Fulfills abstract method by mapping to self.nse.price_info()
-       search(self, symbol:str, exchange='NSE', match:bool=False)  # Performs a search using the master list.
-       get_company_info(self, symbol:str)
-       __getattr__(self, name)  # Delegate calls to the wrapped nse or master instances.
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> pd.DataFrame
+       get_price_data(self, symbol:str) -> pd.DataFrame
+       search(self, symbol:str, exchange='NSE', match:bool=False) -> pd.DataFrame
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       __getattr__(self, name)
 
 📄 legacy/data_sources/nse_complete_ORIGINAL.py
+   role: general
+   doc: Complete NSE data source combining NseUtils + NSEMasterData
    imports: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
    class NSEComplete(DataSource)  # Complete NSE data source using:
        __init__(self)
-       get_company_info(self, symbol:str)  # Get company information.
-       get_price_data(self, symbol:str)  # Get current price data.
-       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')  # Get historical OHLCV data.
-       get_intraday_data(self, symbol:str, interval:str='5m')  # Get today's intraday data.
-       get_futures_data(self, symbol:str, expiry:str=None, period:str='1m', interval:str='1d')  # Get futures historical data.
-       get_options_data(self, symbol:str, strike:int, option_type:str, expiry:str=None, interval:str='5m')  # Get options historical data.
-       get_option_chain(self, symbol:str, indices:bool=True)  # Get full option chain.
-       get_market_depth(self, symbol:str)  # Get bid/ask depth.
-       get_corporate_actions(self, from_date:str=None, to_date:str=None, filter:str=None)  # Get corporate actions.
-       get_bulk_deals(self, from_date:str=None, to_date:str=None)  # Get bulk deals.
-       get_insider_trading(self, from_date:str=None, to_date:str=None)  # Get insider trading data.
-       get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
+       get_intraday_data(self, symbol:str, interval:str='5m') -> Optional[pd.DataFrame]
+       get_futures_data(self, symbol:str, expiry:str=None, period:str='1m', interval:str='1d') -> Optional[pd.DataFrame]
+       get_options_data(self, symbol:str, strike:int, option_type:str, expiry:str=None, interval:str='5m') -> Optional[pd.DataFrame]
+       get_option_chain(self, symbol:str, indices:bool=True) -> Optional[pd.DataFrame]
+       get_market_depth(self, symbol:str) -> Optional[Dict]
+       get_corporate_actions(self, from_date:str=None, to_date:str=None, filter:str=None) -> Optional[pd.DataFrame]
+       get_bulk_deals(self, from_date:str=None, to_date:str=None) -> Optional[pd.DataFrame]
+       get_insider_trading(self, from_date:str=None, to_date:str=None) -> Optional[pd.DataFrame]
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
 
 📄 legacy/data_sources/screener_enhanced.py
+   role: general
+   doc: data_sources/screener_enhanced.py
    imports: base_source, bs4, io, logging, pandas, re, requests, typing
    class ScreenerEnhanced(DataSource)  # Enhanced Screener.in scraper with complete data extraction.
        __init__(self)
-       _parse_number(self, value:Any)  # Safely parse a string into a float, handling commas and symb
-       _get_company_page(self, symbol:str)  # Fetch and parse company page using requests.
-       get_complete_data(self, symbol:str)  # Get ALL available data from Screener.
-       _extract_company_info(self, soup:BeautifulSoup, symbol:str)
-       _extract_key_metrics(self, soup:BeautifulSoup)
-       _extract_table(self, soup:BeautifulSoup, table_id:str, is_peers:bool=False)
-       get_company_info(self, symbol:str)
-       get_price_data(self, symbol:str)
-       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')
+       _parse_number(self, value:Any) -> Optional[float]
+       _get_company_page(self, symbol:str) -> Optional[BeautifulSoup]
+       get_complete_data(self, symbol:str) -> Dict[str, Any]
+       _extract_company_info(self, soup:BeautifulSoup, symbol:str) -> Dict
+       _extract_key_metrics(self, soup:BeautifulSoup) -> Dict
+       _extract_table(self, soup:BeautifulSoup, table_id:str, is_peers:bool=False) -> Optional[pd.DataFrame]
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> None
 
 📄 legacy/data_sources/yahoo_finance.py
+   role: general
+   doc: Yahoo Finance API wrapper
    imports: base_source, datetime, logging, pandas, typing, yfinance
    class YahooFinance(DataSource)  # Yahoo Finance API wrapper.
        __init__(self)
-       _get_ticker(self, symbol:str)  # Get Yahoo Finance ticker object.
-       get_company_info(self, symbol:str)  # Get company information.
-       get_price_data(self, symbol:str)  # Get current price data.
-       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')  # Get historical price data.
+       _get_ticker(self, symbol:str)
+       get_company_info(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_price_data(self, symbol:str) -> Optional[Dict[str, Any]]
+       get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d') -> Optional[pd.DataFrame]
 
 📄 legacy/database/__init__.py
+   role: data
+   doc: Database package initializer.
    imports: db_manager, updater
 
 📄 legacy/database/db_manager.py
+   role: data
+   doc: SQLite Database Manager - Hybrid Schema
    imports: datetime, json, logging, pandas, pathlib, schema, sqlite3, typing
    class DatabaseManager  # Manage SQLite database operations with hybrid schema.
        __init__(self, db_path:str='stock_data.db')
-       _initialize_db(self)  # Initialize database and create tables.
-       _verify_schema(self)  # Verify all tables were created.
-       execute(self, query:str, params:tuple=None)  # Execute a SQL query.
-       executemany(self, query:str, params_list:List[tuple])  # Execute a SQL query with multiple parameter sets.
-       commit(self)  # Commit changes.
-       rollback(self)  # Rollback changes.
-       begin_transaction(self)  # Begin a transaction.
-       add_company(self, symbol:str, company_name:str=None, sector:str=None, industry:str=None, isin:str=None, listing_date:str=None)  # Add or update company in master table.
-       get_company(self, symbol:str)  # Get company information.
-       get_all_companies(self, sector:str=None)  # Get all companies, optionally filtered by sector.
-       get_sectors(self)  # Get list of unique sectors.
-       update_snapshot(self, symbol:str, data:Dict)  # Update latest snapshot for a company.
-       get_snapshot(self, symbol:str)  # Get latest snapshot for a symbol.
-       get_all_snapshots(self)  # Get all latest snapshots.
-       save_price_history(self, symbol:str, df:pd.DataFrame)  # Save historical OHLCV data.
-       get_price_history(self, symbol:str, days:int=365, start_date:str=None, end_date:str=None)  # Get historical prices.
-       get_latest_price_date(self, symbol:str)  # Get the date of the latest price record.
-       save_quarterly_results(self, symbol:str, df:pd.DataFrame)  # Save quarterly results.
-       get_quarterly_results(self, symbol:str, limit:int=12)  # Get quarterly results.
-       save_annual_results(self, symbol:str, df:pd.DataFrame)  # Save annual profit & loss results.
-       get_annual_results(self, symbol:str, limit:int=10)  # Get annual results.
-       save_shareholding(self, symbol:str, df:pd.DataFrame)  # Save shareholding pattern.
-       get_shareholding(self, symbol:str, limit:int=8)  # Get shareholding pattern.
-       save_peers(self, symbol:str, df:pd.DataFrame)  # Save peer comparison.
-       get_peers(self, symbol:str)  # Get peer comparison.
-       save_custom_metric(self, symbol:str, metric_name:str, metric_value:Any, metric_type:str='text', period:str=None, category:str='custom')  # Save a custom metric (flexible EAV pattern).
-       get_custom_metrics(self, symbol:str, category:str=None, period:str=None)  # Get custom metrics.
-       log_update(self, symbol:str, table_name:str, record_count:int=0, status:str='success', message:str=None, execution_time:float=None)  # Log a data update.
-       get_last_update(self, symbol:str, table_name:str=None)  # Get last successful update time.
-       get_update_summary(self)  # Get update summary for all stocks.
-       needs_update(self, symbol:str, hours:int=24)  # Check if stock needs update.
-       _parse_number(self, value)  # Parse number from string (handles ₹, %, commas).
-       _parse_percentage(self, value)  # Parse percentage value.
-       get_table_info(self, table_name:str)  # Get table schema information.
-       get_row_count(self, table_name:str)  # Get row count for a table.
-       get_database_stats(self)  # Get database statistics.
-       vacuum(self)  # Optimize database (reclaim space).
-       close(self)  # Close database connection.
+       _initialize_db(self)
+       _verify_schema(self)
+       execute(self, query:str, params:tuple=None) -> sqlite3.Cursor
+       executemany(self, query:str, params_list:List[tuple]) -> sqlite3.Cursor
+       commit(self)
+       rollback(self)
+       begin_transaction(self)
+       add_company(self, symbol:str, company_name:str=None, sector:str=None, industry:str=None, isin:str=None, listing_date:str=None)
+       get_company(self, symbol:str) -> Optional[Dict]
+       get_all_companies(self, sector:str=None) -> List[Dict]
+       get_sectors(self) -> List[str]
+       update_snapshot(self, symbol:str, data:Dict)
+       get_snapshot(self, symbol:str) -> Optional[Dict]
+       get_all_snapshots(self) -> pd.DataFrame
+       save_price_history(self, symbol:str, df:pd.DataFrame)
+       get_price_history(self, symbol:str, days:int=365, start_date:str=None, end_date:str=None) -> pd.DataFrame
+       get_latest_price_date(self, symbol:str) -> Optional[datetime]
+       save_quarterly_results(self, symbol:str, df:pd.DataFrame)
+       get_quarterly_results(self, symbol:str, limit:int=12) -> pd.DataFrame
+       save_annual_results(self, symbol:str, df:pd.DataFrame)
+       get_annual_results(self, symbol:str, limit:int=10) -> pd.DataFrame
+       save_shareholding(self, symbol:str, df:pd.DataFrame)
+       get_shareholding(self, symbol:str, limit:int=8) -> pd.DataFrame
+       save_peers(self, symbol:str, df:pd.DataFrame)
+       get_peers(self, symbol:str) -> pd.DataFrame
+       save_custom_metric(self, symbol:str, metric_name:str, metric_value:Any, metric_type:str='text', period:str=None, category:str='custom')
+       get_custom_metrics(self, symbol:str, category:str=None, period:str=None) -> List[Dict]
+       log_update(self, symbol:str, table_name:str, record_count:int=0, status:str='success', message:str=None, execution_time:float=None)
+       get_last_update(self, symbol:str, table_name:str=None) -> Optional[datetime]
+       get_update_summary(self) -> pd.DataFrame
+       needs_update(self, symbol:str, hours:int=24) -> bool
+       _parse_number(self, value) -> Optional[float]
+       _parse_percentage(self, value) -> Optional[float]
+       get_table_info(self, table_name:str) -> pd.DataFrame
+       get_row_count(self, table_name:str) -> int
+       get_database_stats(self) -> Dict
+       vacuum(self)
+       close(self)
 
 📄 legacy/database/schema.py
+   role: data
+   doc: Complete NSE ML Database Schema
+   globals: CREATE_TABLES, DROP_ALL_TABLES, ALL_TABLES, CORE_TABLES, ML_CRITICAL_TABLES, TABLE_CATEGORIES
 
 📄 legacy/database/updater.py
+   role: data
+   doc: Data Updater - Fetches data from sources and stores in database
    imports: core, datetime, db_manager, logging, re, time, typing
    class DataUpdater  # Update database with fresh data from all sources.
        __init__(self, db_path:str='stock_data.db')
-       update_stock(self, symbol:str, force:bool=False)  # Update all data for a symbol.
-       _update_company_info(self, symbol:str, data:Dict)  # Update company master table.
-       _update_snapshot(self, symbol:str, data:Dict)  # Update latest snapshot.
-       _update_price_history(self, symbol:str, data:Dict)  # Update historical prices.
-       _update_quarterly_results(self, symbol:str, data:Dict)  # Update quarterly results.
-       _update_annual_results(self, symbol:str, data:Dict)  # Update annual results.
-       _update_shareholding(self, symbol:str, data:Dict)  # Update shareholding pattern.
-       _update_peers(self, symbol:str, data:Dict)  # Update peer comparison.
-       _update_corporate_actions(self, symbol:str, data:Dict)  # Update corporate actions.
-       update_multiple(self, symbols:List[str], force:bool=False, delay:float=2.0)  # Update multiple stocks with rate limiting.
-       _print_batch_summary(self, results:Dict[str, Dict])  # Print summary of batch update.
-       update_stale_stocks(self, hours:int=24, max_stocks:int=None)  # Update stocks that haven't been updated recently.
-       update_sector(self, sector:str, force:bool=False)  # Update all stocks in a sector.
-       _extract_number(self, value)  # Extract numeric value from string.
-       get_update_status(self)  # Get current update status of database.
-
-📄 legacy/debug_master.py
-   imports: pandas, pathlib, sys
+       update_stock(self, symbol:str, force:bool=False) -> Dict[str, any]
+       _update_company_info(self, symbol:str, data:Dict)
+       _update_snapshot(self, symbol:str, data:Dict)
+       _update_price_history(self, symbol:str, data:Dict) -> int
+       _update_quarterly_results(self, symbol:str, data:Dict)
+       _update_annual_results(self, symbol:str, data:Dict)
+       _update_shareholding(self, symbol:str, data:Dict)
+       _update_peers(self, symbol:str, data:Dict) -> int
+       _update_corporate_actions(self, symbol:str, data:Dict)
+       update_multiple(self, symbols:List[str], force:bool=False, delay:float=2.0) -> Dict[str, Dict]
+       _print_batch_summary(self, results:Dict[str, Dict])
+       update_stale_stocks(self, hours:int=24, max_stocks:int=None) -> Dict[str, Dict]
+       update_sector(self, sector:str, force:bool=False) -> Dict[str, Dict]
+       _extract_number(self, value) -> Optional[float]
+       get_update_status(self) -> Dict
 
 📄 legacy/examples/example_basic_usage.py
+   role: general
+   doc: Basic usage examples
    imports: core, pandas, pathlib, sys
-   def example_single_stock()  # Fetch data for a single stock.
-   def example_quick_quotes()  # Get quick quotes for multiple stocks.
-   def example_batch_fetch()  # Batch fetch multiple stocks.
-   def example_cache_performance()  # Demonstrate caching performance.
+   def example_single_stock()
+   def example_quick_quotes()
+   def example_batch_fetch()
+   def example_cache_performance()
 
 📄 legacy/examples/example_technical_analysis.py
+   role: general
+   doc: Technical analysis examples using historical data
    imports: core, data_sources, numpy, pandas, pathlib, sys
-   def calculate_moving_averages(df, periods=[20, 50, 200])  # Calculate simple moving averages.
-   def calculate_rsi(df, period=14)  # Calculate RSI indicator.
-   def example_moving_averages()  # Calculate and display moving averages.
-   def example_intraday_analysis()  # Analyze intraday data.
-   def example_rsi_analysis()  # Calculate RSI indicator.
+   def calculate_moving_averages(df, periods=[20, 50, 200])
+   def calculate_rsi(df, period=14)
+   def example_moving_averages()
+   def example_intraday_analysis()
+   def example_rsi_analysis()
 
 📄 legacy/external_libs/__init__.py
+   role: general
+   doc: External libraries package
 
 📄 legacy/external_libs/nse_master_data.py
+   role: general
    imports: datetime, json, pandas, re, requests, time
    class NSEMasterData
        __init__(self)
-       get_nse_symbol_master(self, url)  # CORRECTED: Fetches and correctly parses the symbol master, u
-       download_symbol_master(self)  # Download NSE and NFO master data and assigns them to interna
-       search(self, symbol, exchange, match=False)  # Search for symbols, now using the correct 'TradingSymbol' co
-       search_symbol(self, symbol, exchange)  # Search for a symbol and return the first match, using correc
-       get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')  # Get historical data for a symbol. This is the complete, orig
+       get_nse_symbol_master(self, url)
+       download_symbol_master(self)
+       search(self, symbol, exchange, match=False)
+       search_symbol(self, symbol, exchange)
+       get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')
 
 📄 legacy/external_libs/nse_utils.py
+   role: utility
    imports: datetime, io, pandas, requests, zipfile
    class NseUtils
        __init__(self)
        pre_market_info(self, category='All')
        get_index_details(self, category, list_only=False)
-       clearing_holidays(self, list_only=False)  # Returns the list of NSE clearing holidays
-       trading_holidays(self, list_only=False)  # Returns the list of NSE trading holidays
-       is_nse_trading_holiday(self, date_str=None)  # Return True if the date supplied in a NSE trading holiday, e
-       is_nse_clearing_holiday(self, date_str=None)  # Return True if the date supplied in a NSE clearing holiday, 
-       equity_info(self, symbol)  # Extracts the full details of a symbol as see on NSE website
-       price_info(self, symbol)  # Gets all key price related information for a given stock
-       futures_data(self, symbol, indices=False)  # Returns the list of futures instruments for a given stock an
-       get_option_chain(self, symbol, indices=False)  # Returns the full option chain table as seen on NSE website f
-       get_52week_high_low(self, stock=None)  # Get 52 Week High and Low data.  If stock is provided, the Hi
-       fno_bhav_copy(self, trade_date:str='')  # Get the NSE FNO bhav copy data as per the traded date
-       bhav_copy_with_delivery(self, trade_date:str)  # Get the NSE bhav copy with delivery data as per the traded d
-       equity_bhav_copy(self, trade_date:str)  # Extract Equity Bhav Copy per the traded date provided
-       bhav_copy_indices(self, trade_date:str)  # Get nse bhav copy as per the traded date provided
-       fii_dii_activity(self)  # FII and DII trading activity of the day in data frame
-       get_live_option_chain(self, symbol:str, expiry_date:str=None, oi_mode:str='full', indices=False)  # get live nse option chain.
-       get_market_depth(self, symbol)  # Function to retrieve market depth for a given symbol
-       get_index_historic_data(self, index:str, from_date:str=None, to_date:str=None)  # get historical index data set for the specific time period.
+       clearing_holidays(self, list_only=False)
+       trading_holidays(self, list_only=False)
+       is_nse_trading_holiday(self, date_str=None)
+       is_nse_clearing_holiday(self, date_str=None)
+       equity_info(self, symbol)
+       price_info(self, symbol)
+       futures_data(self, symbol, indices=False)
+       get_option_chain(self, symbol, indices=False)
+       get_52week_high_low(self, stock=None)
+       fno_bhav_copy(self, trade_date:str='')
+       bhav_copy_with_delivery(self, trade_date:str)
+       equity_bhav_copy(self, trade_date:str)
+       bhav_copy_indices(self, trade_date:str)
+       fii_dii_activity(self)
+       get_live_option_chain(self, symbol:str, expiry_date:str=None, oi_mode:str='full', indices=False)
+       get_market_depth(self, symbol)
+       get_index_historic_data(self, index:str, from_date:str=None, to_date:str=None)
        get_index_data(self, index:str, from_date:str, to_date:str)
-       get_equity_full_list(self, list_only=False)  # get list of all equity available to trade in NSE
-       get_fno_full_list(self, list_only=False)  # get a dataframe of all listed derivative list with the recen
+       get_equity_full_list(self, list_only=False)
+       get_fno_full_list(self, list_only=False)
        get_gainers_losers(self)
        get_corporate_action(self, from_date_str:str=None, to_date_str:str=None, filter:str=None)
        get_corporate_announcement(self, from_date_str:str=None, to_date_str:str=None)
@@ -859,160 +1457,88 @@ ml/serving/
        get_short_selling(self, from_date:str=None, to_date:str=None)
 
 📄 legacy/final_cleanup.py
+   role: general
+   doc: Final Project Cleanup Script
    imports: argparse, os, pathlib, shutil
    class ProjectCleaner
        __init__(self, project_root=None)
        log(self, message, emoji='ℹ️')
-       create_scripts_dir(self)  # Create scripts directory if it doesn't exist
-       delete_temp_files(self, dry_run=False)  # Delete temporary refactoring scripts
-       move_utility_scripts(self, dry_run=False)  # Move utility scripts to scripts/ folder
-       cleanup_failed_backups(self, dry_run=False)  # Remove failed refactoring backup folders
-       cleanup_pycache(self, dry_run=False)  # Remove all __pycache__ directories
-       create_readme_for_scripts(self, dry_run=False)  # Create README in scripts folder
-
-📄 legacy/fix_corporate_actions.py
-   imports: pandas, pathlib, sys
-   def fix_corporate_actions(csv_path:str)  # Fix corporate actions CSV:
-   def main()
-
-📄 legacy/fix_nse_merge.py
-   imports: ast, datetime, os, pathlib, re, sys
-   def extract_class_body(content:str, class_name:str)  # Extract everything inside a class definition
-   def normalize_indentation(code:str, target_indent:int=4)  # Normalize code indentation to target level
-
-📄 legacy/fix_streamlit_warnings.py
-   imports: pathlib, re
-   def fix_file(filepath:Path)  # Fix a single file
-   def main()
+       create_scripts_dir(self)
+       delete_temp_files(self, dry_run=False)
+       move_utility_scripts(self, dry_run=False)
+       cleanup_failed_backups(self, dry_run=False)
+       cleanup_pycache(self, dry_run=False)
+       create_readme_for_scripts(self, dry_run=False)
 
 📄 legacy/quick_validate.py
+   role: general
+   doc: Quick validation for NSE wrapper approach
    imports: pathlib, sys
 
-📄 legacy/restaurant_shift_manager.py
-   imports: datetime, pandas, tkinter
-   class ShiftManagerApp
-       __init__(self, root)
-       setup_ui(self)
-       add_staff(self)
-       mark_time(self)
-       calculate_hours(self, s)  # Compute total working hours = (Logout - Start) - (Break End 
-       update_tree(self, index, s)
-       delete_staff(self)
-       export_to_excel(self)
-
-📄 legacy/restaurant_shift_manager_v5.py
-   imports: csv, datetime, io, pandas, tkinter
-   def generate_time_options(granularity_minutes=15)  # Generates time options in HH:MM format for comboboxes.
-   def parse_time_str(tstr)  # Safely parses HH:MM string to a datetime.time object.
-   def to_datetime_today(t)  # Converts datetime.time to a datetime object on the current d
-   def normalize_interval_minutes(v)  # Ensures interval is 15, 30, or 60 minutes.
-   class StaffRecord
-       __init__(self, name, role, dept, start='', break_start='', break_end='', logout='')
-       get_datetimes(self)  # Calculates adjusted datetimes for overnight shifts.
-       working_hours(self)
-       break_hours(self)
-       total_hours(self)
-       to_dict(self)
-   class ShiftManagerApp
-       __init__(self, root)
-       create_ui(self)
-       build_staff_tab(self)
-       filter_staff_tree(self)
-       clear_filters(self)
-       insert_staff_tree(self, rec)
-       add_staff(self)
-       clear_inputs(self)
-       on_tree_select(self, ev)
-       update_selected(self)
-       delete_selected(self)
-       import_csv(self)
-       download_sample_csv(self)
-       export_excel(self)
-       export_csv(self)
-       build_view_tab(self)
-       refresh_view(self)
-       build_stats_tab(self)
-       refresh_stats_tab(self)
-       generate_suggestions(self)
-
-📄 legacy/restaurant_shift_manager_v6_grok.py
-   imports: csv, datetime, io, os, pandas, tkinter
-   def parse_time_safe(tstr)
-   def fmt_time(dt)
-   class StaffRecord
-       __init__(self, name, role, dept, start='', break_start='', break_end='', logout='')
-       to_dict(self)
-       working_hours(self)
-       break_hours(self)
-   class ShiftManagerApp
-       __init__(self, master)
-       create_widgets(self)
-       build_staff_tab(self)
-       build_shift_view_tab(self)
-       _on_canvas_configure(self, event)
-       add_staff(self)
-       _insert_staff_tree(self, rec)
-       clear_inputs(self)
-       on_staff_select(self, event)
-       update_selected_staff(self)
-       delete_selected_staff(self)
-       import_csv(self)
-       download_sample_csv(self)
-       export_excel(self)
-       export_csv(self)
-       refresh_shift_view(self)
-
 📄 legacy/stock_screener.py
+   role: general
+   doc: Fundamental Stock Screener using Screener.in data
    imports: core, pandas, re, time, typing
    class FundamentalScreener  # Screen stocks based on fundamental criteria.
        __init__(self)
-       screen_stocks(self, symbols:List[str], min_roe:float=None, max_pe:float=None, min_roce:float=None, min_div_yield:float=None)  # Screen stocks based on fundamental filters.
-       _extract_number(self, value:str)  # Extract numeric value from string like '15.5%' or '₹1,234'.
-   def main()  # Example usage.
+       screen_stocks(self, symbols:List[str], min_roe:float=None, max_pe:float=None, min_roce:float=None, min_div_yield:float=None) -> pd.DataFrame
+       _extract_number(self, value:str) -> float
+   def main()
 
 📄 legacy/structure.py
+   role: general
+   doc: Python Project Structure Analyzer - LLM Optimized
    imports: ast, datetime, os, pathlib, subprocess, sys
-   def find_git_root(start_path=None)  # Find the root of the git repository.
-   def find_project_root()  # Automatically detect project root directory.
-   def scan_python_files(base_dir)  # Recursively find Python files.
-   def compact_signature(func_node)  # Generate ultra-compact function signature.
-   def extract_compact_info(file_path, project_root)  # Extract minimal essential information.
-   def generate_tree_structure(files, project_root)  # Generate compact tree structure.
-   def generate_compact_output(project_root, files)  # Generate ultra-compact text output optimized for LLM.
-   def generate_markdown_output(project_root, files)  # Generate compact markdown output.
-   def generate_minimal_json(project_root, files)  # Generate minimal JSON (more compact than original).
-   def save_outputs(project_root, files)  # Save multiple output formats.
-   def main()  # Main function.
+   globals: EXCLUDE_DIRS
+   def find_git_root(start_path=None)
+   def find_project_root()
+   def scan_python_files(base_dir)
+   def compact_signature(func_node)
+   def extract_compact_info(file_path, project_root)
+   def generate_tree_structure(files, project_root)
+   def generate_compact_output(project_root, files)
+   def generate_markdown_output(project_root, files)
+   def generate_minimal_json(project_root, files)
+   def save_outputs(project_root, files)
+   def main()
 
 📄 legacy/test_components.py
+   role: general
+   doc: Test specific components in detail
    imports: argparse, pathlib, sys
-   def test_nse_detailed()  # Detailed NSE testing
-   def test_yahoo_detailed()  # Detailed Yahoo Finance testing
-   def test_database_detailed()  # Detailed database testing
-   def test_aggregator_detailed()  # Detailed aggregator testing
+   def test_nse_detailed()
+   def test_yahoo_detailed()
+   def test_database_detailed()
+   def test_aggregator_detailed()
    def main()
 
 📄 legacy/test_health_check.py
+   role: general
+   doc: Quick health check for Fortune Trading platform
    imports: pathlib, sys, traceback
-   def test_result(passed:bool, test_name:str, details:str='')  # Print colored test result
-   def test_imports()  # Test 1: Check if core modules can be imported
-   def test_data_sources()  # Test 2: Check if data sources are accessible
-   def test_database()  # Test 3: Database operations
-   def test_core_functionality()  # Test 4: Core functionality
-   def test_dashboard()  # Test 5: Dashboard components
-   def print_summary(all_results)  # Print overall summary
-   def main()  # Run all tests
+   globals: GREEN, RED, YELLOW, BLUE, RESET
+   def test_result(passed:bool, test_name:str, details:str='')
+   def test_imports()
+   def test_data_sources()
+   def test_database()
+   def test_core_functionality()
+   def test_dashboard()
+   def print_summary(all_results)
+   def main()
 
 📄 legacy/tests/_helpers/fake_dataframes.py
+   role: utility
    imports: pandas
    def sample_price_history(symbol='TCS', rows=5)
    def sample_intraday(symbol='TCS', rows=10, interval='5m')
 
 📄 legacy/tests/_helpers/fake_streamlit.py
+   role: utility
    class FakeStreamlit
        __getattr__(self, name)
 
 📄 legacy/tests/_helpers/mock_responses.py
+   role: utility
    imports: datetime, pandas
    def mock_nse_price_info(symbol='TCS')
    def mock_nse_option_chain(symbol='NIFTY', indices=True)
@@ -1020,20 +1546,25 @@ ml/serving/
    def mock_screener_company_page(symbol='TCS')
 
 📄 legacy/tests/_helpers/temp_dirs.py
+   role: utility
    imports: shutil, tempfile
    class TempDir
        __init__(self)
        cleanup(self)
 
 📄 legacy/tests/conftest.py
+   role: general
    imports: datetime, pandas, unittest
+   globals: MOCK_NSE_PRICE_DATA, MOCK_HISTORICAL_DF
    def mock_requests_get()
 
 📄 legacy/tests/run_all_tests.py
+   role: general
    imports: pathlib, sys, unittest
    def main()
 
 📄 legacy/tests/test_core/test_cache_manager.py
+   role: general
    imports: core, pathlib, shutil, unittest
    class TestCacheManager(unittest.TestCase)
        setUp(self)
@@ -1042,6 +1573,7 @@ ml/serving/
        test_expiry(self)
 
 📄 legacy/tests/test_core/test_data_merger.py
+   role: general
    imports: core, unittest
    class TestDataMerger(unittest.TestCase)
        test_merge_price_data_priority(self)
@@ -1050,12 +1582,14 @@ ml/serving/
        test_assess_quality(self)
 
 📄 legacy/tests/test_core/test_hybrid_aggregator.py
+   role: general
    imports: core, unittest
    class TestHybridAggregator(unittest.TestCase)
        test_get_stock_data(self, mock_yf_hist, mock_screener, mock_nse_price)
        test_batch_fetch(self)
 
 📄 legacy/tests/test_core/test_model_data_prep.py
+   role: model
    imports: core, pandas, unittest
    class FakeNSE
        get_historical_prices(self, symbol, period='1y', interval='1d')
@@ -1068,6 +1602,7 @@ ml/serving/
        test_prepare_price_prediction_data(self)
 
 📄 legacy/tests/test_core/test_mtf_manager.py
+   role: general
    imports: core, pandas, unittest
    class FakeDB
    class FakeNSE
@@ -1077,48 +1612,56 @@ ml/serving/
        test_get_mtf_data(self)
 
 📄 legacy/tests/test_core/test_rate_limiter.py
+   role: general
    imports: core, time, unittest
    class TestRateLimiter(unittest.TestCase)
        test_wait_if_needed(self)
 
 📄 legacy/tests/test_core_modules.py
+   role: general
    imports: core, pandas, tests, time, unittest
    class TestCoreModules(unittest.TestCase)
-       test_cache_manager_set_get(self)  # Unit test for CacheManager TTL and retrieval.
-       test_rate_limiter_wait(self)  # Unit test for RateLimiter token bucket logic.
-       test_data_merger_price_priority(self)  # Unit test for DataMerger conflict resolution.
-       test_hybrid_aggregator_call_flow(self, mock_fetch, mock_quality)  # Integration test for HybridAggregator combining fetch and qu
+       test_cache_manager_set_get(self)
+       test_rate_limiter_wait(self)
+       test_data_merger_price_priority(self)
+       test_hybrid_aggregator_call_flow(self, mock_fetch, mock_quality)
 
 📄 legacy/tests/test_dashboard/test_app.py
+   role: general
    imports: dashboard, unittest
    class TestDashboardApp(unittest.TestCase)
        test_validate_nse_symbol(self, mock_get_nse)
 
 📄 legacy/tests/test_dashboard/test_components.py
+   role: general
    imports: dashboard, pandas, unittest
    class TestComponents(unittest.TestCase)
        test_render_quarterly_results(self)
 
 📄 legacy/tests/test_dashboard/test_pages.py
+   role: general
    imports: dashboard, pandas, unittest
    class TestPages(unittest.TestCase)
        test_render_price_trend_chart(self, _)
 
 📄 legacy/tests/test_dashboard/test_utils.py
+   role: utility
    imports: dashboard, datetime, unittest
    class TestUtils(unittest.TestCase)
        test_currency(self)
        test_time_ago(self)
 
 📄 legacy/tests/test_data_sources.py
+   role: general
    imports: data_sources, pandas, tests, unittest
    class TestDataSources(unittest.TestCase)
        setUp(self)
-       test_nse_complete_price_data(self, mock_get)  # Unit test for NSEComplete.get_price_data.
-       test_nse_complete_historical_prices(self, mock_historic)  # Unit test for NSEComplete.get_historical_prices using intern
-       test_screener_enhanced_fundamental(self, mock_get)  # Unit test for ScreenerEnhanced parsing logic.
+       test_nse_complete_price_data(self, mock_get)
+       test_nse_complete_historical_prices(self, mock_historic)
+       test_screener_enhanced_fundamental(self, mock_get)
 
 📄 legacy/tests/test_data_sources/test_base_source.py
+   role: general
    imports: data_sources, unittest
    class Dummy(DataSource)
        __init__(self)
@@ -1130,11 +1673,13 @@ ml/serving/
        test_error_handling(self)
 
 📄 legacy/tests/test_data_sources/test_nse_complete_integration.py
+   role: general
    imports: data_sources, unittest
    class TestNSECompleteIntegration(unittest.TestCase)
        test_get_complete_data(self, mock_bhav, mock_price)
 
 📄 legacy/tests/test_data_sources/test_nse_complete_unit.py
+   role: general
    imports: data_sources, unittest
    class TestNSECompleteUnit(unittest.TestCase)
        setUp(self)
@@ -1143,11 +1688,13 @@ ml/serving/
        test_search_symbol(self, mock_search)
 
 📄 legacy/tests/test_data_sources/test_screener_enhanced.py
+   role: general
    imports: data_sources, unittest
    class TestScreenerEnhanced(unittest.TestCase)
        test_get_complete_data(self, mock_page)
 
 📄 legacy/tests/test_data_sources/test_yahoo_finance.py
+   role: general
    imports: data_sources, unittest
    class FakeTicker
        info(self)
@@ -1157,6 +1704,7 @@ ml/serving/
        test_get_historical_prices(self, _)
 
 📄 legacy/tests/test_database/test_db_manager.py
+   role: data
    imports: database, os, pandas, tempfile, unittest
    class TestDatabaseManager(unittest.TestCase)
        setUp(self)
@@ -1165,106 +1713,209 @@ ml/serving/
        test_price_history_roundtrip(self)
 
 📄 legacy/tests/test_database/test_schema.py
+   role: model
    imports: database, unittest
    class TestSchema(unittest.TestCase)
        test_schema_has_core_tables(self)
 
 📄 legacy/tests/test_database/test_updater.py
+   role: general
    imports: database, unittest
    class TestDataUpdater(unittest.TestCase)
        test_update_stock(self, mock_analysis)
 
 📄 legacy/tests/test_database_mtf.py
+   role: general
    imports: core, database, pandas, tests, unittest
    class TestDatabaseAndMTF(unittest.TestCase)
        setUp(self)
-       test_db_manager_add_and_get_company(self)  # Integration test for basic DB CRUD operations.
-       test_db_manager_save_and_load_price_data(self)  # Integration test for saving and loading historical data.
-       test_timeframe_resample_ohlcv(self)  # Unit test for MTFDataManager._resample_ohlcv (aggregation lo
-       test_mtf_manager_timeframe_conversions(self)  # Unit test for TimeFrame helper functions.
+       test_db_manager_add_and_get_company(self)
+       test_db_manager_save_and_load_price_data(self)
+       test_timeframe_resample_ohlcv(self)
+       test_mtf_manager_timeframe_conversions(self)
 
 📄 legacy/tests/test_examples/test_example_basic_usage.py
+   role: general
    imports: examples, unittest
    class TestExamplesBasic(unittest.TestCase)
        test_example_single_stock(self, _)
 
 📄 legacy/tests/test_examples/test_example_technical_analysis.py
+   role: general
    imports: examples, pandas, unittest
    class TestExamplesTA(unittest.TestCase)
        test_calculate_rsi(self)
 
 📄 legacy/tests/test_misc/test_structure_scripts.py
+   role: general
    imports: structure, unittest
    class TestStructureScripts(unittest.TestCase)
        test_find_project_root(self)
        test_scan_python_files(self)
 
 📄 legacy/tests/test_misc/test_unified_exporter.py
+   role: general
    imports: pandas, unified_exporter, unittest
    class TestUnifiedExporter(unittest.TestCase)
        test_export_to_excel(self, _)
 
 📄 legacy/tests/test_misc/test_validate_data.py
+   role: general
    imports: pandas, unittest, validate_data
    class TestValidateData(unittest.TestCase)
        test_validate_ohlcv(self)
 
 📄 legacy/tests/test_screener_enhanced.py
+   role: general
+   doc: Test enhanced Screener scraper - DEBUG VERSION
    imports: data_sources, logging, pandas
 
 📄 legacy/utils/data_status.py
+   role: utility
    imports: logging, pandas, sqlite3, typing
-   def get_db_manager()  # Singleton pattern to get the DatabaseManager instance.
-   def fetch_table_statistics()  # Fetches the record count for all tables using the DatabaseMa
+   globals: DB_PATH, ALL_TABLES
+   def get_db_manager() -> DatabaseManager
+   def fetch_table_statistics() -> List[Tuple[str, int, str, str]]
 
 📄 legacy/validate_data.py
+   role: general
+   doc: Comprehensive data validation for all exported CSVs
    imports: datetime, numpy, pandas, pathlib
    class DataValidator  # Validate all exported data for quality issues.
        __init__(self)
-       validate_all_csvs(self, folder_path:str)  # Validate all CSV files in a folder.
-       _validate_file(self, filename:str, df:pd.DataFrame)  # Validate a single CSV file.
-       _validate_price_data(self, filename:str, df:pd.DataFrame)  # Validate price data.
-       _validate_ohlcv_data(self, filename:str, df:pd.DataFrame)  # Validate OHLCV (candlestick) data.
-       _validate_timestamps(self, filename:str, df:pd.DataFrame)  # Validate date/timestamp columns.
-       _check_date_gaps(self, filename:str, dates:pd.DatetimeIndex)  # Check for unusual gaps in date sequence.
-       _validate_date_columns(self, filename:str, df:pd.DataFrame)  # Validate files with date columns (corporate actions, bulk de
-       _validate_company_info(self, filename:str, df:pd.DataFrame)  # Validate company information.
-       _check_missing_values(self, filename:str, df:pd.DataFrame)  # Check for missing values.
-       _print_summary(self)  # Print validation summary.
-   def main()  # Run validation on a folder.
+       validate_all_csvs(self, folder_path:str)
+       _validate_file(self, filename:str, df:pd.DataFrame)
+       _validate_price_data(self, filename:str, df:pd.DataFrame)
+       _validate_ohlcv_data(self, filename:str, df:pd.DataFrame)
+       _validate_timestamps(self, filename:str, df:pd.DataFrame)
+       _check_date_gaps(self, filename:str, dates:pd.DatetimeIndex)
+       _validate_date_columns(self, filename:str, df:pd.DataFrame)
+       _validate_company_info(self, filename:str, df:pd.DataFrame)
+       _check_missing_values(self, filename:str, df:pd.DataFrame)
+       _print_summary(self)
+   def main()
 
 📄 ml/features/feature_pipeline.py
+   role: general
    imports: app, numpy, pandas
    class FeatureEngineeringPipeline  # PILLAR 4: Prediction Engine (P)
        __init__(self, price_data:pd.DataFrame, fundamental_data:dict)
-       generate_features(self)  # Execute all feature generation steps
+       generate_features(self) -> pd.DataFrame
        _add_return_features(self)
        _add_time_features(self)
        _add_fundamental_features(self)
-       _add_targets(self)  # Create prediction targets: 5-day future direction
+       _add_targets(self)
 
 📄 ml/serving/predictor.py
+   role: general
    imports: joblib, os, pandas, typing
-   class PredictorService  # Handles model loading and inference for direction and volati
+   class PredictorService  # Handles model loading and inference for direction and volatility.
        __init__(self)
        _load_model(self, filename:str)
-       predict(self, feature_row:pd.DataFrame)  # Generate all predictions for a given feature set
+       predict(self, feature_row:pd.DataFrame) -> Dict[str, Any]
+
+📄 scripts/analyze_data_coverage.py
+   role: general
+   imports: os, pandas, pathlib, sqlite3, sys
+   globals: DB_PATH
+   def analyze_database(db_path)
+
+📄 scripts/check_corp_actions.py
+   role: general
+   imports: backend, os, pandas, sys
+   def check_structure()
+
+📄 scripts/export_data.py
+   role: general
+   doc: Master Unified Exporter - Combines NSE + Screener + Validation
+   imports: backend, datetime, json, pandas, pathlib, sys
+   class UnifiedExporter  # Export everything from NSE + Screener in one organized structure.
+       __init__(self, output_dir:str='stock_data')
+       export_complete(self, symbol:str)
+       _export_market_data(self, data, market_dir, summary)
+       _export_fundamentals(self, data, fundamental_dir, summary)
+       _save_metadata(self, symbol_dir, summary)
+       _print_summary(self, symbol, summary)
+       export_to_excel(self, symbol:str, filename:str=None)
+   def main()
+
+📄 scripts/fill_data_gaps.py
+   role: general
+   imports: backend, logging, os, pathlib, sys
+   def fill_data_gaps()
+
+📄 scripts/fresh_start_check.py
+   role: general
+   imports: backend, datetime, logging, os, pandas, shutil, sys
+   globals: DB_PATH, BACKUP_PATH
+   def reset_database()
+   def check_coverage(db:DatabaseManager, symbol:str)
+   def main()
+
+📄 scripts/test_data_sources.py
+   role: general
+   doc: Test all data sources for INFY (Infosys)
+   imports: backend, pandas, pathlib, sys
+   def test_yahoo_finance(symbol)
+   def test_nse_direct(symbol)
+   def test_screener(symbol)
+   def main()
+
+📄 scripts/test_granular.py
+   role: general
+   imports: pandas, requests, yfinance
+
+📄 scripts/test_nselib.py
+   role: general
+   imports: nselib
+
+📄 scripts/test_recommendations.py
+   role: general
+   imports: backend, logging, os, sys
+   def test_recommendations()
+
+📄 scripts/test_sources.py
+   role: general
+   imports: nselib, pandas, yfinance
+
+📄 scripts/update_db.py
+   role: data
+   doc: Database Update CLI Tool
+   imports: argparse, backend, logging, pathlib, sys
+   def main()
+   def show_status(updater:DataUpdater)
+   def list_sectors(updater:DataUpdater)
+   def print_result(result:dict)
+
+📄 scripts/verify_enhancements.py
+   role: general
+   imports: backend, logging, os, sys
+   def verify()
+
+📄 scripts/verify_priority.py
+   role: general
+   imports: backend, logging, os, sys
+   def verify_priority()
 
 📄 unified_exporter.py
+   role: general
+   doc: Master Unified Exporter - Combines NSE + Screener + Validation
    imports: core, datetime, json, pandas, pathlib, sys
-   class UnifiedExporter  # Export everything from NSE + Screener in one organized struc
+   class UnifiedExporter  # Export everything from NSE + Screener in one organized structure.
        __init__(self, output_dir:str='stock_data')
-       export_complete(self, symbol:str)  # Export everything for a symbol.
-       _export_market_data(self, data, market_dir, summary)  # Export all NSE market data.
-       _export_fundamentals(self, data, fundamental_dir, summary)  # Export all Screener fundamental data.
-       _save_metadata(self, symbol_dir, summary)  # Save export metadata.
-       _print_summary(self, symbol, summary)  # Print export summary.
-       export_to_excel(self, symbol:str, filename:str=None)  # Export everything to a single Excel file with multiple sheet
-   def main()  # Example usage.
+       export_complete(self, symbol:str)
+       _export_market_data(self, data, market_dir, summary)
+       _export_fundamentals(self, data, fundamental_dir, summary)
+       _save_metadata(self, symbol_dir, summary)
+       _print_summary(self, symbol, summary)
+       export_to_excel(self, symbol:str, filename:str=None)
+   def main()
 
 📄 update_database.py
+   role: general
+   doc: Database Update CLI Tool
    imports: argparse, database, logging, pathlib, sys
-   def main()  # Main CLI entry point.
-   def show_status(updater:DataUpdater)  # Show database status.
-   def list_sectors(updater:DataUpdater)  # List all sectors.
-   def print_result(result:dict)  # Print single stock update result.
+   def main()
+   def show_status(updater:DataUpdater)
+   def list_sectors(updater:DataUpdater)
+   def print_result(result:dict)

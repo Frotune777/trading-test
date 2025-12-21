@@ -24,8 +24,8 @@ class YahooFinanceMapper:
         'volume': 'volume',
         'regularMarketVolume': 'volume',
         'marketCap': 'market_cap',
-        'fiftyTwoWeekHigh': 'week_high_52',
-        'fiftyTwoWeekLow': 'week_low_52',
+        'fiftyTwoWeekHigh': 'high_52w',
+        'fiftyTwoWeekLow': 'low_52w',
     }
     
     # Company info mapping
@@ -121,8 +121,8 @@ class ScreenerMapper:
         'last_price': 'last_price',
         'Current Price': 'last_price',
         'CMP': 'last_price',
-        'High': 'week_high_52',
-        'Low': 'week_low_52',
+        'High': 'high_52w',
+        'Low': 'low_52w',
         'market_cap': 'market_cap',
         'Market Cap': 'market_cap',
     }

@@ -26,6 +26,8 @@ def test_recommendations():
         print(f"  Technical: {r['technical_score']}")
         print(f"  Fundamental: {r['fundamental_score']}")
         print(f"  Details: {r['technical_details'].get('trend', 'N/A')}")
+        print(f"  Regime: {r.get('market_regime', {}).get('regime', 'N/A')}")
+        print(f"  Derivatives: {r.get('derivatives_details', {}).get('sentiment', 'N/A')}")
         print(f"  Signal: {r.get('stop_loss', 'N/A')} / {r.get('target_price', 'N/A')}")
         print(f"  Why? {r.get('explanation', 'N/A')}")
         print("-" * 30)

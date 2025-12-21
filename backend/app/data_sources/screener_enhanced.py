@@ -89,13 +89,28 @@ class ScreenerEnhanced(DataSource):
         # Normalize company info and metrics using DataNormalizer
         normalized_company = self.normalizer.normalize_company_data(raw_company_info, 'screener')
         normalized_metrics = self.normalizer.normalize_fundamental_data(raw_key_metrics, 'screener')
-        
+        # Handle High / Low split
+        high_low = raw_key_metrics.get('High / Low')
+        high = None
+        low = None
+        if high_low and isinstance(high_low, str) and '/' in high_low:
+             try:
+                 parts = high_low.split('/')
+                 if len(parts) == 2:
+                     high = self._parse_number(parts[0])
+                     low = self._parse_number(parts[1])
+             except Exception as e:
+                 logger.error(f"Error parsing High/Low for {symbol}: {e}")
+
+        if high is not None: normalized_metrics['high_52w'] = high
+        if low is not None: normalized_metrics['low_52w'] = low
+                 
         # Merge price data from metrics into normalized format
         price_data = {
             'Current Price': raw_key_metrics.get('Current Price'),
             'Market Cap': raw_key_metrics.get('Market Cap'),
-            'High': raw_key_metrics.get('High'),
-            'Low': raw_key_metrics.get('Low')
+            'High': high,
+            'Low': low
         }
         normalized_price = self.normalizer.normalize_price_data(price_data, 'screener')
         
@@ -127,10 +142,20 @@ class ScreenerEnhanced(DataSource):
         try:
             for li in soup.select('#top-ratios li'):
                 name = li.find('span', class_='name').text.strip()
-                value = li.find('span', class_='number').text.strip()
-                # Parse numbers right at the source
-                parsed_value = self._parse_number(value)
-                metrics[name] = parsed_value if parsed_value is not None else value
+                
+                if 'High / Low' in name:
+                    numbers = li.find_all('span', class_='number')
+                    if len(numbers) >= 2:
+                        high_val = numbers[0].text.strip()
+                        low_val = numbers[1].text.strip()
+                        metrics['High / Low'] = f"{high_val} / {low_val}"
+                    else:
+                        # Fallback
+                        metrics['High / Low'] = li.find('span', class_='number').text.strip()
+                else:
+                    value = li.find('span', class_='number').text.strip()
+                    parsed_value = self._parse_number(value)
+                    metrics[name] = parsed_value if parsed_value is not None else value
         except Exception: pass
         return metrics
 
