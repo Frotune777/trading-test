@@ -1,13 +1,47 @@
 ======================================================================
-PROJECT: fortune_trading
-PATH: /home/fortune/Desktop/Python_Projects/fortune_trading
-ANALYZED: 2025-11-10 14:17
+PROJECT: trading-test
+PATH: /home/zohra/Documents/Stock_analysis/trading-test
+ANALYZED: 2025-12-20 20:22
 ======================================================================
 
-📊 SUMMARY: 103 files, 24,248 lines
-📦 DEPENDENCIES: abc, argparse, ast, base_source, bs4, cache_manager, collections, concurrent, config, core, csv, dashboard, data_sources, database, datetime, db_manager, examples, hashlib, io, json, logging, nse_complete, nse_master_data, nse_utils, numpy, os, pandas, pathlib, pickle, plotly, rate_limiter, re, requests, schema, shutil, sqlite3, streamlit, structure, subprocess, sys, tempfile, tests, threading, time, tkinter, traceback, typing, unified_exporter, unittest, updater, validate_data, yfinance, zipfile
+📊 SUMMARY: 121 files, 24,871 lines
+📦 DEPENDENCIES: abc, app, argparse, ast, base_source, bs4, cache_manager, celery, collections, concurrent, config, core, csv, dashboard, data_sources, database, datetime, db_manager, enum, examples, fastapi, hashlib, httpx, io, joblib, json, logging, nse_complete, nse_master_data, nse_utils, numpy, os, pandas, pathlib, pickle, plotly, pydantic, pydantic_settings, rate_limiter, re, redis, requests, schema, shutil, sqlalchemy, sqlite3, streamlit, structure, subprocess, sys, talib, tempfile, tests, threading, time, tkinter, traceback, typing, unified_exporter, unittest, updater, validate_data, yfinance, zipfile
 
 📁 FILE TREE:
+  unified_exporter.py (261 lines)
+  update_database.py (196 lines)
+
+backend/app/
+  main.py (25 lines)
+
+backend/app/api/v1/
+  router.py (6 lines)
+
+backend/app/api/v1/endpoints/
+  data.py (7 lines)
+  health.py (10 lines)
+
+backend/app/core/
+  config.py (48 lines)
+  database.py (19 lines)
+  redis.py (11 lines)
+
+backend/app/data_sources/
+  base.py (30 lines)
+  nse_source.py (49 lines)
+  screener_source.py (42 lines)
+
+backend/app/services/
+  backtester.py (32 lines)
+  data_aggregator.py (34 lines)
+  screener_engine.py (38 lines)
+  signal_generator.py (37 lines)
+  technical_analysis.py (112 lines)
+
+backend/app/workers/
+  celery_app.py (28 lines)
+
+legacy/
   Refactoring.py (714 lines)
   auto_fix_tests.py (73 lines)
   auto_fix_tests_v2.py (90 lines)
@@ -26,22 +60,20 @@ ANALYZED: 2025-11-10 14:17
   structure.py (382 lines)
   test_components.py (187 lines)
   test_health_check.py (376 lines)
-  unified_exporter.py (261 lines)
-  update_database.py (196 lines)
   validate_data.py (347 lines)
 
-backups/refactor_20251028_001034/
+legacy/backups/refactor_20251028_001034/
   nse_complete.py (258 lines)
   nse_master_data.py (306 lines)
   nse_utils.py (1185 lines)
 
-backups/refactor_20251028_001402/
+legacy/backups/refactor_20251028_001402/
   nse_complete.py (1425 lines)
 
-backups/refactor_20251028_001446/
+legacy/backups/refactor_20251028_001446/
   nse_complete.py (1425 lines)
 
-core/
+legacy/core/
   __init__.py (8 lines)
   cache_manager.py (131 lines)
   data_merger.py (102 lines)
@@ -50,20 +82,20 @@ core/
   mtf_manager.py (571 lines)
   rate_limiter.py (43 lines)
 
-dashboard/
+legacy/dashboard/
   __init__.py (3 lines)
   app.py (1315 lines)
   app_v3.py (422 lines)
   app_v3_copy.py (454 lines)
   config.py (362 lines)
 
-dashboard/components/
+legacy/dashboard/components/
   charts.py (128 lines)
   metrics.py (43 lines)
   navigation.py (62 lines)
   tables.py (73 lines)
 
-dashboard/pages/
+legacy/dashboard/pages/
   analytics.py (346 lines)
   data_manager.py (831 lines)
   database_explorer.py (552 lines)
@@ -74,14 +106,14 @@ dashboard/pages/
   settings.py (365 lines)
   trading.py (60 lines)
 
-dashboard/styles/
+legacy/dashboard/styles/
   theme.py (475 lines)
 
-dashboard/utils/
+legacy/dashboard/utils/
   data_loader.py (131 lines)
   formatters.py (277 lines)
 
-data_sources/
+legacy/data_sources/
   __init__.py (8 lines)
   base_source.py (53 lines)
   nse_complete.py (171 lines)
@@ -89,22 +121,22 @@ data_sources/
   screener_enhanced.py (127 lines)
   yahoo_finance.py (97 lines)
 
-database/
+legacy/database/
   __init__.py (9 lines)
   db_manager.py (809 lines)
   schema.py (1101 lines)
   updater.py (448 lines)
 
-examples/
+legacy/examples/
   example_basic_usage.py (121 lines)
   example_technical_analysis.py (138 lines)
 
-external_libs/
+legacy/external_libs/
   __init__.py (3 lines)
   nse_master_data.py (181 lines)
   nse_utils.py (1185 lines)
 
-tests/
+legacy/tests/
   conftest.py (38 lines)
   run_all_tests.py (24 lines)
   test_core_modules.py (67 lines)
@@ -112,13 +144,13 @@ tests/
   test_database_mtf.py (51 lines)
   test_screener_enhanced.py (112 lines)
 
-tests/_helpers/
+legacy/tests/_helpers/
   fake_dataframes.py (14 lines)
   fake_streamlit.py (8 lines)
   mock_responses.py (30 lines)
   temp_dirs.py (10 lines)
 
-tests/test_core/
+legacy/tests/test_core/
   test_cache_manager.py (29 lines)
   test_data_merger.py (22 lines)
   test_hybrid_aggregator.py (24 lines)
@@ -126,41 +158,129 @@ tests/test_core/
   test_mtf_manager.py (20 lines)
   test_rate_limiter.py (11 lines)
 
-tests/test_dashboard/
+legacy/tests/test_dashboard/
   test_app.py (11 lines)
   test_components.py (9 lines)
   test_pages.py (10 lines)
   test_utils.py (12 lines)
 
-tests/test_data_sources/
+legacy/tests/test_data_sources/
   test_base_source.py (17 lines)
   test_nse_complete_integration.py (14 lines)
   test_nse_complete_unit.py (26 lines)
   test_screener_enhanced.py (14 lines)
   test_yahoo_finance.py (22 lines)
 
-tests/test_database/
+legacy/tests/test_database/
   test_db_manager.py (25 lines)
   test_schema.py (8 lines)
   test_updater.py (18 lines)
 
-tests/test_examples/
+legacy/tests/test_examples/
   test_example_basic_usage.py (9 lines)
   test_example_technical_analysis.py (9 lines)
 
-tests/test_misc/
+legacy/tests/test_misc/
   test_structure_scripts.py (11 lines)
   test_unified_exporter.py (18 lines)
   test_validate_data.py (10 lines)
 
-utils/
+legacy/utils/
   data_status.py (114 lines)
+
+ml/features/
+  feature_pipeline.py (58 lines)
+
+ml/serving/
+  predictor.py (37 lines)
 
 ======================================================================
 📋 DETAILED STRUCTURE
 ======================================================================
 
-📄 Refactoring.py
+📄 backend/app/api/v1/endpoints/data.py
+   imports: fastapi
+
+📄 backend/app/api/v1/endpoints/health.py
+   imports: fastapi
+
+📄 backend/app/api/v1/router.py
+   imports: app, fastapi
+
+📄 backend/app/core/config.py
+   imports: os, pydantic, pydantic_settings, typing
+   class Settings(BaseSettings)
+       assemble_cors_origins(cls, v:Any)
+       assemble_db_connection(cls, v:Optional[str], values:dict)
+       assemble_redis_uri(cls, v:Optional[str], values:dict)
+
+📄 backend/app/core/database.py
+   imports: app, sqlalchemy
+
+📄 backend/app/core/redis.py
+   imports: app, redis
+
+📄 backend/app/data_sources/base.py
+   imports: abc, pandas, typing
+   class DataSource(ABC)  # Abstract base class for all data sources (NSE, Yahoo, Screen
+       __init__(self, name:str)
+
+📄 backend/app/data_sources/nse_source.py
+   imports: app, httpx, logging, pandas, typing
+   class NSESource(DataSource)  # NSE India data source with cookie and session management
+       __init__(self)
+
+📄 backend/app/data_sources/screener_source.py
+   imports: app, bs4, httpx, logging, pandas
+   class ScreenerSource(DataSource)  # Screener.in HTML scraper for detailed fundamental data
+       __init__(self)
+       _parse_soup(self, soup:BeautifulSoup)
+
+📄 backend/app/main.py
+   imports: app, fastapi
+
+📄 backend/app/services/backtester.py
+   imports: pandas, typing
+   class Backtester  # PILLAR 3: Decision Engine (D) - Backtesting Framework
+       __init__(self, initial_capital:float=1000000)
+       run(self, df:pd.DataFrame, signals:pd.Series)  # Simple vectorized or loop-based backtest
+
+📄 backend/app/services/data_aggregator.py
+   imports: app, pandas, typing
+   class DataAggregatorService  # Orchestrates data fetching and analysis from multiple source
+       __init__(self)
+
+📄 backend/app/services/screener_engine.py
+   imports: pandas, typing
+   class ScreenerEngine  # PILLAR 2: Analytics Engine (A)
+       __init__(self, stocks_df:pd.DataFrame)
+       run_screen(self, conditions:List[Dict[str, Any]])  # Executes a screen based on a list of conditions.
+
+📄 backend/app/services/signal_generator.py
+   imports: app, enum, typing
+   class SignalType(Enum)
+   class SignalGenerator  # PILLAR 3: Decision Engine (D)
+       __init__(self, analyzed_df:pd.DataFrame)
+       generate_signals(self)
+
+📄 backend/app/services/technical_analysis.py
+   imports: numpy, pandas, talib, typing
+   class TechnicalAnalysisService  # Pillar 1: Quantitative Engine (Q)
+       __init__(self, data:pd.DataFrame)
+       _preprocess(self)  # Ensure columns are lowercase and numeric
+       calculate_all(self)  # Run all indicator categories
+       add_trend_indicators(self)
+       add_momentum_indicators(self)
+       add_volatility_indicators(self)
+       add_volume_indicators(self)
+       add_patterns(self)  # Recognize 40+ candlestick patterns using TA-Lib
+       calculate_stats(self)  # PILLAR 1: Statistical Analysis Functions
+       _calculate_max_drawdown(self)
+
+📄 backend/app/workers/celery_app.py
+   imports: app, celery
+
+📄 legacy/Refactoring.py
    imports: ast, datetime, os, pathlib, re, shutil, subprocess, sys, typing
    class NSERefactoringTool  # Automated refactoring tool for NSE consolidation
        __init__(self, project_root:str=None)
@@ -182,23 +302,23 @@ utils/
        run(self, skip_tests:bool=False)  # Run complete refactoring process
    def main()  # Main entry point
 
-📄 auto_fix_tests.py
+📄 legacy/auto_fix_tests.py
    imports: pathlib, re
    def replace_in_file(path, replacements)
    def main()
 
-📄 auto_fix_tests_v2.py
+📄 legacy/auto_fix_tests_v2.py
    imports: pathlib, re
    def replace_in_file(path:Path, replacements)
    def main()
 
-📄 auto_fix_tests_v4.py
+📄 legacy/auto_fix_tests_v4.py
    imports: pathlib, re, subprocess
    def replace_in_file(path:Path, replacements)
    def patch_tests()
    def run_tests()
 
-📄 backups/refactor_20251028_001034/nse_complete.py
+📄 legacy/backups/refactor_20251028_001034/nse_complete.py
    imports: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
    class NSEComplete(DataSource)  # Complete NSE data source using:
        __init__(self)
@@ -215,7 +335,7 @@ utils/
        get_insider_trading(self, from_date:str=None, to_date:str=None)  # Get insider trading data.
        get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
 
-📄 backups/refactor_20251028_001034/nse_master_data.py
+📄 legacy/backups/refactor_20251028_001034/nse_master_data.py
    imports: datetime, json, pandas, re, requests, time
    class NSEMasterData
        __init__(self)
@@ -225,7 +345,7 @@ utils/
        search_symbol(self, symbol, exchange)  # Search for a symbol in the specified exchange and return the
        get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')  # Get historical data for a symbol.
 
-📄 backups/refactor_20251028_001034/nse_utils.py
+📄 legacy/backups/refactor_20251028_001034/nse_utils.py
    imports: datetime, io, pandas, requests, zipfile
    class NseUtils
        __init__(self)
@@ -275,27 +395,27 @@ utils/
        get_block_deals(self, from_date:str=None, to_date:str=None)
        get_short_selling(self, from_date:str=None, to_date:str=None)
 
-📄 backups/refactor_20251028_001402/nse_complete.py
+📄 legacy/backups/refactor_20251028_001402/nse_complete.py
    imports: base_source, data_sources, datetime, io, json, logging, pandas, pathlib, re, requests, sys, time, typing, zipfile
    class NSEComplete(DataSource)  # Complete NSE data source with all functionality consolidated
        __init__(self)
        _initialize_session(self)  # Initialize session with NSE cookies
        get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
 
-📄 backups/refactor_20251028_001446/nse_complete.py
+📄 legacy/backups/refactor_20251028_001446/nse_complete.py
    imports: base_source, data_sources, datetime, io, json, logging, pandas, pathlib, re, requests, sys, time, typing, zipfile
    class NSEComplete(DataSource)  # Complete NSE data source with all functionality consolidated
        __init__(self)
        _initialize_session(self)  # Initialize session with NSE cookies
        get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
 
-📄 config.py
+📄 legacy/config.py
    imports: datetime, pathlib
 
-📄 core/__init__.py
+📄 legacy/core/__init__.py
    imports: cache_manager, rate_limiter
 
-📄 core/cache_manager.py
+📄 legacy/core/cache_manager.py
    imports: datetime, hashlib, logging, pathlib, pickle, typing
    class CacheManager  # Multi-layer cache system with TTL.
        __init__(self, enabled:bool=True, cache_dir:str='.cache')
@@ -306,7 +426,7 @@ utils/
        clear(self)  # Clear all cache.
        get_stats(self)  # Get cache statistics.
 
-📄 core/data_merger.py
+📄 legacy/core/data_merger.py
    imports: logging, pandas, typing
    class DataMerger  # Intelligent data merging with conflict resolution.
        merge_price_data(sources:List[Dict[str, Any]], priority:List[str])  # Merge price data from multiple sources.
@@ -315,7 +435,7 @@ utils/
        assess_quality(data:Dict[str, Any])  # Assess overall data quality.
        _get_grade(score:float)  # Convert score to letter grade.
 
-📄 core/hybrid_aggregator.py
+📄 legacy/core/hybrid_aggregator.py
    imports: concurrent, config, core, data_sources, datetime, logging, pandas, pathlib, sys, typing
    class HybridAggregator  # Intelligent data aggregator combining multiple sources.
        __init__(self, use_cache:bool=True)
@@ -331,7 +451,7 @@ utils/
        get_quick_quote(self, symbol:str)  # Get only price data (fast).
        batch_fetch(self, symbols:List[str], max_workers:int=5)  # Fetch data for multiple symbols in parallel.
 
-📄 core/model_data_prep.py
+📄 legacy/core/model_data_prep.py
    imports: datetime, logging, numpy, pandas, typing
    class ModelDataPrep  # Prepare data for financial models
        __init__(self, nse, db)
@@ -344,7 +464,7 @@ utils/
        _calculate_quality_score(self, quality_dict:Dict)  # Calculate overall data quality score
        export_for_talib(self, price_history:pd.DataFrame)  # Export price data in format ready for TA-Lib
 
-📄 core/mtf_manager.py
+📄 legacy/core/mtf_manager.py
    imports: datetime, logging, numpy, pandas, pathlib, sqlite3, typing
    class TimeFrame  # Timeframe definitions and conversions
        get_minutes(cls, timeframe:str)  # Get minutes for a timeframe
@@ -367,15 +487,15 @@ utils/
        is_mtf_aligned(self, mtf_data:Dict[str, pd.DataFrame], direction:str='UP', min_timeframes:int=3)  # Check if multiple timeframes are aligned in same direction
        validate_mtf_data(self, mtf_data:Dict[str, pd.DataFrame])  # Validate data quality across timeframes
 
-📄 core/rate_limiter.py
+📄 legacy/core/rate_limiter.py
    imports: collections, logging, threading, time
    class RateLimiter  # Token bucket rate limiter.
        __init__(self, calls_per_minute:int=30)
        wait_if_needed(self)  # Wait if rate limit would be exceeded.
 
-📄 dashboard/__init__.py
+📄 legacy/dashboard/__init__.py
 
-📄 dashboard/app.py
+📄 legacy/dashboard/app.py
    imports: data_sources, database, datetime, io, pandas, pathlib, plotly, sqlite3, streamlit, sys
    def get_database()  # Get database connection (cached).
    def get_updater()  # Get data updater (cached).
@@ -388,7 +508,7 @@ utils/
    def get_all_suggestions()  # Get all popular stocks as flat list.
    def execute_sql_query(query:str, db_path:str=None)  # Execute SQL query and return results.
 
-📄 dashboard/app_v3.py
+📄 legacy/dashboard/app_v3.py
    imports: dashboard, datetime, pathlib, streamlit, sys
    def initialize_session_state()  # Initialize all session state variables
    def placeholder_page(page_name:str)  # Placeholder page when actual page fails to load
@@ -396,7 +516,7 @@ utils/
    def main()  # Main application entry point
    def render_footer()  # Render application footer
 
-📄 dashboard/app_v3_copy.py
+📄 legacy/dashboard/app_v3_copy.py
    imports: dashboard, datetime, pathlib, streamlit, sys, time
    def get_dashboard_statistics()  # Fetches table statistics from the database.
    def initialize_session_state()  # Initialize all session state variables and fetch initial dat
@@ -405,34 +525,34 @@ utils/
    def placeholder_page(page_name:str)  # Placeholder page when actual page fails to load
    def render_footer()  # Render application footer
 
-📄 dashboard/components/charts.py
+📄 legacy/dashboard/components/charts.py
    imports: dashboard, pandas, plotly, streamlit
    def render_price_chart(price_history:pd.DataFrame, symbol:str)  # Render price and volume charts
    def render_shareholding_chart(shareholding:pd.DataFrame)  # Render shareholding pie chart
 
-📄 dashboard/components/metrics.py
+📄 legacy/dashboard/components/metrics.py
    imports: dashboard, pandas, streamlit
    def render_metrics_row(metrics:dict)  # Render key metrics in a row
 
-📄 dashboard/components/navigation.py
+📄 legacy/dashboard/components/navigation.py
    imports: streamlit
    def render_navigation()  # Render top navigation bar
 
-📄 dashboard/components/tables.py
+📄 legacy/dashboard/components/tables.py
    imports: dashboard, pandas, streamlit
    def render_period_summary(snapshot:dict, last_update)  # Render period summary table
    def render_quarterly_results(quarterly:pd.DataFrame)  # Render quarterly results table
    def render_peer_comparison(peers:pd.DataFrame)  # Render peer comparison table
 
-📄 dashboard/config.py
+📄 legacy/dashboard/config.py
    imports: os, pathlib
 
-📄 dashboard/pages/analytics.py
+📄 legacy/dashboard/pages/analytics.py
    imports: dashboard, datetime, numpy, pandas, plotly, streamlit
    def analytics_page()  # Main analytics dashboard with price trends
    def render_price_trend_chart(price_history:pd.DataFrame, symbol:str)  # Render comprehensive price trend analysis
 
-📄 dashboard/pages/data_manager.py
+📄 legacy/dashboard/pages/data_manager.py
    imports: dashboard, datetime, logging, pandas, streamlit, time, typing
    def render_html_table(df:pd.DataFrame, height:int=None)  # Render DataFrame as HTML table with dark theme
    def validate_stock_symbol(symbol:str, nse)  # Validate if stock symbol exists on NSE
@@ -452,7 +572,7 @@ utils/
    def update_stale_stocks(hours, updater)
    def show_summary(results)  # Show summary
 
-📄 dashboard/pages/database_explorer.py
+📄 legacy/dashboard/pages/database_explorer.py
    imports: datetime, json, pandas, pathlib, sqlite3, streamlit
    def database_explorer_page()  # Database Explorer - Browse tables and run SQL queries
    def browse_tables_tab(conn)  # Browse database tables
@@ -461,7 +581,7 @@ utils/
    def schema_viewer_tab(conn)  # View database schema
    def quick_stats_tab(conn)  # Quick database statistics
 
-📄 dashboard/pages/models.py
+📄 legacy/dashboard/pages/models.py
    imports: core, dashboard, datetime, json, pandas, streamlit
    def models_page()  # Financial models configuration and data export
    def price_prediction_tab(model_prep, db)  # Price prediction model configuration
@@ -472,17 +592,17 @@ utils/
    def options_trading_tab(model_prep, db)  # Options trading configuration
    def display_model_data(data:dict, model_type:str)  # Display prepared model data with quality assessment
 
-📄 dashboard/pages/mtf_analysis.py
+📄 legacy/dashboard/pages/mtf_analysis.py
    imports: core, dashboard, datetime, pandas, plotly, streamlit
    def mtf_analysis_page()  # Multi-Timeframe Analysis Dashboard
    def display_mtf_analysis(mtf_data:dict, symbol:str, chart_type:str, mtf_manager:MTFDataManager)  # Display comprehensive MTF analysis
    def render_timeframe_chart(df:pd.DataFrame, symbol:str, timeframe:str, chart_type:str, trend:str)  # Render chart for single timeframe
 
-📄 dashboard/pages/portfolio.py
+📄 legacy/dashboard/pages/portfolio.py
    imports: pandas, plotly, streamlit
    def portfolio_page()  # Portfolio management
 
-📄 dashboard/pages/research.py
+📄 legacy/dashboard/pages/research.py
    imports: core, dashboard, datetime, pandas, re, streamlit, time, typing
    def research_page()  # Research and screening dashboard
    def screener_tab()  # Stock screener
@@ -492,7 +612,7 @@ utils/
    def compare_stocks(symbols:List[str])  # Compare stocks
    def extract_number(value:str)  # Extract number from string
 
-📄 dashboard/pages/settings.py
+📄 legacy/dashboard/pages/settings.py
    imports: dashboard, datetime, pathlib, shutil, streamlit
    def settings_page()  # Application settings and configuration
    def general_settings_tab()  # General application settings
@@ -500,13 +620,13 @@ utils/
    def database_management_tab()  # Database maintenance tools
    def advanced_settings_tab()  # Advanced settings
 
-📄 dashboard/pages/trading.py
+📄 legacy/dashboard/pages/trading.py
    imports: pandas, streamlit
    def trading_page()  # Trading interface
 
-📄 dashboard/styles/theme.py
+📄 legacy/dashboard/styles/theme.py
 
-📄 dashboard/utils/data_loader.py
+📄 legacy/dashboard/utils/data_loader.py
    imports: data_sources, database, datetime, numpy, pandas, pathlib, streamlit, sys
    def get_database()  # Get cached database instance
    def get_nse()  # Get cached NSE data source - NOW EXPORTED
@@ -514,7 +634,7 @@ utils/
    def load_stock_data(symbol:str)  # Load complete stock data with caching
    def calculate_metrics(price_history:pd.DataFrame, snapshot:dict)  # Calculate key performance metrics
 
-📄 dashboard/utils/formatters.py
+📄 legacy/dashboard/utils/formatters.py
    imports: datetime, numpy, pandas, typing
    def safe_num(value:Any, default:float=0)  # Safely convert any value to float
    def safe_format_currency(value:Any, decimals:int=2, default:str='N/A', symbol:str='₹')  # Format value as currency with symbol
@@ -527,10 +647,10 @@ utils/
    def format_market_cap(value:Any)  # Format market cap in standard financial notation
    def color_code_change(value:float)  # Return color class based on value (for price changes)
 
-📄 data_sources/__init__.py
+📄 legacy/data_sources/__init__.py
    imports: base_source, nse_complete
 
-📄 data_sources/base_source.py
+📄 legacy/data_sources/base_source.py
    imports: abc, logging, pandas, typing
    class DataSource(ABC)  # Base class for all data sources.
        __init__(self, name:str)
@@ -540,7 +660,7 @@ utils/
        test_connection(self)  # Test if the data source is accessible.
        handle_error(self, error:Exception, context:str='')  # Standardized error handling.
 
-📄 data_sources/nse_complete.py
+📄 legacy/data_sources/nse_complete.py
    imports: base_source, datetime, logging, pandas, pathlib, sys, typing
    class NSEComplete(DataSource)
        __init__(self)
@@ -550,7 +670,7 @@ utils/
        get_company_info(self, symbol:str)
        __getattr__(self, name)  # Delegate calls to the wrapped nse or master instances.
 
-📄 data_sources/nse_complete_ORIGINAL.py
+📄 legacy/data_sources/nse_complete_ORIGINAL.py
    imports: base_source, datetime, logging, nse_master_data, nse_utils, pandas, pathlib, sys, typing
    class NSEComplete(DataSource)  # Complete NSE data source using:
        __init__(self)
@@ -567,7 +687,7 @@ utils/
        get_insider_trading(self, from_date:str=None, to_date:str=None)  # Get insider trading data.
        get_complete_data(self, symbol:str)  # Get complete dataset for a symbol.
 
-📄 data_sources/screener_enhanced.py
+📄 legacy/data_sources/screener_enhanced.py
    imports: base_source, bs4, io, logging, pandas, re, requests, typing
    class ScreenerEnhanced(DataSource)  # Enhanced Screener.in scraper with complete data extraction.
        __init__(self)
@@ -581,7 +701,7 @@ utils/
        get_price_data(self, symbol:str)
        get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')
 
-📄 data_sources/yahoo_finance.py
+📄 legacy/data_sources/yahoo_finance.py
    imports: base_source, datetime, logging, pandas, typing, yfinance
    class YahooFinance(DataSource)  # Yahoo Finance API wrapper.
        __init__(self)
@@ -590,10 +710,10 @@ utils/
        get_price_data(self, symbol:str)  # Get current price data.
        get_historical_prices(self, symbol:str, period:str='1y', interval:str='1d')  # Get historical price data.
 
-📄 database/__init__.py
+📄 legacy/database/__init__.py
    imports: db_manager, updater
 
-📄 database/db_manager.py
+📄 legacy/database/db_manager.py
    imports: datetime, json, logging, pandas, pathlib, schema, sqlite3, typing
    class DatabaseManager  # Manage SQLite database operations with hybrid schema.
        __init__(self, db_path:str='stock_data.db')
@@ -636,9 +756,9 @@ utils/
        vacuum(self)  # Optimize database (reclaim space).
        close(self)  # Close database connection.
 
-📄 database/schema.py
+📄 legacy/database/schema.py
 
-📄 database/updater.py
+📄 legacy/database/updater.py
    imports: core, datetime, db_manager, logging, re, time, typing
    class DataUpdater  # Update database with fresh data from all sources.
        __init__(self, db_path:str='stock_data.db')
@@ -658,17 +778,17 @@ utils/
        _extract_number(self, value)  # Extract numeric value from string.
        get_update_status(self)  # Get current update status of database.
 
-📄 debug_master.py
+📄 legacy/debug_master.py
    imports: pandas, pathlib, sys
 
-📄 examples/example_basic_usage.py
+📄 legacy/examples/example_basic_usage.py
    imports: core, pandas, pathlib, sys
    def example_single_stock()  # Fetch data for a single stock.
    def example_quick_quotes()  # Get quick quotes for multiple stocks.
    def example_batch_fetch()  # Batch fetch multiple stocks.
    def example_cache_performance()  # Demonstrate caching performance.
 
-📄 examples/example_technical_analysis.py
+📄 legacy/examples/example_technical_analysis.py
    imports: core, data_sources, numpy, pandas, pathlib, sys
    def calculate_moving_averages(df, periods=[20, 50, 200])  # Calculate simple moving averages.
    def calculate_rsi(df, period=14)  # Calculate RSI indicator.
@@ -676,9 +796,9 @@ utils/
    def example_intraday_analysis()  # Analyze intraday data.
    def example_rsi_analysis()  # Calculate RSI indicator.
 
-📄 external_libs/__init__.py
+📄 legacy/external_libs/__init__.py
 
-📄 external_libs/nse_master_data.py
+📄 legacy/external_libs/nse_master_data.py
    imports: datetime, json, pandas, re, requests, time
    class NSEMasterData
        __init__(self)
@@ -688,7 +808,7 @@ utils/
        search_symbol(self, symbol, exchange)  # Search for a symbol and return the first match, using correc
        get_history(self, symbol='Nifty 50', exchange='NSE', start=None, end=None, interval='1d')  # Get historical data for a symbol. This is the complete, orig
 
-📄 external_libs/nse_utils.py
+📄 legacy/external_libs/nse_utils.py
    imports: datetime, io, pandas, requests, zipfile
    class NseUtils
        __init__(self)
@@ -738,7 +858,7 @@ utils/
        get_block_deals(self, from_date:str=None, to_date:str=None)
        get_short_selling(self, from_date:str=None, to_date:str=None)
 
-📄 final_cleanup.py
+📄 legacy/final_cleanup.py
    imports: argparse, os, pathlib, shutil
    class ProjectCleaner
        __init__(self, project_root=None)
@@ -750,25 +870,25 @@ utils/
        cleanup_pycache(self, dry_run=False)  # Remove all __pycache__ directories
        create_readme_for_scripts(self, dry_run=False)  # Create README in scripts folder
 
-📄 fix_corporate_actions.py
+📄 legacy/fix_corporate_actions.py
    imports: pandas, pathlib, sys
    def fix_corporate_actions(csv_path:str)  # Fix corporate actions CSV:
    def main()
 
-📄 fix_nse_merge.py
+📄 legacy/fix_nse_merge.py
    imports: ast, datetime, os, pathlib, re, sys
    def extract_class_body(content:str, class_name:str)  # Extract everything inside a class definition
    def normalize_indentation(code:str, target_indent:int=4)  # Normalize code indentation to target level
 
-📄 fix_streamlit_warnings.py
+📄 legacy/fix_streamlit_warnings.py
    imports: pathlib, re
    def fix_file(filepath:Path)  # Fix a single file
    def main()
 
-📄 quick_validate.py
+📄 legacy/quick_validate.py
    imports: pathlib, sys
 
-📄 restaurant_shift_manager.py
+📄 legacy/restaurant_shift_manager.py
    imports: datetime, pandas, tkinter
    class ShiftManagerApp
        __init__(self, root)
@@ -780,7 +900,7 @@ utils/
        delete_staff(self)
        export_to_excel(self)
 
-📄 restaurant_shift_manager_v5.py
+📄 legacy/restaurant_shift_manager_v5.py
    imports: csv, datetime, io, pandas, tkinter
    def generate_time_options(granularity_minutes=15)  # Generates time options in HH:MM format for comboboxes.
    def parse_time_str(tstr)  # Safely parses HH:MM string to a datetime.time object.
@@ -815,7 +935,7 @@ utils/
        refresh_stats_tab(self)
        generate_suggestions(self)
 
-📄 restaurant_shift_manager_v6_grok.py
+📄 legacy/restaurant_shift_manager_v6_grok.py
    imports: csv, datetime, io, os, pandas, tkinter
    def parse_time_safe(tstr)
    def fmt_time(dt)
@@ -842,7 +962,7 @@ utils/
        export_csv(self)
        refresh_shift_view(self)
 
-📄 stock_screener.py
+📄 legacy/stock_screener.py
    imports: core, pandas, re, time, typing
    class FundamentalScreener  # Screen stocks based on fundamental criteria.
        __init__(self)
@@ -850,7 +970,7 @@ utils/
        _extract_number(self, value:str)  # Extract numeric value from string like '15.5%' or '₹1,234'.
    def main()  # Example usage.
 
-📄 structure.py
+📄 legacy/structure.py
    imports: ast, datetime, os, pathlib, subprocess, sys
    def find_git_root(start_path=None)  # Find the root of the git repository.
    def find_project_root()  # Automatically detect project root directory.
@@ -864,7 +984,7 @@ utils/
    def save_outputs(project_root, files)  # Save multiple output formats.
    def main()  # Main function.
 
-📄 test_components.py
+📄 legacy/test_components.py
    imports: argparse, pathlib, sys
    def test_nse_detailed()  # Detailed NSE testing
    def test_yahoo_detailed()  # Detailed Yahoo Finance testing
@@ -872,7 +992,7 @@ utils/
    def test_aggregator_detailed()  # Detailed aggregator testing
    def main()
 
-📄 test_health_check.py
+📄 legacy/test_health_check.py
    imports: pathlib, sys, traceback
    def test_result(passed:bool, test_name:str, details:str='')  # Print colored test result
    def test_imports()  # Test 1: Check if core modules can be imported
@@ -883,37 +1003,37 @@ utils/
    def print_summary(all_results)  # Print overall summary
    def main()  # Run all tests
 
-📄 tests/_helpers/fake_dataframes.py
+📄 legacy/tests/_helpers/fake_dataframes.py
    imports: pandas
    def sample_price_history(symbol='TCS', rows=5)
    def sample_intraday(symbol='TCS', rows=10, interval='5m')
 
-📄 tests/_helpers/fake_streamlit.py
+📄 legacy/tests/_helpers/fake_streamlit.py
    class FakeStreamlit
        __getattr__(self, name)
 
-📄 tests/_helpers/mock_responses.py
+📄 legacy/tests/_helpers/mock_responses.py
    imports: datetime, pandas
    def mock_nse_price_info(symbol='TCS')
    def mock_nse_option_chain(symbol='NIFTY', indices=True)
    def mock_yf_history(days=30)
    def mock_screener_company_page(symbol='TCS')
 
-📄 tests/_helpers/temp_dirs.py
+📄 legacy/tests/_helpers/temp_dirs.py
    imports: shutil, tempfile
    class TempDir
        __init__(self)
        cleanup(self)
 
-📄 tests/conftest.py
+📄 legacy/tests/conftest.py
    imports: datetime, pandas, unittest
    def mock_requests_get()
 
-📄 tests/run_all_tests.py
+📄 legacy/tests/run_all_tests.py
    imports: pathlib, sys, unittest
    def main()
 
-📄 tests/test_core/test_cache_manager.py
+📄 legacy/tests/test_core/test_cache_manager.py
    imports: core, pathlib, shutil, unittest
    class TestCacheManager(unittest.TestCase)
        setUp(self)
@@ -921,7 +1041,7 @@ utils/
        test_set_get_clear_stats(self)
        test_expiry(self)
 
-📄 tests/test_core/test_data_merger.py
+📄 legacy/tests/test_core/test_data_merger.py
    imports: core, unittest
    class TestDataMerger(unittest.TestCase)
        test_merge_price_data_priority(self)
@@ -929,13 +1049,13 @@ utils/
    class TestDataQualityChecker(unittest.TestCase)
        test_assess_quality(self)
 
-📄 tests/test_core/test_hybrid_aggregator.py
+📄 legacy/tests/test_core/test_hybrid_aggregator.py
    imports: core, unittest
    class TestHybridAggregator(unittest.TestCase)
        test_get_stock_data(self, mock_yf_hist, mock_screener, mock_nse_price)
        test_batch_fetch(self)
 
-📄 tests/test_core/test_model_data_prep.py
+📄 legacy/tests/test_core/test_model_data_prep.py
    imports: core, pandas, unittest
    class FakeNSE
        get_historical_prices(self, symbol, period='1y', interval='1d')
@@ -947,7 +1067,7 @@ utils/
        setUp(self)
        test_prepare_price_prediction_data(self)
 
-📄 tests/test_core/test_mtf_manager.py
+📄 legacy/tests/test_core/test_mtf_manager.py
    imports: core, pandas, unittest
    class FakeDB
    class FakeNSE
@@ -956,12 +1076,12 @@ utils/
        test_timeframe_conversions(self)
        test_get_mtf_data(self)
 
-📄 tests/test_core/test_rate_limiter.py
+📄 legacy/tests/test_core/test_rate_limiter.py
    imports: core, time, unittest
    class TestRateLimiter(unittest.TestCase)
        test_wait_if_needed(self)
 
-📄 tests/test_core_modules.py
+📄 legacy/tests/test_core_modules.py
    imports: core, pandas, tests, time, unittest
    class TestCoreModules(unittest.TestCase)
        test_cache_manager_set_get(self)  # Unit test for CacheManager TTL and retrieval.
@@ -969,28 +1089,28 @@ utils/
        test_data_merger_price_priority(self)  # Unit test for DataMerger conflict resolution.
        test_hybrid_aggregator_call_flow(self, mock_fetch, mock_quality)  # Integration test for HybridAggregator combining fetch and qu
 
-📄 tests/test_dashboard/test_app.py
+📄 legacy/tests/test_dashboard/test_app.py
    imports: dashboard, unittest
    class TestDashboardApp(unittest.TestCase)
        test_validate_nse_symbol(self, mock_get_nse)
 
-📄 tests/test_dashboard/test_components.py
+📄 legacy/tests/test_dashboard/test_components.py
    imports: dashboard, pandas, unittest
    class TestComponents(unittest.TestCase)
        test_render_quarterly_results(self)
 
-📄 tests/test_dashboard/test_pages.py
+📄 legacy/tests/test_dashboard/test_pages.py
    imports: dashboard, pandas, unittest
    class TestPages(unittest.TestCase)
        test_render_price_trend_chart(self, _)
 
-📄 tests/test_dashboard/test_utils.py
+📄 legacy/tests/test_dashboard/test_utils.py
    imports: dashboard, datetime, unittest
    class TestUtils(unittest.TestCase)
        test_currency(self)
        test_time_ago(self)
 
-📄 tests/test_data_sources.py
+📄 legacy/tests/test_data_sources.py
    imports: data_sources, pandas, tests, unittest
    class TestDataSources(unittest.TestCase)
        setUp(self)
@@ -998,7 +1118,7 @@ utils/
        test_nse_complete_historical_prices(self, mock_historic)  # Unit test for NSEComplete.get_historical_prices using intern
        test_screener_enhanced_fundamental(self, mock_get)  # Unit test for ScreenerEnhanced parsing logic.
 
-📄 tests/test_data_sources/test_base_source.py
+📄 legacy/tests/test_data_sources/test_base_source.py
    imports: data_sources, unittest
    class Dummy(DataSource)
        __init__(self)
@@ -1009,12 +1129,12 @@ utils/
    class TestBaseSource(unittest.TestCase)
        test_error_handling(self)
 
-📄 tests/test_data_sources/test_nse_complete_integration.py
+📄 legacy/tests/test_data_sources/test_nse_complete_integration.py
    imports: data_sources, unittest
    class TestNSECompleteIntegration(unittest.TestCase)
        test_get_complete_data(self, mock_bhav, mock_price)
 
-📄 tests/test_data_sources/test_nse_complete_unit.py
+📄 legacy/tests/test_data_sources/test_nse_complete_unit.py
    imports: data_sources, unittest
    class TestNSECompleteUnit(unittest.TestCase)
        setUp(self)
@@ -1022,12 +1142,12 @@ utils/
        test_get_option_chain(self, mock_chain)
        test_search_symbol(self, mock_search)
 
-📄 tests/test_data_sources/test_screener_enhanced.py
+📄 legacy/tests/test_data_sources/test_screener_enhanced.py
    imports: data_sources, unittest
    class TestScreenerEnhanced(unittest.TestCase)
        test_get_complete_data(self, mock_page)
 
-📄 tests/test_data_sources/test_yahoo_finance.py
+📄 legacy/tests/test_data_sources/test_yahoo_finance.py
    imports: data_sources, unittest
    class FakeTicker
        info(self)
@@ -1036,7 +1156,7 @@ utils/
        test_get_company_info(self, _)
        test_get_historical_prices(self, _)
 
-📄 tests/test_database/test_db_manager.py
+📄 legacy/tests/test_database/test_db_manager.py
    imports: database, os, pandas, tempfile, unittest
    class TestDatabaseManager(unittest.TestCase)
        setUp(self)
@@ -1044,17 +1164,17 @@ utils/
        test_add_and_get_company(self)
        test_price_history_roundtrip(self)
 
-📄 tests/test_database/test_schema.py
+📄 legacy/tests/test_database/test_schema.py
    imports: database, unittest
    class TestSchema(unittest.TestCase)
        test_schema_has_core_tables(self)
 
-📄 tests/test_database/test_updater.py
+📄 legacy/tests/test_database/test_updater.py
    imports: database, unittest
    class TestDataUpdater(unittest.TestCase)
        test_update_stock(self, mock_analysis)
 
-📄 tests/test_database_mtf.py
+📄 legacy/tests/test_database_mtf.py
    imports: core, database, pandas, tests, unittest
    class TestDatabaseAndMTF(unittest.TestCase)
        setUp(self)
@@ -1063,34 +1183,72 @@ utils/
        test_timeframe_resample_ohlcv(self)  # Unit test for MTFDataManager._resample_ohlcv (aggregation lo
        test_mtf_manager_timeframe_conversions(self)  # Unit test for TimeFrame helper functions.
 
-📄 tests/test_examples/test_example_basic_usage.py
+📄 legacy/tests/test_examples/test_example_basic_usage.py
    imports: examples, unittest
    class TestExamplesBasic(unittest.TestCase)
        test_example_single_stock(self, _)
 
-📄 tests/test_examples/test_example_technical_analysis.py
+📄 legacy/tests/test_examples/test_example_technical_analysis.py
    imports: examples, pandas, unittest
    class TestExamplesTA(unittest.TestCase)
        test_calculate_rsi(self)
 
-📄 tests/test_misc/test_structure_scripts.py
+📄 legacy/tests/test_misc/test_structure_scripts.py
    imports: structure, unittest
    class TestStructureScripts(unittest.TestCase)
        test_find_project_root(self)
        test_scan_python_files(self)
 
-📄 tests/test_misc/test_unified_exporter.py
+📄 legacy/tests/test_misc/test_unified_exporter.py
    imports: pandas, unified_exporter, unittest
    class TestUnifiedExporter(unittest.TestCase)
        test_export_to_excel(self, _)
 
-📄 tests/test_misc/test_validate_data.py
+📄 legacy/tests/test_misc/test_validate_data.py
    imports: pandas, unittest, validate_data
    class TestValidateData(unittest.TestCase)
        test_validate_ohlcv(self)
 
-📄 tests/test_screener_enhanced.py
+📄 legacy/tests/test_screener_enhanced.py
    imports: data_sources, logging, pandas
+
+📄 legacy/utils/data_status.py
+   imports: logging, pandas, sqlite3, typing
+   def get_db_manager()  # Singleton pattern to get the DatabaseManager instance.
+   def fetch_table_statistics()  # Fetches the record count for all tables using the DatabaseMa
+
+📄 legacy/validate_data.py
+   imports: datetime, numpy, pandas, pathlib
+   class DataValidator  # Validate all exported data for quality issues.
+       __init__(self)
+       validate_all_csvs(self, folder_path:str)  # Validate all CSV files in a folder.
+       _validate_file(self, filename:str, df:pd.DataFrame)  # Validate a single CSV file.
+       _validate_price_data(self, filename:str, df:pd.DataFrame)  # Validate price data.
+       _validate_ohlcv_data(self, filename:str, df:pd.DataFrame)  # Validate OHLCV (candlestick) data.
+       _validate_timestamps(self, filename:str, df:pd.DataFrame)  # Validate date/timestamp columns.
+       _check_date_gaps(self, filename:str, dates:pd.DatetimeIndex)  # Check for unusual gaps in date sequence.
+       _validate_date_columns(self, filename:str, df:pd.DataFrame)  # Validate files with date columns (corporate actions, bulk de
+       _validate_company_info(self, filename:str, df:pd.DataFrame)  # Validate company information.
+       _check_missing_values(self, filename:str, df:pd.DataFrame)  # Check for missing values.
+       _print_summary(self)  # Print validation summary.
+   def main()  # Run validation on a folder.
+
+📄 ml/features/feature_pipeline.py
+   imports: app, numpy, pandas
+   class FeatureEngineeringPipeline  # PILLAR 4: Prediction Engine (P)
+       __init__(self, price_data:pd.DataFrame, fundamental_data:dict)
+       generate_features(self)  # Execute all feature generation steps
+       _add_return_features(self)
+       _add_time_features(self)
+       _add_fundamental_features(self)
+       _add_targets(self)  # Create prediction targets: 5-day future direction
+
+📄 ml/serving/predictor.py
+   imports: joblib, os, pandas, typing
+   class PredictorService  # Handles model loading and inference for direction and volati
+       __init__(self)
+       _load_model(self, filename:str)
+       predict(self, feature_row:pd.DataFrame)  # Generate all predictions for a given feature set
 
 📄 unified_exporter.py
    imports: core, datetime, json, pandas, pathlib, sys
@@ -1110,24 +1268,3 @@ utils/
    def show_status(updater:DataUpdater)  # Show database status.
    def list_sectors(updater:DataUpdater)  # List all sectors.
    def print_result(result:dict)  # Print single stock update result.
-
-📄 utils/data_status.py
-   imports: logging, pandas, sqlite3, typing
-   def get_db_manager()  # Singleton pattern to get the DatabaseManager instance.
-   def fetch_table_statistics()  # Fetches the record count for all tables using the DatabaseMa
-
-📄 validate_data.py
-   imports: datetime, numpy, pandas, pathlib
-   class DataValidator  # Validate all exported data for quality issues.
-       __init__(self)
-       validate_all_csvs(self, folder_path:str)  # Validate all CSV files in a folder.
-       _validate_file(self, filename:str, df:pd.DataFrame)  # Validate a single CSV file.
-       _validate_price_data(self, filename:str, df:pd.DataFrame)  # Validate price data.
-       _validate_ohlcv_data(self, filename:str, df:pd.DataFrame)  # Validate OHLCV (candlestick) data.
-       _validate_timestamps(self, filename:str, df:pd.DataFrame)  # Validate date/timestamp columns.
-       _check_date_gaps(self, filename:str, dates:pd.DatetimeIndex)  # Check for unusual gaps in date sequence.
-       _validate_date_columns(self, filename:str, df:pd.DataFrame)  # Validate files with date columns (corporate actions, bulk de
-       _validate_company_info(self, filename:str, df:pd.DataFrame)  # Validate company information.
-       _check_missing_values(self, filename:str, df:pd.DataFrame)  # Check for missing values.
-       _print_summary(self)  # Print validation summary.
-   def main()  # Run validation on a folder.
