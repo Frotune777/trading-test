@@ -32,11 +32,13 @@ async def get_intraday_data(
             return {"symbol": symbol, "data": []}
             
         # Ensure timestamp is string for JSON
-        if 'Date' in df.columns:
-            df['Date'] = df['Date'].astype(str)
-        if df.index.name == 'Date' or 'datetime' in str(df.index.dtype):
+        if df.index.name in ['Date', 'Timestamp'] or 'datetime' in str(df.index.dtype):
              df = df.reset_index()
-             df['Date'] = df['Date'].astype(str)
+             
+        # Identify the date/timestamp column
+        date_col = next((c for c in df.columns if c.lower() in ['date', 'timestamp']), None)
+        if date_col:
+            df[date_col] = df[date_col].astype(str)
              
         return {
             "symbol": symbol.upper(),
@@ -82,11 +84,12 @@ async def get_technical_indicators(symbol: str):
         # Handle nan/inf for JSON
         tail_df = tail_df.fillna(0)
         
-        if 'date' in tail_df.columns:
-            tail_df['date'] = tail_df['date'].astype(str)
-        elif tail_df.index.name == 'Date' or 'datetime' in str(tail_df.index.dtype):
+        if tail_df.index.name in ['Date', 'Timestamp'] or 'datetime' in str(tail_df.index.dtype):
              tail_df = tail_df.reset_index()
-             tail_df['Date'] = tail_df['Date'].astype(str)
+        
+        date_col = next((c for c in tail_df.columns if c.lower() in ['date', 'timestamp']), None)
+        if date_col:
+            tail_df[date_col] = tail_df[date_col].astype(str)
 
         return {
             "symbol": symbol.upper(),

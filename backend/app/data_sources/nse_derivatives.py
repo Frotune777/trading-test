@@ -12,6 +12,7 @@ import yfinance as yf
 from nselib import capital_market
 
 from .base_source import DataSource
+from .nse_utils import NseUtils
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class NSEDerivatives(DataSource):
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
+        self.nse_utils = NseUtils()
         
     def get_fii_dii_activity(self) -> Optional[Dict[str, Any]]:
         """
@@ -178,7 +180,12 @@ class NSEDerivatives(DataSource):
         except:
             return 0.0
 
-    # ... Placeholder for derivatives ...
-    def get_option_chain(self, symbol: str):
-        # TODO: Implement when reliable source available
-        return None
+    def get_option_chain(self, symbol: str, indices: bool = False):
+        """
+        Fetch full option chain using NseUtils.
+        """
+        try:
+            return self.nse_utils.get_option_chain(symbol, indices=indices)
+        except Exception as e:
+            self.handle_error(e, f"get_option_chain({symbol})")
+            return pd.DataFrame()

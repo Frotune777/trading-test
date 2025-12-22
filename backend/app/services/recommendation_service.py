@@ -307,19 +307,38 @@ class RecommendationService:
 
     def _calculate_derivatives_score(self, symbol: str) -> tuple[float, Dict]:
         """
-        Calculate derivatives score (0-100).
+        Calculate derivatives score (0-100) based on Option Chain and Futures.
         """
-        # Fetch option chain from DB
-        # Ideally we need a method in db_manager to get latest option chain
-        # For now, we'll try to fetch it or mock if empty (since data might be sparse)
-        # TODO: Add get_latest_option_chain to DB Manager
-        # For this implementation, I will skip fetching and return neutral if no data
-        # To make this real, I need to implement get_option_chain in DB Manager or use MTF/Data service.
-        # Let's assume we can get it via self.db.get_option_chain_summary(symbol) or similar.
-        
-        # Placeholder for DB fetch (assuming table exists but accessor might need update)
-        # Using a default neutral score for now to prevent crash, will wire up DB access next.
-        return 50.0, {'sentiment': 'NEUTRAL', 'pcr': 1.0}
+        try:
+            # 1. Fetch Option Chain from DB
+            records = self.db.get_latest_option_chain(symbol)
+            if not records:
+                return 50.0, {'sentiment': 'NEUTRAL', 'message': 'No derivatives data'}
+            
+            df = pd.DataFrame(records)
+            analysis = self.derivatives_analyzer.analyze_option_chain(df)
+            
+            # Simple scoring logic for Smart Score
+            # Neutral = 50, Bullish > 50, Bearish < 50
+            derivatives_score = 50.0
+            sentiment = analysis.get('sentiment', 'NEUTRAL')
+            pcr = analysis.get('pcr_oi', 1.0)
+            
+            if sentiment == 'BULLISH': derivatives_score = 75.0
+            if sentiment == 'OVERSOLD': derivatives_score = 85.0
+            if sentiment == 'BEARISH': derivatives_score = 25.0
+            
+            # Adjust by PCR
+            if pcr > 1.0: derivatives_score += (pcr - 1.0) * 10
+            elif pcr < 1.0: derivatives_score -= (1.0 - pcr) * 10
+            
+            # Cap at 0-100
+            derivatives_score = max(0.0, min(100.0, derivatives_score))
+            
+            return derivatives_score, analysis
+        except Exception as e:
+            logger.error(f"Error in derivatives scoring for {symbol}: {e}")
+            return 50.0, {'sentiment': 'NEUTRAL', 'error': str(e)}
 
     def _calculate_regime_score(self) -> tuple[float, Dict]:
         """

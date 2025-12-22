@@ -1,0 +1,1 @@
+# QUAD Analysis Pillars

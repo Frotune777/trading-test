@@ -9,25 +9,42 @@ nse = NseUtils()
 @router.get("/option-chain/{symbol}")
 async def get_option_chain(symbol: str, indices: bool = False):
     """
-    Get full option chain for a symbol.
+    Get full option chain for a symbol, nested for the frontend.
     """
     try:
-        # Indices check: NIFTY, BANKNIFTY, FINNIFTY need indices=True
         is_index = indices or symbol.upper() in ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'NIFTYNXT50']
-        
         df = nse.get_option_chain(symbol.upper(), indices=is_index)
         
         if df is None or df.empty:
-            return {"symbol": symbol, "data": []}
+            return {"symbol": symbol, "records": {"data": [], "expiryDates": [], "strikePrices": [], "underlyingValue": 0}}
             
-        # Reset index to make 'identifier' a column if needed, or just to_dict
-        # nse_utils returns dataframe with index set to 'identifier' usually
-        df_reset = df.reset_index()
+        underlying_value = float(df.iloc[0].get('underlyingValue', 0))
+        expiry_dates = sorted(list(df['expiryDate'].unique()))
+        strike_prices = sorted(list(df['strikePrice'].unique()))
         
+        # Group by strike
+        grouped_data = []
+        for strike in strike_prices:
+            strike_df = df[df['strikePrice'] == strike]
+            ce_data = strike_df[strike_df['instrumentType'] == 'CE'].to_dict(orient='records')
+            pe_data = strike_df[strike_df['instrumentType'] == 'PE'].to_dict(orient='records')
+            
+            node = {
+                "strikePrice": strike,
+                "expiryDate": ce_data[0]['expiryDate'] if ce_data else (pe_data[0]['expiryDate'] if pe_data else ""),
+                "CE": ce_data[0] if ce_data else None,
+                "PE": pe_data[0] if pe_data else None
+            }
+            grouped_data.append(node)
+
         return {
             "symbol": symbol.upper(),
-            "count": len(df_reset),
-            "data": df_reset.to_dict(orient="records")
+            "records": {
+                "expiryDates": expiry_dates,
+                "data": grouped_data,
+                "strikePrices": strike_prices,
+                "underlyingValue": underlying_value
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -17,15 +17,20 @@ async def get_insider_trades(
     from_date: Optional[str] = None, 
     to_date: Optional[str] = None
 ):
-    """
-    Get SAI (Substantial Acquisition of Shares) & Insider Trading data.
-    Format: dd-mm-yyyy
-    """
     try:
         df = nse.get_insider_trading(from_date=from_date, to_date=to_date)
         if df is None or df.empty:
             return {"data": []}
-        return {"data": df.to_dict(orient="records")}
+            
+        # Rename columns for frontend
+        df_renamed = df.rename(columns={
+            'acquirerName': 'person',
+            'secType': 'typeOfSecurity',
+            'tdpAdvisers': 'acquisitionMode',
+            'acqFromDate': 'date',
+            'valueInRs': 'value'
+        })
+        return {"data": df_renamed.to_dict(orient="records")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -34,14 +39,18 @@ async def get_bulk_deals(
     from_date: Optional[str] = None, 
     to_date: Optional[str] = None
 ):
-    """
-    Get Bulk Deals.
-    """
     try:
         df = nse.get_bulk_deals(from_date=from_date, to_date=to_date)
         if df is None or df.empty:
             return {"data": []}
-        return {"data": df.to_dict(orient="records")}
+            
+        # Rename columns for frontend
+        df_renamed = df.rename(columns={
+            'transactionType': 'dealType',
+            'quantityTraded': 'quantity',
+            'tradePrice': 'price'
+        })
+        return {"data": df_renamed.to_dict(orient="records")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -50,14 +59,18 @@ async def get_block_deals(
     from_date: Optional[str] = None, 
     to_date: Optional[str] = None
 ):
-    """
-    Get Block Deals.
-    """
     try:
         df = nse.get_block_deals(from_date=from_date, to_date=to_date)
         if df is None or df.empty:
             return {"data": []}
-        return {"data": df.to_dict(orient="records")}
+            
+        # Rename columns for frontend
+        df_renamed = df.rename(columns={
+            'transactionType': 'dealType',
+            'quantityTraded': 'quantity',
+            'tradePrice': 'price'
+        })
+        return {"data": df_renamed.to_dict(orient="records")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -66,13 +79,16 @@ async def get_short_selling(
     from_date: Optional[str] = None, 
     to_date: Optional[str] = None
 ):
-    """
-    Get Short Selling data.
-    """
     try:
         df = nse.get_short_selling(from_date=from_date, to_date=to_date)
         if df is None or df.empty:
             return {"data": []}
-        return {"data": df.to_dict(orient="records")}
+            
+        # Rename columns for frontend
+        df_renamed = df.rename(columns={
+            'short_qty': 'quantity',
+            'short_percent': 'percent'
+        })
+        return {"data": df_renamed.to_dict(orient="records")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

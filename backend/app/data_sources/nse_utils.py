@@ -38,7 +38,8 @@ class NseUtils:
         }
 
         self.session = requests.Session()
-        self.session.get("http://nseindia.com", headers=self.headers)
+        # Primary call to establish initial cookies
+        self.session.get("https://www.nseindia.com", headers=self.headers, timeout=10)
         self.cookies = self.session.cookies.get_dict()
 
     def pre_market_info(self, category='All'):
@@ -233,27 +234,42 @@ class NseUtils:
         :return:
         """
         symbol = symbol.replace(' ', '%20').replace('&', '%26')
+        base_url = "https://www.nseindia.com"
+        
         if not indices:
-            ref_url = 'https://www.nseindia.com/get-quotes/derivatives?symbol=' + symbol
-            ref = requests.get(ref_url, headers=self.headers)
-            url = 'https://www.nseindia.com/api/option-chain-equities?symbol=' + symbol
-            data = self.session.get(url, headers=self.headers, cookies=ref.cookies.get_dict()).json()["records"]
+            ref_url = f'{base_url}/get-quotes/derivatives?symbol={symbol}'
+            api_url = f'{base_url}/api/option-chain-equities?symbol={symbol}'
         else:
-            ref_url = 'https://www.nseindia.com/get-quotes/derivatives?symbol=' + symbol
-            ref = requests.get(ref_url, headers=self.headers)
-            url = 'https://www.nseindia.com/api/option-chain-indices?symbol=' + symbol
-            data = self.session.get(url, headers=self.headers, cookies=ref.cookies.get_dict()).json()["records"]
+            ref_url = f'{base_url}/get-quotes/derivatives?symbol={symbol}'
+            api_url = f'{base_url}/api/option-chain-indices?symbol={symbol}'
 
+        # Ensure session has fresh cookies from the reference page
+        self.session.get(ref_url, headers=self.headers, timeout=10)
+        response = self.session.get(api_url, headers=self.headers, timeout=10)
+        
+        if response.status_code != 200:
+            return pd.DataFrame()
+            
+        json_data = response.json()
+        if "records" not in json_data:
+            return pd.DataFrame()
+            
+        data = json_data["records"]
         my_df = []
-        for i in data["data"]:
+        for i in data.get("data", []):
             for k, v in i.items():
                 if k == "CE" or k == "PE":
                     info = v
                     info["instrumentType"] = k
-                    info["timestamp"] = data["timestamp"]
+                    info["timestamp"] = data.get("timestamp")
                     my_df.append(info)
+                    
+        if not my_df:
+            return pd.DataFrame()
+            
         df = pd.DataFrame(my_df)
-        df = df.set_index("identifier", drop=True)
+        if "identifier" in df.columns:
+            df = df.set_index("identifier", drop=True)
         return df
 
     def get_52week_high_low(self, stock=None):

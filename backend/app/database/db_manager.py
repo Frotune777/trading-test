@@ -1178,7 +1178,11 @@ class DatabaseManager:
                         int(row.get('CALLS_OI', 0)),
                         int(row.get('CALLS_Chng_in_OI', 0)),
                         int(row.get('CALLS_Volume', 0)),
-                        float(row.get('CALLS_IV', 0))
+                        float(row.get('CALLS_IV', 0)),
+                        float(row.get('CALLS_Delta', 0)),
+                        float(row.get('CALLS_Gamma', 0)),
+                        float(row.get('CALLS_Theta', 0)),
+                        float(row.get('CALLS_Vega', 0))
                     ))
                     
                 # PUTS
@@ -1189,14 +1193,18 @@ class DatabaseManager:
                         int(row.get('PUTS_OI', 0)),
                         int(row.get('PUTS_Chng_in_OI', 0)),
                         int(row.get('PUTS_Volume', 0)),
-                        float(row.get('PUTS_IV', 0))
+                        float(row.get('PUTS_IV', 0)),
+                        float(row.get('PUTS_Delta', 0)),
+                        float(row.get('PUTS_Gamma', 0)),
+                        float(row.get('PUTS_Theta', 0)),
+                        float(row.get('PUTS_Vega', 0))
                     ))
             
             # Bulk Insert
             cursor.executemany("""
                 INSERT OR REPLACE INTO option_chain 
-                (symbol, expiry_date, strike_price, option_type, timestamp, last_price, open_interest, oi_change, volume, iv)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (symbol, expiry_date, strike_price, option_type, timestamp, last_price, open_interest, oi_change, volume, iv, delta, gamma, theta, vega)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, records)
             
             self.commit()
@@ -1205,6 +1213,27 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error saving option chain: {e}")
             self.conn.rollback()
+
+    def get_latest_option_chain(self, symbol: str) -> List[Dict]:
+        """
+        Get the most recent option chain data for a symbol.
+        """
+        try:
+            # First find the latest timestamp
+            query_ts = "SELECT MAX(timestamp) as last_ts FROM option_chain WHERE symbol = ?"
+            res = pd.read_sql_query(query_ts, self.conn, params=(symbol.upper(),))
+            if res.empty or res.iloc[0]['last_ts'] is None:
+                return []
+            
+            last_ts = res.iloc[0]['last_ts']
+            
+            # Fetch all records for that timestamp
+            query = "SELECT * FROM option_chain WHERE symbol = ? AND timestamp = ?"
+            df = pd.read_sql_query(query, self.conn, params=(symbol.upper(), last_ts))
+            return df.to_dict(orient='records')
+        except Exception as e:
+            logger.error(f"Error fetching latest option chain: {e}")
+            return []
 
     def save_market_breadth(self, data: Dict):
         """Save market breadth."""
@@ -1300,6 +1329,55 @@ class DatabaseManager:
         self.conn.execute("VACUUM")
         logger.info("✅ Database optimized")
     
+    def save_bulk_deals(self, df: pd.DataFrame):
+        try:
+            if df is None or df.empty: return
+            cursor = self.conn.cursor()
+            records = []
+            for _, row in df.iterrows():
+                qty = int(self._parse_number(row.get('quantityTraded', 0)))
+                price = float(self._parse_number(row.get('tradePrice', 0)))
+                records.append((row.get('symbol'), row.get('date'), row.get('clientName'), row.get('transactionType'), qty, price, qty * price))
+            cursor.executemany("INSERT INTO bulk_deals (symbol, deal_date, client_name, deal_type, quantity, price, value) VALUES (?, ?, ?, ?, ?, ?, ?)", records)
+            self.commit()
+        except: self.conn.rollback()
+
+    def save_block_deals(self, df: pd.DataFrame):
+        try:
+            if df is None or df.empty: return
+            cursor = self.conn.cursor()
+            records = []
+            for _, row in df.iterrows():
+                qty = int(self._parse_number(row.get('quantityTraded', 0)))
+                price = float(self._parse_number(row.get('tradePrice', 0)))
+                records.append((row.get('symbol'), row.get('date'), row.get('clientName'), row.get('transactionType'), qty, price, qty * price))
+            cursor.executemany("INSERT INTO block_deals (symbol, deal_date, client_name, deal_type, quantity, price, value) VALUES (?, ?, ?, ?, ?, ?, ?)", records)
+            self.commit()
+        except: self.conn.rollback()
+
+    def save_insider_trading(self, df: pd.DataFrame):
+        try:
+            if df is None or df.empty: return
+            cursor = self.conn.cursor()
+            records = []
+            for _, row in df.iterrows():
+                records.append((row.get('symbol'), row.get('acquirerName'), row.get('category'), row.get('secType'), row.get('tdpAdvisers'), int(self._parse_number(row.get('noOfSecurities', 0))), float(self._parse_number(row.get('valueInRs', 0))), row.get('acqFromDate')))
+            cursor.executemany("INSERT INTO insider_trading (symbol, person_name, person_category, securities_type, transaction_type, number_of_securities, value, acquisition_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", records)
+            self.commit()
+        except: self.conn.rollback()
+
+    def save_futures_data(self, df: pd.DataFrame):
+        try:
+            if df is None or df.empty: return
+            cursor = self.conn.cursor()
+            records = []
+            ts = datetime.now()
+            for _, row in df.iterrows():
+                records.append((row.get('symbol'), row.get('expiryDate'), ts, float(row.get('underlyingValue', 0)), float(row.get('lastPrice', 0)), int(row.get('openInterest', 0)), int(row.get('changeinOpenInterest', 0)), int(row.get('totalTradedVolume', 0)), float(row.get('lastPrice', 0)) - float(row.get('underlyingValue', 0))))
+            cursor.executemany("INSERT OR REPLACE INTO futures_data (symbol, expiry_date, timestamp, underlying_value, futures_price, open_interest, oi_change, volume, basis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", records)
+            self.commit()
+        except: self.conn.rollback()
+
     def close(self):
         """Close database connection."""
         if self.conn:

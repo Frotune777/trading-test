@@ -44,13 +44,12 @@ services:
     command: celery -A app.workers.celery_app worker --loglevel=info
 
   frontend:
-    build: ./frontend
-    container_name: quad_frontend
+    build: 
+      context: ./frontend-new
+      dockerfile: Dockerfile
+    container_name: quad_frontend_new
     ports:
-      - "3003:3003"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "3000:3000"
     env_file: .env
     depends_on:
       - backend
