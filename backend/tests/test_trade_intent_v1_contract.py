@@ -156,12 +156,18 @@ def test_contract_v1_structure():
     # ========== Test 10: Narrative Quality ==========
     print("\n✓ Test 10: Verifying reasoning narrative...")
     assert len(intent.reasoning_narrative) > 0, "Narrative should not be empty"
-    # Check that placeholders are marked either in narrative OR warnings
-    has_placeholder_indicator = (
-        "[P]" in intent.reasoning_narrative or 
-        any("placeholder" in w.lower() for w in intent.degradation_warnings)
-    )
-    assert has_placeholder_indicator, "Placeholders should be marked in narrative or warnings"
+    # Check placeholder marking logic:
+    # - If placeholders exist: they MUST be marked in narrative OR warnings
+    # - If NO placeholders: no marking required (success!)
+    if intent.quality.placeholder_pillars > 0:
+        has_placeholder_indicator = (
+            "[P]" in intent.reasoning_narrative or 
+            any("placeholder" in w.lower() for w in intent.degradation_warnings)
+        )
+        assert has_placeholder_indicator, f"Placeholders ({intent.quality.placeholder_pillars}) should be marked"
+        print(f"  ✓ Placeholders marked ({intent.quality.placeholder_pillars} found)")
+    else:
+        print(f"  ✓ All {intent.quality.active_pillars}/{intent.quality.total_pillars} pillars active - no placeholders!")
     print(f"  ✓ Narrative: {intent.reasoning_narrative}")
     
     print("\n" + "=" * 70)

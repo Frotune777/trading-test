@@ -71,6 +71,7 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
           <div
             key={pillar.name}
             className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            data-testid="pillar-card"
           >
             {/* Pillar Header */}
             <div className="flex items-center justify-between mb-3">
@@ -96,7 +97,7 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
             {/* Score Display */}
             <div className="mb-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-gray-900" data-testid="pillar-score">
                   {pillar.score.toFixed(1)}
                 </span>
                 <div

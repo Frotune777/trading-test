@@ -145,10 +145,10 @@ export function ConvictionMeter({
 
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={`text-4xl font-bold ${getConvictionColor(conviction)}`}>
+            <span className={`text-4xl font-bold ${getConvictionColor(conviction)}`} data-testid="conviction-score">
               {conviction.toFixed(1)}%
             </span>
-            <span className="text-sm text-gray-500 mt-1">
+            <span className="text-sm text-gray-500 mt-1" data-testid="conviction-label">
               {getConvictionLabel(conviction)}
             </span>
           </div>
@@ -164,7 +164,7 @@ export function ConvictionMeter({
               <div className={biasStyle.color}>{biasStyle.icon}</div>
               <div>
                 <div className="text-sm text-gray-600">Directional Bias</div>
-                <div className={`text-lg font-semibold ${biasStyle.color}`}>
+                <div className={`text-lg font-semibold ${biasStyle.color}`} data-testid="conviction-bias">
                   {directionalBias}
                 </div>
               </div>
@@ -193,6 +193,7 @@ export function ConvictionMeter({
                   className={`text-lg font-semibold ${
                     isExecutionReady ? 'text-green-600' : 'text-yellow-600'
                   }`}
+                  data-testid="execution-ready-status"
                 >
                   {isExecutionReady ? 'Ready' : 'Not Ready'}
                 </div>

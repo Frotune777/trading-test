@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import data, health, recommendations, stocks, market, derivatives, insider, technicals
+from app.api.v1.endpoints import data, health, recommendations, stocks, market, derivatives, insider, technicals, reasoning
 
 api_router = APIRouter()
 api_router.include_router(data.router, prefix="/data", tags=["data"])

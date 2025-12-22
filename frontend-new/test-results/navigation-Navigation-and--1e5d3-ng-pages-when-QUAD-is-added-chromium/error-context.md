@@ -1,0 +1,76 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]:
+      - link "Antigravity" [ref=e6] [cursor=pointer]:
+        - /url: /dashboard
+        - heading "Antigravity" [level=1] [ref=e10]
+      - generic [ref=e11]:
+        - link "Dashboard" [ref=e12] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e13]:
+            - img [ref=e14]
+            - text: Dashboard
+        - link "QUAD Analytics" [ref=e19] [cursor=pointer]:
+          - /url: /quad
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - text: QUAD Analytics
+        - link "Screener" [ref=e29] [cursor=pointer]:
+          - /url: /dashboard/screener
+          - generic [ref=e30]:
+            - img [ref=e31]
+            - text: Screener
+        - link "Analysis" [ref=e33] [cursor=pointer]:
+          - /url: /dashboard/analysis
+          - generic [ref=e34]:
+            - img [ref=e35]
+            - text: Analysis
+        - link "Derivatives" [ref=e38] [cursor=pointer]:
+          - /url: /dashboard/derivatives
+          - generic [ref=e39]:
+            - img [ref=e40]
+            - text: Derivatives
+        - link "Insider" [ref=e43] [cursor=pointer]:
+          - /url: /dashboard/insider
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - text: Insider
+        - link "Settings" [ref=e48] [cursor=pointer]:
+          - /url: /dashboard/settings
+          - generic [ref=e49]:
+            - img [ref=e50]
+            - text: Settings
+    - main [ref=e53]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - img [ref=e57]
+          - textbox "Search stocks, ETFs, indices... (Press '/')" [ref=e60]
+        - button "Feedback" [ref=e62]
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - heading "Market Pulse" [level=2] [ref=e67]
+          - paragraph [ref=e68]: Live market overview and institutional activity.
+        - generic [ref=e75]:
+          - generic [ref=e77]: Trend Leaders (Volume)
+          - table [ref=e80]:
+            - rowgroup [ref=e81]:
+              - row "Symbol Price % Chg Volume" [ref=e82]:
+                - columnheader "Symbol" [ref=e83]
+                - columnheader "Price" [ref=e84]
+                - columnheader "% Chg" [ref=e85]
+                - columnheader "Volume" [ref=e86]
+            - rowgroup [ref=e87]:
+              - row "Loading market data..." [ref=e88]:
+                - cell "Loading market data..." [ref=e89]
+  - button "Open Next.js Dev Tools" [ref=e96] [cursor=pointer]:
+    - generic [ref=e99]:
+      - text: Compiling
+      - generic [ref=e100]:
+        - generic [ref=e101]: .
+        - generic [ref=e102]: .
+        - generic [ref=e103]: .
+  - alert [ref=e104]
+```

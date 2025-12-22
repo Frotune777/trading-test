@@ -12,7 +12,7 @@ sys.path.insert(0, str(backend_path))
 
 from datetime import datetime
 from app.core.market_snapshot import LiveDecisionSnapshot, SessionContext
-from app.core.trade_intent import TradeIntent, TradeAction
+from app.core.trade_intent import TradeIntent, DirectionalBias
 from app.reasoning.reasoning_engine import ReasoningEngine
 from app.reasoning.pillars.trend_pillar import TrendPillar
 from app.reasoning.pillars.momentum_pillar import MomentumPillar
