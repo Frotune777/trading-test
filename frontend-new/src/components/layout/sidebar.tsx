@@ -10,7 +10,8 @@ import {
     PieChart,
     Settings,
     TrendingUp,
-    Search
+    Search,
+    Brain
 } from "lucide-react"
 
 const routes = [
@@ -19,6 +20,12 @@ const routes = [
         icon: LayoutDashboard,
         href: "/dashboard",
         color: "text-sky-500",
+    },
+    {
+        label: "QUAD Analytics",
+        icon: Brain,
+        href: "/quad",
+        color: "text-purple-500",
     },
     {
         label: "Screener",
