@@ -78,7 +78,7 @@ class ReasoningEngine:
         
         for pillar_name, pillar in self.pillars.items():
             try:
-                score, bias = pillar.analyze(snapshot, context)
+                score, bias, metrics = pillar.analyze(snapshot, context)
                 scores[pillar_name] = score
                 biases[pillar_name] = bias
                 
@@ -88,7 +88,8 @@ class ReasoningEngine:
                     score=score,
                     bias=bias,
                     is_placeholder=(pillar_name in self.placeholder_pillars),
-                    weight_applied=self.weights[pillar_name]
+                    weight_applied=self.weights[pillar_name],
+                    metrics=metrics
                 ))
                 
                 logger.debug(f"{pillar_name}: score={score}, bias={bias}")
@@ -104,16 +105,21 @@ class ReasoningEngine:
                     score=50.0,
                     bias="NEUTRAL",
                     is_placeholder=True,  # Failed = placeholder behavior
-                    weight_applied=self.weights[pillar_name]
+                    weight_applied=self.weights[pillar_name],
+                    metrics={"error": str(e)}
                 ))
         
         # Step 2: Build quality metadata
+        data_age = None
+        if snapshot.timestamp:
+            data_age = int((analysis_timestamp - snapshot.timestamp).total_seconds())
+
         quality = AnalysisQuality(
             total_pillars=len(self.weights),
             active_pillars=len(self.pillars) - len(self.placeholder_pillars) - len(failed_pillars),
             placeholder_pillars=len(self.placeholder_pillars),
             failed_pillars=failed_pillars,
-            data_age_seconds=None  # TODO: Calculate from snapshot timestamp
+            data_age_seconds=data_age
         )
         
         # Step 3: Generate degradation warnings

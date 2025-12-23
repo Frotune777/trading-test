@@ -79,7 +79,8 @@ class ReasoningService:
                         'score': contrib.score,
                         'bias': contrib.bias,
                         'is_placeholder': contrib.is_placeholder,
-                        'weight': contrib.weight_applied
+                        'weight': contrib.weight_applied,
+                        'metrics': contrib.metrics
                     }
                     for contrib in intent.pillar_contributions
                 },

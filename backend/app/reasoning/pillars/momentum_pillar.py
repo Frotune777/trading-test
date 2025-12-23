@@ -20,14 +20,14 @@ class MomentumPillar(BasePillar):
         - MACD Histogram > 0: +10
         - MACD > Signal: +10
         
-        Returns score 0-100 and bias.
+        Returns score 0-100 and bias and metrics.
         """
         score = 0.0
         
         # Check if momentum indicators are available
         if snapshot.rsi is None:
             # No momentum data, return neutral
-            return 50.0, "NEUTRAL"
+            return 50.0, "NEUTRAL", {}
         
         # 1. RSI Scoring (20 points)
         rsi_score = 0
@@ -65,4 +65,11 @@ class MomentumPillar(BasePillar):
         else:
             bias = "NEUTRAL"
         
-        return self._validate_score(normalized_score), bias
+        metrics = {
+            "RSI": round(snapshot.rsi, 2) if snapshot.rsi else "N/A",
+            "MACD": round(snapshot.macd, 2) if snapshot.macd else "N/A",
+            "MACD Hist": round(snapshot.macd_hist, 2) if snapshot.macd_hist else "N/A",
+            "MACD Signal": round(snapshot.macd_signal, 2) if snapshot.macd_signal else "N/A"
+        }
+
+        return self._validate_score(normalized_score), bias, metrics

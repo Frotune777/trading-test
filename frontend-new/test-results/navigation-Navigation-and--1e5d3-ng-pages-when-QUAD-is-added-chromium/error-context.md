@@ -65,12 +65,18 @@
             - rowgroup [ref=e87]:
               - row "Loading market data..." [ref=e88]:
                 - cell "Loading market data..." [ref=e89]
-  - button "Open Next.js Dev Tools" [ref=e96] [cursor=pointer]:
-    - generic [ref=e99]:
-      - text: Compiling
-      - generic [ref=e100]:
-        - generic [ref=e101]: .
-        - generic [ref=e102]: .
-        - generic [ref=e103]: .
-  - alert [ref=e104]
+  - generic [ref=e95] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e96]:
+      - img [ref=e97]
+    - generic [ref=e100]:
+      - button "Open issues overlay" [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: "2"
+          - generic [ref=e104]: "3"
+        - generic [ref=e105]:
+          - text: Issue
+          - generic [ref=e106]: s
+      - button "Collapse issues badge" [ref=e107]:
+        - img [ref=e108]
+  - alert [ref=e110]
 ```

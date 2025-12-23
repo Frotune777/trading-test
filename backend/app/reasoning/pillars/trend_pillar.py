@@ -18,14 +18,14 @@ class TrendPillar(BasePillar):
         - Price > SMA50: +10
         - Weekly SMA confirmation: +30
         
-        Returns score 0-100 and bias.
+        Returns score 0-100 and bias and metrics.
         """
         score = 0.0
         
         # Check if technical indicators are available
         if not snapshot.sma_50 or not snapshot.sma_200:
             # No technical data, return neutral
-            return 50.0, "NEUTRAL"
+            return 50.0, "NEUTRAL", {}
         
         # 1. Daily Trend (30 points)
         daily_score = 0
@@ -59,4 +59,11 @@ class TrendPillar(BasePillar):
         else:
             bias = "NEUTRAL"
         
-        return self._validate_score(normalized_score), bias
+        metrics = {
+            "LTP": round(snapshot.ltp, 2),
+            "SMA 50": round(snapshot.sma_50, 2) if snapshot.sma_50 else "N/A",
+            "SMA 200": round(snapshot.sma_200, 2) if snapshot.sma_200 else "N/A",
+            "Weekly SMA": round(snapshot.sma_20_weekly, 2) if snapshot.sma_20_weekly else "N/A"
+        }
+
+        return self._validate_score(normalized_score), bias, metrics

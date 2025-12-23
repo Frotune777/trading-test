@@ -70,7 +70,7 @@ export function Sidebar() {
                         <div className="absolute inset-2 bg-blue-500 rounded-md" />
                     </div>
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                        Antigravity
+                        Fortune Trading
                     </h1>
                 </Link>
                 <div className="space-y-1">

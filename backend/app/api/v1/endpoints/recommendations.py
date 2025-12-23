@@ -3,6 +3,13 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from ....services.recommendation_service import RecommendationService
+from app.services.reasoning_service import ReasoningService
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Initialize reasoning service (singleton)
+reasoning_service = ReasoningService()
 
 router = APIRouter()
 
@@ -47,3 +54,32 @@ def get_recommendations(
         return recommendations
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{symbol}/reasoning", response_model=dict)
+async def get_reasoning(symbol: str):
+    """
+    Get QUAD reasoning analysis for a symbol.
+    """
+    if not symbol or len(symbol) < 2:
+        raise HTTPException(status_code=400, detail="Invalid symbol")
+    
+    try:
+        logger.info(f"Fetching QUAD reasoning for {symbol}")
+        result = reasoning_service.analyze_symbol(symbol.upper())
+        
+        if 'error' in result:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Analysis failed: {result['error']}"
+            )
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in reasoning endpoint for {symbol}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )

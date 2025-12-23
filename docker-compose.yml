@@ -49,7 +49,7 @@ services:
       dockerfile: Dockerfile
     container_name: quad_frontend_new
     ports:
-      - "3000:3000"
+      - "3010:3000"
     env_file: .env
     depends_on:
       - backend

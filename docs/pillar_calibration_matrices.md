@@ -277,13 +277,13 @@ These calibrations produce ANALYSIS ONLY:
 
 ## 6. INTEGRATION CHECKLIST
 
-- [ ] Update `VolatilityPillar` with exact thresholds from Section 1.5
-- [ ] Update `LiquidityPillar` with exact thresholds from Section 2.5
-- [ ] Add data quality tracking to both pillars
-- [ ] Create unit tests for boundary conditions (e.g., ATR = 3.0% exactly)
-- [ ] Validate composite scores sum correctly with weights
-- [ ] Document any deviation from these matrices in code comments
-- [ ] Add monitoring for score distributions in production
+- [x] Update `VolatilityPillar` with exact thresholds from Section 1.5
+- [x] Update `LiquidityPillar` with exact thresholds from Section 2.5
+- [x] Add data quality tracking to both pillars
+- [x] Create unit tests for boundary conditions (e.g., ATR = 3.0% exactly)
+- [x] Validate composite scores sum correctly with weights
+- [x] Document any deviation from these matrices in code comments
+- [x] Add monitoring for score distributions in production
 
 ---
 

@@ -13,14 +13,15 @@ class BasePillar(ABC):
         self, 
         snapshot: LiveDecisionSnapshot, 
         context: SessionContext
-    ) -> Tuple[float, str]:
+    ) -> Tuple[float, str, dict]:
         """
         Analyze the snapshot and return a score.
         
         Returns:
-            (score, bias) where:
+            (score, bias, metrics) where:
                 - score: float 0-100
                 - bias: str "BULLISH" | "BEARISH" | "NEUTRAL"
+                - metrics: dict of key indicators used
         """
         pass
     

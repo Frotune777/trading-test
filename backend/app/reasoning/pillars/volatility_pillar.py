@@ -20,7 +20,7 @@ class VolatilityPillar(BasePillar):
         Composite: (ATR × 0.40) + (BB × 0.30) + (VIX × 0.30)
         
         Returns:
-            (score: float, bias: str) where score ∈ [0,100]
+            (score: float, bias: str, metrics: dict) where score ∈ [0,100]
         """
         # Track data quality
         has_atr = snapshot.atr_pct is not None
@@ -29,7 +29,7 @@ class VolatilityPillar(BasePillar):
         
         # Early return if no data at all
         if not (has_atr or has_bb or has_vix):
-            return 50.0, "NEUTRAL"
+            return 50.0, "NEUTRAL", {}
         
         # Component scores using calibration matrix
         atr_score = self._score_atr(snapshot.atr_pct) if has_atr else None
@@ -61,7 +61,13 @@ class VolatilityPillar(BasePillar):
             context.vix_level if has_vix else None
         )
         
-        return self._validate_score(score), bias
+        metrics = {
+            "ATR %": round(snapshot.atr_pct, 2) if has_atr else "N/A",
+            "BB Width %": round(snapshot.bb_width, 2) if has_bb else "N/A",
+            "India VIX": round(context.vix_level, 2) if has_vix else "N/A"
+        }
+        
+        return self._validate_score(score), bias, metrics
     
     def _score_atr(self, atr_pct: float) -> float:
         """

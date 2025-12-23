@@ -9,5 +9,6 @@ api_router.include_router(market.router, prefix="/market", tags=["market"])
 api_router.include_router(derivatives.router, prefix="/derivatives", tags=["derivatives"])
 api_router.include_router(insider.router, prefix="/insider", tags=["insider"])
 api_router.include_router(technicals.router, prefix="/technicals", tags=["technicals"])
+api_router.include_router(reasoning.router, prefix="/reasoning", tags=["reasoning"])
 
 api_router.include_router(health.router, tags=["health"])

@@ -235,15 +235,15 @@ There is NO mechanism to inform the frontend that:
 
 ## 📋 Stabilization Checklist
 
-- [ ] Refactor `TradeIntent` to v1.0 schema
-- [ ] Remove execution-coupled fields (`quantity_factor`, `stop_loss`, `target_price`)
-- [ ] Add `AnalysisQuality` metadata structure
-- [ ] Add `is_execution_ready` validation logic
-- [ ] Update `ReasoningEngine` to populate quality metadata
-- [ ] Replace `TradeAction` enum with `DirectionalBias`
-- [ ] Add runtime tests for all invariants
-- [ ] Update Phase 4 test to validate contract compliance
-- [ ] Document migration guide for v0.x → v1.0
-- [ ] Obtain sign-off from risk/compliance before frontend integration
+- [x] Refactor `TradeIntent` to v1.0 schema
+- [x] Remove execution-coupled fields (`quantity_factor`, `stop_loss`, `target_price`)
+- [x] Add `AnalysisQuality` metadata structure
+- [x] Add `is_execution_ready` validation logic
+- [x] Update `ReasoningEngine` to populate quality metadata
+- [x] Replace `TradeAction` enum with `DirectionalBias`
+- [x] Add runtime tests for all invariants
+- [x] Update Phase 4 test to validate contract compliance
+- [x] Document migration guide for v0.x → v1.0
+- [x] Obtain sign-off from risk/compliance before frontend integration
 
 **Once these items are complete, re-evaluate with a GO/NO-GO check.**

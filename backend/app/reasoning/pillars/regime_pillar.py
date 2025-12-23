@@ -43,4 +43,9 @@ class RegimePillar(BasePillar):
                 if regime in ["BULLISH", "BEARISH"]:
                     score += 5  # Increase trend confidence
         
-        return self._validate_score(score), bias
+        metrics = {
+            "Regime": regime,
+            "Market VIX": round(context.vix_level, 2) if context.vix_level else "N/A"
+        }
+
+        return self._validate_score(score), bias, metrics

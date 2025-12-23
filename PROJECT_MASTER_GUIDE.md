@@ -1,88 +1,89 @@
 # 📘 Project Master Guide & Developer Instructions
 
-> **CRITICAL**: This document is the **Single Source of Truth** for the project. Read this before writing any code.
+> **CRITICAL**: This document is the **Single Source of Truth** for the project. Read this before writing any code. For a deeper dive, refer to the [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md).
+
+---
 
 ## 1. Project Overview
-**Name**: Portfolio-Grade Stock Analysis SaaS
-**Goal**: Transform a Python-script-based trading tool into a high-performance, interactive SaaS platform providing institutional-grade data (Derivatives, Insider, Technicals) to retail users.
+**Name**: Fortune Trading QUAD SaaS  
+**Goal**: Transform legacy stock analysis scripts into a high-performance, interactive SaaS platform providing institutional-grade QUAD (Quantitative, Underlying, Analysis, Derivatives) reasoning to retail traders.
+
+### Key Technical Outcomes:
+- **Unified Reasoning Engine**: 6 Pillars of analysis outputting a static `TradeIntent v1.0` contract.
+- **Async Architecture**: FastAPI backend capable of handling multiple market data streams concurrently.
+- **Premium UX**: Next.js 14 based dashboard with high-fidelity charts and glassmorphism design.
 
 ---
 
 ## 2. Architecture Stack
 | Layer | Technology | Details |
-|-------|------------|---------|
+| :--- | :--- | :--- |
 | **Frontend** | **Next.js 14** | App Router, Server Components, TypeScript. |
-| **Styling** | **TailwindCSS** | Utility-first, Custom Design System. |
-| **UI Library** | **Shadcn/UI** | Radix-based, Accessible, Professional components. |
-| **Charts** | **Recharts** | Responsive, declarative charts. |
-| **Backend** | **FastAPI** | High-performance Async Python REST API. |
-| **Database** | **SQLite** | Local persistence for User Watchlists & Snapshots. |
-| **Data Sources**| **Hybrid** | `NSEMasterData` (Charting), `NseUtils` (Live), `Screener` (Fundamentals). |
+| **Styling** | **TailwindCSS 4** | Themeable CSS-first utility styles. |
+| **UI Library** | **Shadcn/UI** | Accessible primitives based on Radix UI. |
+| **Charts** | **Recharts** | Declarative, SVG-based responsive charting. |
+| **Backend** | **FastAPI** | High-performance Async Python API with Pydantic v2. |
+| **Database** | **PostgreSQL** | Relational data with PostGIS extensions. |
+| **Data Sources**| **Hybrid** | NSEMasterData, NseUtils, Screener, Yahoo Finance. |
 
 ---
 
 ## 3. Backend API Reference (Existing)
-The backend has been expanded with 4 critical routers. **Do not hallucinate new endpoints.** Use these:
+*Do not hallucinate new endpoints. Use These existing routers:*
 
 ### 🟢 Market Data (`/market`)
-- `GET /market/breadth`: Advance/Decline Ratio.
-- `GET /market/activity/volume`: Most Active by Volume.
-- `GET /market/activity/value`: Most Active by Value.
-- `GET /market/indices`: Live data for Nifty 50, Bank Nifty, etc.
+- `GET /market/breadth`: Advance/Decline Ratio snapshots.
+- `GET /market/activity/volume`: Market leaders by volume.
+- `GET /market/indices`: Live global and domestic major indices.
 
 ### 🔴 Derivatives (`/derivatives`)
-- `GET /derivatives/option-chain/{symbol}?indices=true`: Full Option Chain.
-- `GET /derivatives/futures/{symbol}`: Futures Prices & OI.
-- `GET /derivatives/pcr/{symbol}`: Put-Call Ratio (calculated).
+- `GET /derivatives/option-chain/{symbol}`: Full nested option chain data.
+- `GET /derivatives/futures/{symbol}`: Futures price and Open Interest.
+- `GET /derivatives/pcr/{symbol}`: Put-Call Ratio implementation.
 
 ### 🔵 Technicals (`/technicals`)
-- `GET /technicals/intraday/{symbol}?interval=5m`: Intraday OHLCV for charts.
-- `GET /technicals/indicators/{symbol}`: 50+ Indicators (RSI, MACD, BB) + Stats.
+- `GET /technicals/indicators/{symbol}`: 50+ indicators (RSI, MACD, etc.).
+- `GET /technicals/intraday/{symbol}`: Chart-ready OHLCV data.
 
 ### 🟣 Insider & Sentinel (`/insider`)
-- `GET /insider/trades`: Insider Trading (SAST/Promoters).
-- `GET /insider/bulk-deals`: Large institutional deals.
-- `GET /insider/short-selling`: Daily short selling reports.
+- `GET /insider/trades`: Insider Trading reports from NSE.
+- `GET /insider/bulk-deals`: Significant institutional bulk deals.
+- `GET /insider/short-selling`: Reported daily short-selling metrics.
 
 ---
 
 ## 4. Frontend Design Guidelines
 **Aesthetics**: "Dark Node", "Glassmorphism", "Premium Fintech".
-- **Backgrounds**: Deep slate/zinc colors (e.g., `bg-slate-950`).
-- **Cards**: Subtle borders, slight translucency (`bg-slate-900/50 backdrop-blur`).
-- **Typography**: Inter or Geist Sans. Clean, readable, professional.
-- **Interactivity**: Hover effects on rows, instantaneous chart tooltips.
 
-**Component Rules**:
-- Use **Shadcn/UI** for all primitives (Buttons, Inputs, Dialogs, Tables).
-- Do not build custom dropdowns/modals from scratch; wrap Shadcn components.
-- Use **Lucide React** for icons.
+- **Palette**: Deep slate backgrounds (`oklch(0.145 0 0)`) with neutral accents.
+- **Surfaces**: Cards use `bg-slate-900/50` with `backdrop-blur-md` and `border-slate-800`.
+- **Interactions**: Subtle lift on hover, micro-animations for data arrival.
+- **Components**: Standardize on **Shadcn/UI**; use **Lucide React** for icons.
 
 ---
 
 ## 5. Development Rules (Strict)
-1.  **No Hallucinations**:
-    - Do not invent API methods. Check `nse_utils.py` or the Backend Plan first.
-    - If a data point seems missing, **Check the API first** (e.g., use `/technicals/indicators` for RSI, don't calculate it in JS).
 
-2.  **Verify Signatures**:
-    - Before calling a backend function, verify its arguments in the python file.
-    - Example: `get_insider_trading` takes `from_date` (str), not datetime object.
-
-3.  **Step-by-Step Execution**:
-    - **Plan**: Update `MIGRATION_TASKS.md`.
-    - **Code**: Implement the feature.
-    - **Verify**: Check against the Master Guide.
-
-4.  **Directory Structure**:
-    - `backend/`: FastAPI Application.
-    - `frontend/`: (Legacy) Streamlit App.
-    - `frontend-new/`: **(Target)** Next.js Application.
+1.  **Direct Correlation**: Backend models (Pydantic) must map 1:1 to Frontend interfaces.
+2.  **No Hallucinations**: Never invent API endpoints. Check `app/api/v1/router.py`.
+3.  **Step-by-Step**: Plan changes in `MIGRATION_TASKS.md` or a task artifact before coding.
+4.  **Verification**: Every new feature must be verified against the `DEVELOPMENT_GUIDE.md` standards.
 
 ---
 
 ## 6. Implementation Status
-- [x] Backend API Expansion (Market, Derivatives, Insider, Technicals).
-- [ ] Frontend Setup (Next.js Initialization).
-- [ ] UI Component Implementation.
-- [ ] Integration.
+- [x] **Phase 1**: Infrastructure & Dockerization.
+- [x] **Phase 2**: Backend API Expansion (Market, Derivatives, Insider, Technicals).
+- [x] **Phase 3**: QUAD Reasoning Engine Core.
+- [x] **Phase 4**: Next.js 14 Frontend Setup & Integration.
+- [/] **Phase 5**: Advanced Sentinel Analytics (In Progress).
+
+---
+
+## 7. Future Enhancements
+- Real-time WebSockets for breakout alerts.
+- Advanced AI-driven market psychological summaries.
+- Customized user-defined technical strategy builder.
+
+---
+*For full API schemas and design tokens, see the [docs/](./docs/) directory.*

@@ -17,7 +17,7 @@
       - img [ref=e15]
       - generic [ref=e17]:
         - paragraph [ref=e18]: Error
-        - paragraph [ref=e19]: "API error: 404 Not Found"
+        - paragraph [ref=e19]: Failed to fetch
   - generic [ref=e24] [cursor=pointer]:
     - button "Open Next.js Dev Tools" [ref=e25]:
       - img [ref=e26]
