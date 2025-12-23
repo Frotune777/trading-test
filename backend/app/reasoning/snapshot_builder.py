@@ -228,8 +228,105 @@ class SnapshotBuilder:
             gamma=gamma,
             theta=theta,
             vega=vega,
-            oi_change=oi_change
+            oi_change=oi_change,
+            # Sentinel Data Implementation
+            **self._fetch_sentinel_data(symbol)
         )
+    
+    def _fetch_sentinel_data(self, symbol: str) -> dict:
+        """
+        Fetch and aggregate insider/institutional data for the symbol.
+        Last 30 days.
+        """
+        sentinel = {
+            "insider_net_value": 0.0,
+            "insider_buy_count": 0,
+            "bulk_deal_net_qty": 0,
+            "block_deal_net_qty": 0,
+            "short_selling_pct": None
+        }
+        
+        try:
+            # 1. Insider Trades
+            insider_df = self.nse_derivatives.nse_utils.get_insider_trading()
+            if insider_df is not None and not insider_df.empty:
+                # Normalize symbol column (case-insensitive, strip whitespace)
+                if 'symbol' in insider_df.columns:
+                    symbol_trades = insider_df[insider_df['symbol'].str.strip() == symbol]
+                elif 'Symbol' in insider_df.columns:
+                    symbol_trades = insider_df[insider_df['Symbol'].str.strip() == symbol]
+                else:
+                    symbol_trades = pd.DataFrame()
+
+                if not symbol_trades.empty:
+                    for _, trade in symbol_trades.iterrows():
+                        # secVal is the value column in this API version
+                        val = float(trade.get('secVal', trade.get('valueInRs', 0)))
+                        
+                        # Check acqMode and tdpTransactionType
+                        mode = str(trade.get('acqMode', '')).upper()
+                        t_type = str(trade.get('tdpTransactionType', '')).upper()
+                        
+                        if any(x in mode or x in t_type for x in ["ACQUISITION", "BUY", "PURCHASE"]):
+                            sentinel["insider_net_value"] += val
+                            sentinel["insider_buy_count"] += 1
+                        elif any(x in mode or x in t_type for x in ["DISPOSAL", "SELL", "SALE"]):
+                            sentinel["insider_net_value"] -= val
+            
+            # 2. Bulk Deals
+            bulk_df = self.nse_derivatives.nse_utils.get_bulk_deals()
+            if bulk_df is not None and not bulk_df.empty:
+                # Clean column names (strip whitespace and special chars)
+                bulk_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in bulk_df.columns]
+                
+                if 'Symbol' in bulk_df.columns:
+                    symbol_bulk = bulk_df[bulk_df['Symbol'].str.strip() == symbol]
+                    if not symbol_bulk.empty:
+                        for _, deal in symbol_bulk.iterrows():
+                            # Quantity Traded, Buy / Sell
+                            qty_str = str(deal.get('Quantity Traded', '0')).replace(',', '')
+                            qty = int(qty_str) if qty_str.isdigit() else 0
+                            
+                            d_type = str(deal.get('Buy / Sell', '')).strip().upper()
+                            if d_type == "BUY":
+                                sentinel["bulk_deal_net_qty"] += qty
+                            else:
+                                sentinel["bulk_deal_net_qty"] -= qty
+                            
+            # 3. Block Deals
+            block_df = self.nse_derivatives.nse_utils.get_block_deals()
+            if block_df is not None and not block_df.empty:
+                block_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in block_df.columns]
+                
+                if 'Symbol' in block_df.columns:
+                    symbol_block = block_df[block_df['Symbol'].str.strip() == symbol]
+                    if not symbol_block.empty:
+                        for _, deal in symbol_block.iterrows():
+                            qty_str = str(deal.get('Quantity Traded', '0')).replace(',', '')
+                            qty = int(qty_str) if qty_str.isdigit() else 0
+                            
+                            d_type = str(deal.get('Buy / Sell', '')).strip().upper()
+                            if d_type == "BUY":
+                                sentinel["block_deal_net_qty"] += qty
+                            else:
+                                sentinel["block_deal_net_qty"] -= qty
+                            
+            # 4. Short Selling
+            short_df = self.nse_derivatives.nse_utils.get_short_selling()
+            if short_df is not None and not short_df.empty:
+                short_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in short_df.columns]
+                
+                if 'Symbol' in short_df.columns:
+                    symbol_short = short_df[short_df['Symbol'].str.strip() == symbol]
+                    if not symbol_short.empty:
+                        # Percentage of Short Quantity
+                        sentinel["short_selling_pct"] = float(str(symbol_short.iloc[-1].get('Percentage of Short Quantity', 0)).replace(',', ''))
+                    
+        except Exception as e:
+            # Log but continue
+            pass
+            
+        return sentinel
     
     def build_session_context(
         self,

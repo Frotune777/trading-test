@@ -25,12 +25,8 @@ class SentimentPillar(BasePillar):
         has_oi = snapshot.oi_change is not None
         
         if not has_greeks and not has_oi:
-            # Return valid structure even if data missing
-            return score, bias, {
-                "OI Change": "N/A",
-                "Delta": "N/A",
-                "Gamma": "N/A"
-            }
+            # We continue anyway to check for Sentinel data
+            pass
         
         # 1. OI Change Analysis (40 points)
         if has_oi and snapshot.oi_change:
@@ -73,10 +69,45 @@ class SentimentPillar(BasePillar):
                 # Pull score toward neutral
                 score = score * 0.9 + 50 * 0.1
         
+        # 4. SENTNEL SIGNALS (NEW: Advanced Pattern Detection)
+        sentinel_signals = []
+        
+        # A. Promoter Buyback Cluster (Aggressive Bullish)
+        if snapshot.insider_buy_count and snapshot.insider_buy_count >= 3:
+            # Multiple buys in 30 days = High conviction from insiders
+            score += 25
+            sentinel_signals.append("Promoter Buyback Cluster")
+            bias = "BULLISH"
+        elif snapshot.insider_net_value and snapshot.insider_net_value > 10000000: # > 1 Cr
+            score += 15
+            sentinel_signals.append("Significant Insider Buying")
+            bias = "BULLISH" if bias == "NEUTRAL" else bias
+            
+        # B. Institutional Reverse (Bulk/Block Deals)
+        total_deals = (snapshot.bulk_deal_net_qty or 0) + (snapshot.block_deal_net_qty or 0)
+        if total_deals > (snapshot.volume * 0.05): # Deals > 5% of day's volume
+            score += 20
+            sentinel_signals.append("Institutional Accumulation")
+            bias = "BULLISH"
+        elif total_deals < -(snapshot.volume * 0.05):
+            score -= 20
+            sentinel_signals.append("Institutional Distribution")
+            bias = "BEARISH"
+            
+        # C. Delivery-OI-Sentinel Divergence (The "Holy Grail" Setup)
+        # High OI activity + Price holding + Sentinel buying
+        if (snapshot.oi_change or 0) > 0 and snapshot.ltp >= snapshot.prev_close:
+            if "Promoter Buyback Cluster" in sentinel_signals or "Institutional Accumulation" in sentinel_signals:
+                score += 15 # Stacked conviction
+                sentinel_signals.append("SENTINEL-OI CONVERGENCE")
+
         metrics = {
             "OI Change": snapshot.oi_change if has_oi else "N/A",
             "Delta": round(snapshot.delta, 4) if has_greeks else "N/A",
-            "Gamma": round(snapshot.gamma, 4) if has_greeks else "N/A"
+            "Gamma": round(snapshot.gamma, 4) if has_greeks else "N/A",
+            "Insider Buys": snapshot.insider_buy_count or 0,
+            "Net Insider Value": f"₹{snapshot.insider_net_value/1e7:.2f}Cr" if snapshot.insider_net_value else "0",
+            "Sentinel Signals": ", ".join(sentinel_signals) if sentinel_signals else "None"
         }
 
         return self._validate_score(score), bias, metrics

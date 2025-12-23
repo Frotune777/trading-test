@@ -1,155 +1,82 @@
-# Trading System - Setup Guide
+# Fortune Trading Platform: Setup Guide
 
-## Quick Start
+Welcome to the **Fortune Trading Platform**. This guide covers setting up the development environment using Docker (recommended) or manual installation.
 
-### 1. Activate Virtual Environment
+---
+
+## 🏗️ Recommended: Docker Setup
+
+The easiest way to run the entire stack is using Docker Compose.
+
+### 1. Prerequisites
+- Docker & Docker Compose
+- `.env` file (copy from `.env.example`)
+
+### 2. Launching the Stack
+Run the provided script to start the Backend, Frontend, Redis, and Database:
 
 ```bash
-cd /home/zohra/Documents/Stock_analysis/trading-test
-source venv/bin/activate
+./start_docker.sh
 ```
 
-You should see `(venv)` in your terminal prompt.
+- **Frontend**: `http://localhost:3010`
+- **Backend API**: `http://localhost:8000/api/v1`
+- **Interactive API Docs**: `http://localhost:8000/docs`
+
+### 3. Stopping the Stack
+```bash
+./stop_docker.sh
+```
+
+---
+
+## 🐍 Manual Backend Setup (Local)
+
+If you need to run the backend outside of Docker:
+
+### 1. Create & Activate Virtual Environment
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
 ### 2. Install Dependencies
-
 ```bash
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
-> **Note**: If `TA-Lib` installation fails, you can comment it out in `requirements.txt` and install it separately later.
-
-### 3. Verify Installation
-
-Test that imports work correctly:
-
-```bash
-python3 -c "from backend.app.database.db_manager import DatabaseManager; print('✓ Database module OK')"
-python3 -c "from backend.app.data_sources.nse_complete import NSEComplete; print('✓ Data sources OK')"
-python3 -c "from backend.app.services.data_aggregator import HybridAggregator; print('✓ Services OK')"
-```
-
-### 4. Run the Application
-
-#### Option A: Streamlit Dashboard
-```bash
-streamlit run frontend/app.py
-```
-
-#### Option B: FastAPI Backend
+### 3. Run FastAPI
 ```bash
 cd backend
-uvicorn app.main:app --reload
-```
-
-#### Option C: Utility Scripts
-```bash
-# Update database
-python3 scripts/update_db.py --help
-
-# Export data
-python3 scripts/export_data.py
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
 
-## Project Structure
+## ⚛️ Manual Frontend Setup (Local)
 
+### 1. Install Node Dependencies
+```bash
+cd frontend-new
+npm install
 ```
-trading-test/
-├── backend/app/          # Core logic
-│   ├── database/         # Database management
-│   ├── data_sources/     # Data fetching (NSE, Yahoo, Screener)
-│   ├── services/         # Business logic
-│   ├── ml/              # Machine learning
-│   └── core/            # Utilities (cache, rate limiter)
-├── frontend/            # Streamlit UI
-├── scripts/             # Utility scripts
-├── venv/               # Virtual environment (do not commit)
-└── requirements.txt     # Dependencies
+
+### 2. Run Development Server
+```bash
+npm run dev
 ```
+
+The frontend will start at `http://localhost:3010`.
 
 ---
 
-## Deactivating Virtual Environment
+## 🔧 Troubleshooting
 
-When you're done working:
+### Port Conflicts
+- Ensure ports `3010`, `8000`, `5432` (Postgres), and `6379` (Redis) are free.
 
-```bash
-deactivate
-```
-
----
-
-## Troubleshooting
-
-### Virtual Environment Not Found
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Permission Denied on setup_env.sh
-```bash
-chmod +x setup_env.sh
-./setup_env.sh
-```
-
-### TA-Lib Installation Issues
-If TA-Lib fails to install:
-1. Comment it out in `requirements.txt`
-2. Install system dependencies first:
-   ```bash
-   sudo apt-get install ta-lib  # Ubuntu/Debian
-   # or
-   brew install ta-lib          # macOS
-   ```
-3. Then install the Python wrapper:
-   ```bash
-   pip install TA-Lib
-   ```
-
-### Module Not Found Errors
-Make sure:
-1. Virtual environment is activated: `source venv/bin/activate`
-2. You're in the project root directory
-3. Dependencies are installed: `pip install -r requirements.txt`
+### CORS Errors
+- Verify that `BACKEND_CORS_ORIGINS` in `.env` includes `["http://localhost:3010"]`.
 
 ---
-
-## Environment Variables
-
-Create a `.env` file in the project root if needed:
-
-```bash
-# Database
-DATABASE_URL=sqlite:///stock_data.db
-
-# API Keys (if required)
-# NSE_API_KEY=your_key_here
-# YAHOO_API_KEY=your_key_here
-
-# Redis (if using)
-# REDIS_HOST=localhost
-# REDIS_PORT=6379
-```
-
----
-
-## Daily Workflow
-
-```bash
-# 1. Navigate to project
-cd /home/zohra/Documents/Stock_analysis/trading-test
-
-# 2. Activate virtual environment
-source venv/bin/activate
-
-# 3. Work on your project
-streamlit run frontend/app.py
-# or
-python3 scripts/update_db.py TCS INFY
-
-# 4. When done
-deactivate
-```
+*For development rules and architecture, see [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md).*

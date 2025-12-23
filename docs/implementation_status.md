@@ -30,5 +30,18 @@ This status board tracks the migration from the legacy Streamlit dashboard and t
 - [/] Chart responsiveness and performance.
 - [x] Final production documentation (Completed).
 
+## 🏗️ Architecture Evolution
+Historically, this project was a collection of standalone Python scripts and a Streamlit dashboard. The current state represents a complete overhaul:
+- **Decoupled API**: Moved from direct library imports to a strictly typed REST API.
+- **QUAD Implementation**: Replaced basic scoring with a deterministic 6-pillar reasoning engine.
+- **Frontend Modernization**: Migrated from Streamlit (limited interactivity) to Next.js 14 (high performance).
+
+### Resolved Data Gaps
+- [x] **Derivatives**: Full option chain visualizations now implemented.
+- [x] **Insider Activity**: Comprehensive tracking of institutional and promoter trades.
+- [x] **Interactive Charts**: Intraday 1-minute data now accessible via Recharts.
+- [x] **Technical Indicators**: 50+ TA-Lib indicators accessible via dedicated endpoints.
+
+---
 ## Migration Summary: Streamlit → Next.js
 The legacy system used Streamlit for rapid prototyping. The current development focus is migrating all "Reasoning" logic to the FastAPI backend and building highly interactive components in Next.js to replace the Streamlit UI.

@@ -58,6 +58,13 @@ class LiveDecisionSnapshot:
     # Liquidity Indicators (for Liquidity pillar)
     adosc: Optional[float] = None            # Chaikin A/D Oscillator (volume-based)
 
+    # Sentinel Data (Insider & Institutional)
+    insider_net_value: Optional[float] = None     # Net value of insider trades (Acquisition - Disposal)
+    insider_buy_count: Optional[int] = None       # Number of insider buy transactions
+    bulk_deal_net_qty: Optional[int] = None       # Net quantity of bulk deals
+    block_deal_net_qty: Optional[int] = None      # Net quantity of block deals
+    short_selling_pct: Optional[float] = None     # Recent short selling percentage
+
 @dataclass
 class SessionContext:
     """

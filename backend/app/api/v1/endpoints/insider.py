@@ -92,3 +92,46 @@ async def get_short_selling(
         return {"data": df_renamed.to_dict(orient="records")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+@router.get("/sentinel/{symbol}")
+async def get_sentinel_signals(symbol: str):
+    """
+    Get high-conviction Sentinel signals for a specific symbol.
+    Uses SnapshotBuilder and SentimentPillar logic internally.
+    """
+    try:
+        from ....reasoning.snapshot_builder import SnapshotBuilder
+        from ....reasoning.pillars.sentiment_pillar import SentimentPillar
+        from ....core.market_snapshot import SessionContext
+        from datetime import datetime
+        
+        builder = SnapshotBuilder()
+        pillar = SentimentPillar()
+        
+        # Build snapshot for sentiment analysis
+        snapshot = builder.build_snapshot(symbol.upper())
+        
+        # Simple neutral context for baseline
+        context = SessionContext(
+            timestamp=datetime.now(),
+            market_regime="NEUTRAL",
+            vix_level=15.0
+        )
+        
+        # Run analysis (returns score, bias, metrics)
+        score, bias, metrics = pillar.analyze(snapshot, context)
+        
+        return {
+            "symbol": symbol.upper(),
+            "sentinel_score": score,
+            "bias": bias,
+            "signals": metrics.get("Sentinel Signals", "None").split(", "),
+            "metrics": {
+                "insider_buys": metrics.get("Insider Buys"),
+                "net_insider_value": metrics.get("Net Insider Value"),
+                "bulk_deal_qty": snapshot.bulk_deal_net_qty,
+                "block_deal_qty": snapshot.block_deal_net_qty,
+                "short_selling_pct": snapshot.short_selling_pct
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
