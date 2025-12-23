@@ -25,8 +25,12 @@ class SentimentPillar(BasePillar):
         has_oi = snapshot.oi_change is not None
         
         if not has_greeks and not has_oi:
-            # No derivatives data available, return neutral
-            return score, bias
+            # Return valid structure even if data missing
+            return score, bias, {
+                "OI Change": "N/A",
+                "Delta": "N/A",
+                "Gamma": "N/A"
+            }
         
         # 1. OI Change Analysis (40 points)
         if has_oi and snapshot.oi_change:
@@ -69,4 +73,10 @@ class SentimentPillar(BasePillar):
                 # Pull score toward neutral
                 score = score * 0.9 + 50 * 0.1
         
-        return self._validate_score(score), bias
+        metrics = {
+            "OI Change": snapshot.oi_change if has_oi else "N/A",
+            "Delta": round(snapshot.delta, 4) if has_greeks else "N/A",
+            "Gamma": round(snapshot.gamma, 4) if has_greeks else "N/A"
+        }
+
+        return self._validate_score(score), bias, metrics

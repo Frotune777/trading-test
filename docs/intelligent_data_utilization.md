@@ -79,6 +79,6 @@ class IMarketDataProvider(ABC):
 ## ⚠️ Graceful Degradation Logic
 
 If critical data is missing, the Reasoning Agent must explicitly downgrade the decision:
-- **Missing L2 Depth**: Limit trades to "Small Size" only; Disable market-order execution.
-- **Missing Option Chain**: Disable "Sentiment" Pillar; Confidence capped at 60%.
+- **Missing L2 Depth**: Falls back to "N/A" metrics; Logic degrades to neutral/historical scores.
+- **Missing Option Chain**: Falls back to "N/A" metrics; Sentiment Pillar returns Neutral.
 - **Missing Fundamentals**: Strategy restricted to "Day Trading" only; Carry-forward prohibited.

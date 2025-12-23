@@ -22,7 +22,8 @@ class LiquidityPillar(BasePillar):
         - With ADOSC: (Spread × 0.50) + (Depth × 0.30) + (Volume × 0.20) + ADOSC_Adjustment
         
         Returns:
-            (score: float, bias: str) where score ∈ [0,100]
+        Returns:
+            (score: float, bias: str, metrics: dict) where score ∈ [0,100]
         """
         # Track data availability
         has_spread = (snapshot.bid_price is not None and 
@@ -36,7 +37,14 @@ class LiquidityPillar(BasePillar):
         
         # Early return if no data
         if not (has_spread or has_depth):
-            return 50.0, "NEUTRAL"
+             # Return valid structure even if data missing (User Experience improvement)
+             return 50.0, "NEUTRAL", {
+                 "Spread %": "N/A",
+                 "Bid Qty": "N/A",
+                 "Ask Qty": "N/A", 
+                 "Depth Ratio": "N/A",
+                 "ADOSC": round(snapshot.adosc, 2) if has_adosc else "N/A"
+             }
         
         # Component scores using calibration matrix
         spread_score = self._score_spread(snapshot.spread_pct) if has_spread else None
@@ -99,7 +107,15 @@ class LiquidityPillar(BasePillar):
             depth_bias
         )
         
-        return self._validate_score(score), bias
+        metrics = {
+            "Spread %": round(snapshot.spread_pct, 4) if has_spread else "N/A",
+            "Bid Qty": snapshot.bid_qty if has_depth else "N/A",
+            "Ask Qty": snapshot.ask_qty if has_depth else "N/A",
+            "Depth Ratio": round(snapshot.bid_qty / snapshot.ask_qty if has_depth and snapshot.ask_qty > 0 else 0, 2) if has_depth else "N/A",
+             "ADOSC": round(snapshot.adosc, 2) if has_adosc else "N/A"
+        }
+
+        return self._validate_score(score), bias, metrics
     
     def _score_spread(self, spread_pct: float) -> float:
         """

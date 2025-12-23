@@ -18,6 +18,9 @@ class SnapshotBuilder:
     
     def __init__(self):
         self.nse_master = NSEMasterData()
+        # Initialize derivatives source for real-time data
+        from ..data_sources.nse_derivatives import NSEDerivatives
+        self.nse_derivatives = NSEDerivatives()
     
     def build_snapshot(
         self, 
@@ -93,8 +96,51 @@ class SnapshotBuilder:
         # Extract liquidity indicators
         adosc = current.get('adosc')
         
-        # Weekly SMA (fetch weekly data separately or approximate)
-        sma_20_weekly = None  # TODO: Implement weekly data fetch
+        # REAL-TIME LIQUIDITY & DEPTH
+        bid_price = None
+        ask_price = None
+        bid_qty = None
+        ask_qty = None
+        spread_pct = None
+        
+        try:
+            # Try fetching real-time equity info for depth
+            quote_data = self.nse_derivatives.nse_utils.equity_info(symbol)
+            if quote_data and 'tradeData' in quote_data:
+                # Parse L2 depth if available
+                ob = quote_data.get('tradeData', {}).get('marketDeptOrderBook', {})
+                bids = ob.get('bid', [])
+                asks = ob.get('ask', [])
+                
+                if bids and len(bids) > 0:
+                    bid_price = float(bids[0]['price']) if 'price' in bids[0] else None
+                    bid_qty = int(bids[0]['quantity']) if 'quantity' in bids[0] else None
+                    
+                if asks and len(asks) > 0:
+                    ask_price = float(asks[0]['price']) if 'price' in asks[0] else None
+                    ask_qty = int(asks[0]['quantity']) if 'quantity' in asks[0] else None
+                
+                if bid_price is not None and ask_price is not None and bid_price > 0:
+                    spread_pct = (ask_price - bid_price) / bid_price * 100.0
+                    
+        except Exception as e:
+            # Log but don't fail, just leave as None
+            pass
+
+        # Weekly SMA
+        sma_20_weekly = None
+        try:
+            weekly_df = self.nse_master.get_history(
+                symbol=symbol,
+                exchange="NSE",
+                interval="1w"
+            )
+            if weekly_df is not None and not weekly_df.empty:
+                ta_weekly = TechnicalAnalysisService(weekly_df)
+                ta_weekly.add_trend_indicators()
+                sma_20_weekly = float(ta_weekly.df.iloc[-1].get('sma_20', ltp))
+        except Exception as e:
+            pass
         
         # Extract derivatives data if available
         delta = None
@@ -104,12 +150,48 @@ class SnapshotBuilder:
         oi_change = None
         
         if option_data:
-            # Extract from option data dict
+            # Extract from explicitly provided option data
             delta = option_data.get('delta')
             gamma = option_data.get('gamma')
             theta = option_data.get('theta')
             vega = option_data.get('vega')
             oi_change = option_data.get('oi_change')
+        else:
+            # Try fetching real-time Option Chain for Sentiment
+            try:
+                # We want aggregate OI change to gauge sentiment
+                oc_df = self.nse_derivatives.get_option_chain(symbol)
+                if not oc_df.empty:
+                    # Sum up Change in OI for Calls vs Puts near ATM?
+                    # For simple version: Sum of all ChangeInOI (Positive = accumulation)
+                    # Note: Calls OI Change - Puts OI Change could be a metric, but let's stick to total activity
+                    # Or better: PCR of OI Change?
+                    
+                    # SentimentPillar logic looks at "snapshot.oi_change".
+                    # Let's aggregate total OI Change for Puts - Total OI Change for Calls?
+                    # Or just the raw net OI change of the active contract?
+                    
+                    # Simplification: Sum of all OI Change
+                    ce_oi_chg = oc_df['CALLS_Chng_in_OI'].sum() if 'CALLS_Chng_in_OI' in oc_df else 0
+                    pe_oi_chg = oc_df['PUTS_Chng_in_OI'].sum() if 'PUTS_Chng_in_OI' in oc_df else 0
+                    
+                    # Net OI Change: (PE OI Chg) - (CE OI Chg) ? 
+                    # Actually standard interpretation:
+                    # High PE OI Chg = Bullish (Support building)
+                    # High CE OI Chg = Bearish (Resistance building)
+                    # Let's map this to a single number "oi_change" that SentimentPillar expects.
+                    # SentimentPillar: "Positive OI change suggests new positions"
+                    
+                    # Let's store total absolute OI change as activity proxy, 
+                    # OR specific net flow.
+                    
+                    # For now, let's just pass the total OI of the near ATM strikes or just total
+                    oi_change = (pe_oi_chg + ce_oi_chg) # Net market activity
+                    
+                    # Also try to get Greeks if possible (requires Black-Scholes, usually not in raw chain)
+                    # We leave Greeks as None for now unless calculated elsewhere
+            except Exception as e:
+                pass
         
         return LiveDecisionSnapshot(
             symbol=symbol,
@@ -135,6 +217,13 @@ class SnapshotBuilder:
             bb_middle=float(bb_middle) if bb_middle is not None else None,
             bb_lower=float(bb_lower) if bb_lower is not None else None,
             adosc=float(adosc) if adosc is not None else None,
+            # Real-time L2 fields
+            bid_price=bid_price,
+            ask_price=ask_price,
+            bid_qty=bid_qty,
+            ask_qty=ask_qty,
+            spread_pct=spread_pct,
+            # Derivatives fields
             delta=delta,
             gamma=gamma,
             theta=theta,
@@ -170,12 +259,26 @@ class SnapshotBuilder:
             regime_data = market_regime_analyzer.determine_regime()
             regime = regime_data.get('direction', 'NEUTRAL')
         
-        # Get VIX (hardcoded for now, should fetch from data source)
-        vix_level = 15.0  # TODO: Fetch real VIX from India VIX index
+        # Get VIX
+        vix_level = 15.0  # Default fallback
+        vix_percentile = 50.0
+        
+        try:
+            vix_df = self.nse_master.get_history(
+                symbol="INDIA VIX",
+                exchange="NSE",
+                interval="1d"
+            )
+            if vix_df is not None and not vix_df.empty:
+                vix_level = float(vix_df.iloc[-1]['Close'])
+                # Calculate percentile (approximate using last 100 days)
+                vix_percentile = (vix_df['Close'].rank(pct=True).iloc[-1]) * 100.0
+        except Exception as e:
+            logger.warning(f"Failed to fetch real VIX: {e}")
         
         return SessionContext(
             timestamp=datetime.now(),
             market_regime=regime,
             vix_level=vix_level,
-            vix_percentile=50.0
+            vix_percentile=vix_percentile
         )

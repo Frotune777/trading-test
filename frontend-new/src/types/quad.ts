@@ -9,6 +9,7 @@ export interface PillarContribution {
   bias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   is_placeholder: boolean;      // True if returning hardcoded neutral
   weight_applied: number;       // Weight used in aggregation (e.g., 0.30)
+  metrics?: Record<string, any>; // Key metrics used for calculation
 }
 
 export interface AnalysisQuality {
@@ -62,6 +63,7 @@ export interface ReasoningAPIResponse {
       bias: string;
       is_placeholder: boolean;
       weight: number;
+      metrics?: Record<string, any>;
     };
   };
   
