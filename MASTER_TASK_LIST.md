@@ -16,7 +16,7 @@
 - [ ] **3.3 Feature Engineering 2.0**: Alternative data integration (Sentiments)
 
 ## 🔵 Phase 4: Automation & Alerts
-- [ ] **4.1 Trading Bot Service**: Autonomous execution & risk control
+- [x] **4.1 Trading Bot Service**: Autonomous execution & risk control
 - [ ] **4.2 Job Scheduler (Cron)**: Daily data/ML maintenance
 - [x] **4.3 Alert Engine**: Multi-channel (Telegram/Push) notifications
 

@@ -14,7 +14,8 @@ This status board tracks the migration from the legacy Streamlit dashboard and t
 - [x] Technical Analysis Endpoints (`/technicals`).
 - [x] Insider Trading Endpoints (`/insider`).
 - [x] QUAD Reasoning Engine integration.
-- [ ] real-time alert engine (Pending).
+- [x] Real-time Alert Engine (Redis Pub/Sub).
+- [x] Account-Level Risk Engine & Guardrails.
 
 ## 🔵 Phase 3: Frontend Feature Port (75%)
 - [x] Main Dashboard with Market Pulse.
@@ -29,6 +30,7 @@ This status board tracks the migration from the legacy Streamlit dashboard and t
 - [x] Unified Dependency Management (`requirements.txt`).
 - [/] Chart responsiveness and performance.
 - [x] Final production documentation (Completed).
+- [x] Execution Safety & Price Drift Protection.
 
 ## 🏗️ Architecture Evolution
 Historically, this project was a collection of standalone Python scripts and a Streamlit dashboard. The current state represents a complete overhaul:
