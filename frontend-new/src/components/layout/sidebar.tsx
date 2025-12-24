@@ -62,14 +62,14 @@ export function Sidebar() {
     const pathname = usePathname()
 
     return (
-        <div className="space-y-4 py-4 flex flex-col h-full bg-slate-900 text-white border-r border-slate-800">
+        <div className="space-y-4 py-4 flex flex-col h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800">
             <div className="px-3 py-2 flex-1">
                 <Link href="/dashboard" className="flex items-center pl-3 mb-14">
                     <div className="relative w-8 h-8 mr-4">
                         <div className="absolute inset-0 bg-blue-600 rounded-lg opacity-20 animate-pulse" />
                         <div className="absolute inset-2 bg-blue-500 rounded-md" />
                     </div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
                         Fortune Trading
                     </h1>
                 </Link>
@@ -79,8 +79,8 @@ export function Sidebar() {
                             key={route.href}
                             href={route.href}
                             className={cn(
-                                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                                pathname === route.href ? "text-white bg-white/10" : "text-zinc-400"
+                                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition",
+                                pathname === route.href ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10" : "text-slate-600 dark:text-zinc-400"
                             )}
                         >
                             <div className="flex items-center flex-1">

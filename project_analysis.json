@@ -1,0 +1,334 @@
+{
+  "timestamp": "2025-12-24T11:23:37.440111",
+  "status": {
+    "repo_name": "trading-test",
+    "total_tasks": 24,
+    "completed": 7,
+    "in_progress": 2,
+    "pending": 15,
+    "completion_pct": 29.166666666666668,
+    "phases": {
+      "Phase 1": {
+        "total": 3,
+        "completed": 2
+      },
+      "Phase 2": {
+        "total": 6,
+        "completed": 5
+      },
+      "Phase 3": {
+        "total": 3,
+        "completed": 0
+      },
+      "Phase 4": {
+        "total": 3,
+        "completed": 0
+      },
+      "Phase 5": {
+        "total": 3,
+        "completed": 0
+      },
+      "Phase 6": {
+        "total": 3,
+        "completed": 0
+      },
+      "Phase 7": {
+        "total": 3,
+        "completed": 0
+      }
+    },
+    "critical_path": [
+      "2.6",
+      "3.1",
+      "4.1",
+      "4.2",
+      "5.1",
+      "5.2",
+      "7.3"
+    ],
+    "recommendations": [
+      "\ud83d\udea8 PRIORITY: Complete Phase 2.6 Alerts (blocks everything)",
+      "\u26a1 NEXT: ML Models (Phase 3) + OpenAlgo (Phase 5)",
+      "\ud83d\udcca CURRENT: 7/24 tasks complete (29.2%)"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "1.1",
+      "name": "Docker Infrastructure",
+      "description": "Complete Docker setup",
+      "status": "in_progress",
+      "priority": "low",
+      "phase": "Phase 1",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "1.2",
+      "name": "FastAPI Backend",
+      "description": "API routers + CORS",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 1",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "1.3",
+      "name": "Next.js Frontend",
+      "description": "Modern UI with Tailwind",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 1",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "2.1",
+      "name": "Market Data API",
+      "description": "NSE/BSE real-time",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 2",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "2.2",
+      "name": "Derivatives API",
+      "description": "Option chains",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 2",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "2.3",
+      "name": "Technicals API",
+      "description": "50+ TA-Lib",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 2",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "2.4",
+      "name": "Insider Trading API",
+      "description": "FII/DII + Promoters",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 2",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "2.5",
+      "name": "QUAD Engine",
+      "description": "6-pillar reasoning",
+      "status": "completed",
+      "priority": "low",
+      "phase": "Phase 2",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 0
+    },
+    {
+      "id": "2.6",
+      "name": "Real-time Alerts",
+      "description": "WebSocket alert engine",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 2",
+      "subtasks": null,
+      "dependencies": [
+        "2.5"
+      ],
+      "est_hours": 8
+    },
+    {
+      "id": "3.1",
+      "name": "ML Prediction Models",
+      "description": "LSTM/Transformer for price direction",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 3",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 24
+    },
+    {
+      "id": "3.2",
+      "name": "Auto Model Improvement",
+      "description": "Online learning + retraining",
+      "status": "pending",
+      "priority": "high",
+      "phase": "Phase 3",
+      "subtasks": null,
+      "dependencies": [
+        "3.1"
+      ],
+      "est_hours": 16
+    },
+    {
+      "id": "3.3",
+      "name": "Model Serving API",
+      "description": "FastAPI + ONNX",
+      "status": "pending",
+      "priority": "high",
+      "phase": "Phase 3",
+      "subtasks": null,
+      "dependencies": [
+        "3.1"
+      ],
+      "est_hours": 8
+    },
+    {
+      "id": "4.1",
+      "name": "Backtesting Engine",
+      "description": "Vectorized + Event-driven",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 4",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 20
+    },
+    {
+      "id": "4.2",
+      "name": "Custom Strategy Framework",
+      "description": "Python DSL for strategies",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 4",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 16
+    },
+    {
+      "id": "4.3",
+      "name": "Strategy Marketplace",
+      "description": "User-defined strategies",
+      "status": "pending",
+      "priority": "medium",
+      "phase": "Phase 4",
+      "subtasks": null,
+      "dependencies": [
+        "4.2"
+      ],
+      "est_hours": 12
+    },
+    {
+      "id": "5.1",
+      "name": "OpenAlgo Integration",
+      "description": "Production-ready bridge",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 5",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 12
+    },
+    {
+      "id": "5.2",
+      "name": "Risk Engine",
+      "description": "Position sizing + stops",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 5",
+      "subtasks": null,
+      "dependencies": [
+        "5.1"
+      ],
+      "est_hours": 10
+    },
+    {
+      "id": "5.3",
+      "name": "Live Trading Dashboard",
+      "description": "Paper + Live mode",
+      "status": "pending",
+      "priority": "high",
+      "phase": "Phase 5",
+      "subtasks": null,
+      "dependencies": [
+        "5.1"
+      ],
+      "est_hours": 8
+    },
+    {
+      "id": "6.1",
+      "name": "Scheduler/Cron",
+      "description": "Daily model retrain + data sync",
+      "status": "pending",
+      "priority": "high",
+      "phase": "Phase 6",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 6
+    },
+    {
+      "id": "6.2",
+      "name": "Telegram/Discord Bot",
+      "description": "Alert + trade notifications",
+      "status": "pending",
+      "priority": "medium",
+      "phase": "Phase 6",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 8
+    },
+    {
+      "id": "6.3",
+      "name": "Production Deployment",
+      "description": "Kubernetes + Monitoring",
+      "status": "pending",
+      "priority": "high",
+      "phase": "Phase 6",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 12
+    },
+    {
+      "id": "7.1",
+      "name": "Playwright E2E Tests",
+      "description": "Full user flows",
+      "status": "in_progress",
+      "priority": "critical",
+      "phase": "Phase 7",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 16
+    },
+    {
+      "id": "7.2",
+      "name": "Pytest Unit Tests",
+      "description": "95% coverage",
+      "status": "pending",
+      "priority": "high",
+      "phase": "Phase 7",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 12
+    },
+    {
+      "id": "7.3",
+      "name": "Backtest Validation",
+      "description": "Statistical significance",
+      "status": "pending",
+      "priority": "critical",
+      "phase": "Phase 7",
+      "subtasks": null,
+      "dependencies": null,
+      "est_hours": 8
+    }
+  ],
+  "roadmap": "\n\ud83d\ude80 4-WEEK DEVELOPMENT ROADMAP\n===========================\n\nWEEK 1: Alerts + ML Foundation [12-18 Dec]\n\u251c\u2500\u2500 Real-time Alerts (8h)\n\u251c\u2500\u2500 ML Prediction Models (24h) \n\u2514\u2500\u2500 Phase 2.6 + Phase 3.1\n\nWEEK 2: Backtesting + OpenAlgo [19-25 Dec]\n\u251c\u2500\u2500 Backtesting Engine (20h)\n\u251c\u2500\u2500 Custom Strategy Framework (16h)\n\u2514\u2500\u2500 Phase 4.1 + Phase 5.1\n\nWEEK 3: Live Trading + Bot [26 Dec-1 Jan]\n\u251c\u2500\u2500 Risk Engine + Live Dashboard\n\u2514\u2500\u2500 Telegram Bot integration\n\nWEEK 4: Production + Testing [2-8 Jan]\n\u251c\u2500\u2500 E2E Tests + Deployment\n\u2514\u2500\u2500 Full system validation\n        "
+}

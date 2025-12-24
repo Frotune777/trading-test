@@ -223,28 +223,24 @@ WEEK 4: Production + Testing [2-8 Jan]
         """Print beautiful status board"""
         status = self.status
         
-        print("
-" + "="*60)
+        print("\n" + "="*60)
         print(f"📊 PROJECT STATUS: trading-test")
         print("="*60)
         print(f"Progress: {status.completed}/{status.total_tasks} ({status.completion_pct:.1f}%)")
         print(f"⏳ Pending: {status.pending} | 🔄 In Progress: {status.in_progress}")
-        print("
-PHASES:")
+        print("\nPHASES:")
         print("-" * 30)
         
         for phase, stats in status.phases.items():
-            pct = (stats["completed"] / stats["critical"]) * 100 if stats["total"] > 0 else 0
+            pct = (stats["completed"] / stats["total"]) * 100 if stats["total"] > 0 else 0
             print(f"{phase}: {stats['completed']}/{stats['total']} ({pct:.0f}%)")
         
-        print(f"
-🚨 CRITICAL PATH ({len(status.critical_path)} tasks):")
+        print(f"\n🚨 CRITICAL PATH ({len(status.critical_path)} tasks):")
         for task_id in status.critical_path[:5]:  # Top 5
             task = next(t for t in self.tasks if t.id == task_id)
             print(f"  {task_id}: {task.name}")
         
-        print("
-" + self.generate_roadmap())
+        print("\n" + self.generate_roadmap())
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze trading platform project")
@@ -267,8 +263,7 @@ def main():
     if args.save:
         analyzer.save_report()
     
-    print("
-🎯 NEXT ACTIONS:")
+    print("\n🎯 NEXT ACTIONS:")
     critical = [t for t in tasks if t.status == "pending" and t.priority == "critical"]
     for task in critical[:3]:
         print(f"• {task.id}: {task.name} ({task.est_hours}h)")

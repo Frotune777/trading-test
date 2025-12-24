@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional
 import pandas as pd
 from ....database.db_manager import DatabaseManager
+import asyncio
 
 router = APIRouter()
 
@@ -22,7 +23,7 @@ async def get_stock_profile(symbol: str):
     
     try:
         stock = yf.Ticker(ticker_symbol)
-        info = stock.info
+        info = await asyncio.to_thread(lambda: stock.info)
         
         # Build profile
         profile = {
@@ -83,11 +84,11 @@ async def get_stock_history(
         
         # Calculate date range
         if start_date and end_date:
-            df = stock.history(start=start_date, end=end_date)
+            df = await asyncio.to_thread(stock.history, start=start_date, end=end_date)
         else:
             end = datetime.now()
             start = end - timedelta(days=days)
-            df = stock.history(start=start, end=end)
+            df = await asyncio.to_thread(stock.history, start=start, end=end)
         
         if df.empty:
             return {"data": [], "symbol": symbol.upper(), "count": 0}
@@ -118,11 +119,89 @@ async def get_stock_financials(symbol: str, limit: int = 12):
     """
     db = get_db()
     
-    quarterly = db.get_quarterly_results(symbol.upper(), limit=limit)
-    annual = db.get_annual_results(symbol.upper(), limit=limit)
+    quarterly = await asyncio.to_thread(db.get_quarterly_results, symbol.upper(), limit=limit)
+    annual = await asyncio.to_thread(db.get_annual_results, symbol.upper(), limit=limit)
     
     return {
         "symbol": symbol.upper(),
         "quarterly": quarterly.to_dict(orient='records') if not quarterly.empty else [],
         "annual": annual.to_dict(orient='records') if not annual.empty else []
     }
+
+@router.get("/{symbol}/corporate-events")
+async def get_corporate_events(
+    symbol: str,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None
+):
+    """
+    Get corporate events for a symbol (dividends, bonuses, splits, buybacks, etc.).
+    
+    Args:
+        symbol: Stock symbol
+        from_date: Start date in DD-MM-YYYY format (optional)
+        to_date: End date in DD-MM-YYYY format (optional)
+    
+    Returns:
+        List of corporate events with parsed event types
+    """
+    from ....data_sources.nse_utils import NseUtils
+    from datetime import datetime, timedelta
+    
+    try:
+        nse = NseUtils()
+        
+        # Default to last 6 months if no dates provided
+        if not from_date or not to_date:
+            to_date_obj = datetime.now()
+            from_date_obj = to_date_obj - timedelta(days=180)
+            from_date = from_date_obj.strftime("%d-%m-%Y")
+            to_date = to_date_obj.strftime("%d-%m-%Y")
+        
+        # Fetch corporate actions
+        df = await asyncio.to_thread(nse.get_corporate_action, from_date, to_date)
+        
+        if df is None or df.empty:
+            return {"data": [], "symbol": symbol.upper(), "count": 0}
+        
+        # Filter by symbol
+        symbol_events = df[df['symbol'] == symbol.upper()]
+        
+        if symbol_events.empty:
+            return {"data": [], "symbol": symbol.upper(), "count": 0}
+        
+        # Parse event types from subject
+        def parse_event_type(subject):
+            if pd.isna(subject):
+                return 'Other'
+            subject_lower = str(subject).lower()
+            if 'dividend' in subject_lower:
+                return 'Dividend'
+            elif 'bonus' in subject_lower:
+                return 'Bonus'
+            elif 'split' in subject_lower:
+                return 'Split'
+            elif 'buyback' in subject_lower:
+                return 'Buyback'
+            elif 'rights' in subject_lower:
+                return 'Rights Issue'
+            else:
+                return 'Other'
+        
+        symbol_events = symbol_events.copy()
+        symbol_events['eventType'] = symbol_events['subject'].apply(parse_event_type)
+        
+        # Select and rename columns for frontend
+        result_df = symbol_events[['symbol', 'eventType', 'subject', 'exDate', 'recDate', 'comp']].copy()
+        
+        # Convert to dict
+        result = result_df.to_dict(orient='records')
+        
+        return {
+            "data": result,
+            "symbol": symbol.upper(),
+            "count": len(result)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching corporate events: {str(e)}")

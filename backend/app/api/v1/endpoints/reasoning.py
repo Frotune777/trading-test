@@ -44,7 +44,7 @@ async def get_reasoning(symbol: str) -> Dict[str, Any]:
     
     try:
         logger.info(f"Fetching QUAD reasoning for {symbol}")
-        result = reasoning_service.analyze_symbol(symbol.upper())
+        result = await reasoning_service.analyze_symbol(symbol.upper())
         
         # Check if analysis failed
         if 'error' in result:

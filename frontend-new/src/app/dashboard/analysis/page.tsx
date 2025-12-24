@@ -9,12 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Activity, BarChart3, DollarSign, Calendar, Loader2, Shield, TrendingUp } from "lucide-react"
+import { Search, Activity, BarChart3, DollarSign, Calendar, Loader2, Shield, TrendingUp, Clock } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useMarketStatus } from "@/hooks/useMarketStatus"
 import { calculateTechnicalSignal, getSignalDescription } from "@/lib/signal-utils"
 import { TechnicalSignalMeter } from "@/components/analysis/TechnicalSignalMeter"
 import { QUADAnalysisTab } from "@/components/analysis/QUADAnalysisTab"
+import { TechnicalInsights } from "@/components/analysis/TechnicalInsights"
+import { CorporateEvents } from "@/components/analysis/CorporateEvents"
 
 interface TechnicalIndicator {
     [key: string]: number | string
@@ -39,44 +42,62 @@ export default function AnalysisPage() {
     const { refreshInterval } = useMarketStatus()
     const [symbol, setSymbol] = useState("RELIANCE")
     const [searchInput, setSearchInput] = useState("RELIANCE")
+    const [timeframe, setTimeframe] = useState("1d")
     const [activeTab, setActiveTab] = useState("quad")
 
     // Fetch Technical Indicators
-    const { data: technicalData, isLoading: loadingTechnical } = useQuery({
+    const { data: technicalData, isLoading: loadingTechnical, isFetching: fetchingTechnical, refetch: refetchTechnical, isError: errorTechnical } = useQuery({
         queryKey: ['technical-indicators', symbol],
         queryFn: async () => {
             const res = await api.get(`/technicals/indicators/${symbol}`)
             return res.data as { symbol: string; stats: TechnicalStats; indicators: TechnicalIndicator[] }
         },
         enabled: !!symbol,
-        refetchInterval: refreshInterval('market')
+        refetchInterval: refreshInterval('market'),
+        retry: 1, // Minimize retries to reset button faster on fail
+        meta: { errorMessage: `Failed to load technicals for ${symbol}` }
     })
 
     // Fetch QUAD Reasoning
-    const { data: quadData, isLoading: loadingQuad } = useQuery({
+    const { data: quadData, isLoading: loadingQuad, isFetching: fetchingQuad, refetch: refetchQuad, isError: errorQuad } = useQuery({
         queryKey: ['quad-reasoning', symbol],
         queryFn: async () => {
             const res = await api.get(`/recommendations/${symbol}/reasoning`)
             return res.data
         },
         enabled: !!symbol,
-        refetchInterval: refreshInterval('market')
+        refetchInterval: refreshInterval('market'),
+        retry: 1
     })
 
     // Fetch Fundamental Data
-    const { data: fundamentalData, isLoading: loadingFundamental } = useQuery({
+    const { data: fundamentalData, isLoading: loadingFundamental, isFetching: fetchingFundamental, refetch: refetchFundamental, isError: errorFundamental } = useQuery({
         queryKey: ['stock-financials', symbol],
         queryFn: async () => {
             const res = await api.get(`/stocks/${symbol}/financials`)
             return res.data as { symbol: string; quarterly: FinancialQuarterly[]; annual: FinancialQuarterly[] }
         },
         enabled: !!symbol,
-        refetchInterval: refreshInterval('market')
+        refetchInterval: refreshInterval('market'),
+        retry: 1
     })
+
+    const isAnyLoading = loadingTechnical || loadingQuad || loadingFundamental
+    const isAnyFetching = (fetchingTechnical && !errorTechnical) || (fetchingQuad && !errorQuad) || (fetchingFundamental && !errorFundamental)
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
-        if (searchInput) setSymbol(searchInput.toUpperCase())
+        if (!searchInput) return
+
+        const newSymbol = searchInput.toUpperCase()
+        if (newSymbol === symbol) {
+            // Force refresh if same symbol
+            refetchTechnical()
+            refetchQuad()
+            refetchFundamental()
+        } else {
+            setSymbol(newSymbol)
+        }
     }
 
     const latestIndicators = technicalData?.indicators?.[technicalData.indicators.length - 1]
@@ -90,84 +111,110 @@ export default function AnalysisPage() {
             {/* Header with Search */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
                         Stock Intelligence
                     </h2>
-                    <p className="text-slate-400 mt-2">AI-powered analysis combining technical, fundamental, and market intelligence.</p>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                        AI-powered analysis combining technical, fundamental, and market intelligence.
+                    </p>
                 </div>
-                
-                <form onSubmit={handleSearch} className="flex gap-2">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                        <Input 
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <Input
+                            type="text"
+                            placeholder="Enter symbol (e.g., RELIANCE)"
                             value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder="Enter symbol (e.g. RELIANCE)" 
-                            className="bg-slate-900 border-slate-700 pl-10 w-64 text-white"
+                            onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
+                            className="bg-white dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 w-48"
                         />
-                    </div>
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white">
-                        Analyze
-                    </Button>
-                </form>
+                        <Select value={timeframe} onValueChange={setTimeframe}>
+                            <SelectTrigger className="w-28 bg-white dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+                                <Clock className="h-4 w-4 mr-2" />
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                                <SelectItem value="1d" className="text-slate-900 dark:text-white">Daily</SelectItem>
+                                <SelectItem value="1w" className="text-slate-900 dark:text-white">Weekly</SelectItem>
+                                <SelectItem value="1h" className="text-slate-900 dark:text-white">Hourly</SelectItem>
+                                <SelectItem value="15m" className="text-slate-900 dark:text-white">15 Min</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            type="submit"
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={isAnyLoading || isAnyFetching}
+                            data-testid="analyze-button"
+                        >
+                            {isAnyFetching ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Analyzing
+                                </>
+                            ) : (
+                                "Analyze"
+                            )}
+                        </Button>
+                    </form>
+                </div>
             </div>
 
             {/* Quick Stats */}
             {stats && (
                 <div className="grid gap-4 md:grid-cols-4">
-                    <Card className="bg-slate-900/50 border-slate-800 border-l-4 border-l-blue-500">
+                    <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 border-l-4 border-l-blue-500">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <CardTitle className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                                 Volatility
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">{stats.volatility?.toFixed(2)}%</div>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.volatility?.toFixed(2)}%</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
                                 <Activity className="h-3 w-3" /> Price fluctuation
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-900/50 border-slate-800 border-l-4 border-l-emerald-500">
+                    <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 border-l-4 border-l-emerald-500">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <CardTitle className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                                 Avg Volume
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">
                                 {stats.avg_volume ? (stats.avg_volume / 1000000).toFixed(2) + 'M' : 'N/A'}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
                                 <BarChart3 className="h-3 w-3" /> Trading liquidity
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-900/50 border-slate-800 border-l-4 border-l-purple-500">
+                    <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 border-l-4 border-l-purple-500">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <CardTitle className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                                 Price Range
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">₹{stats.price_range?.toFixed(2)}</div>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">₹{stats.price_range?.toFixed(2)}</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
                                 <TrendingUp className="h-3 w-3" /> High-Low spread
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-900/50 border-slate-800 border-l-4 border-l-orange-500">
+                    <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 border-l-4 border-l-orange-500">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <CardTitle className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                                 Trend Strength
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">{stats.trend_strength?.toFixed(0)}</div>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.trend_strength?.toFixed(0)}</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
                                 <Activity className="h-3 w-3" /> Momentum
                             </p>
                         </CardContent>
@@ -177,7 +224,7 @@ export default function AnalysisPage() {
 
             {/* Main Content Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="bg-slate-900 border border-slate-800">
+                <TabsList className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                     <TabsTrigger value="quad" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2">
                         <Shield className="h-4 w-4" />
                         QUAD Analysis
@@ -192,7 +239,11 @@ export default function AnalysisPage() {
                     </TabsTrigger>
                     <TabsTrigger value="indicators" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white flex items-center gap-2">
                         <BarChart3 className="h-4 w-4" />
-                        Raw Indicators
+                        Technical Insights
+                    </TabsTrigger>
+                    <TabsTrigger value="events" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Corporate Events
                     </TabsTrigger>
                 </TabsList>
 
@@ -208,7 +259,7 @@ export default function AnalysisPage() {
                     ) : (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-                            <span className="ml-3 text-slate-400">Calculating signals...</span>
+                            <span className="ml-3 text-slate-600 dark:text-slate-400">Calculating signals...</span>
                         </div>
                     )}
                 </TabsContent>
@@ -217,9 +268,9 @@ export default function AnalysisPage() {
                 <TabsContent value="fundamental" className="space-y-4 mt-4">
                     <div className="grid gap-6 md:grid-cols-2">
                         {/* Quarterly Results */}
-                        <Card className="bg-slate-900/50 border-slate-800">
+                        <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
                                     <Calendar className="h-5 w-5 text-blue-500" />
                                     Quarterly Results
                                 </CardTitle>
@@ -259,7 +310,7 @@ export default function AnalysisPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8 text-slate-500">
+                                    <div className="text-center py-8 text-slate-600 dark:text-slate-500">
                                         No quarterly data available
                                     </div>
                                 )}
@@ -267,9 +318,9 @@ export default function AnalysisPage() {
                         </Card>
 
                         {/* Annual Results */}
-                        <Card className="bg-slate-900/50 border-slate-800">
+                        <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
                                     <DollarSign className="h-5 w-5 text-emerald-500" />
                                     Annual Results
                                 </CardTitle>
@@ -309,7 +360,7 @@ export default function AnalysisPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8 text-slate-500">
+                                    <div className="text-center py-8 text-slate-600 dark:text-slate-500">
                                         No annual data available
                                     </div>
                                 )}
@@ -318,49 +369,33 @@ export default function AnalysisPage() {
                     </div>
                 </TabsContent>
 
-                {/* Raw Indicators Tab */}
+                {/* Technical Insights Tab - Replaces Raw Indicators */}
                 <TabsContent value="indicators" className="mt-4">
-                    <Card className="bg-slate-900/50 border-slate-800">
+                    <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                         <CardHeader>
-                            <CardTitle className="text-white">All Technical Indicators</CardTitle>
-                            <CardDescription>Comprehensive technical analysis metrics for {symbol}</CardDescription>
+                            <CardTitle className="text-slate-900 dark:text-white">Technical Insights</CardTitle>
+                            <CardDescription>Intelligent interpretation of technical indicators for {symbol}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {loadingTechnical ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                                    <span className="ml-3 text-slate-400">Loading indicators...</span>
+                                    <span className="ml-3 text-slate-600 dark:text-slate-400">Loading insights...</span>
                                 </div>
                             ) : latestIndicators ? (
-                                <div className="rounded-md border border-slate-800 overflow-hidden">
-                                    <Table>
-                                        <TableHeader className="bg-slate-950/50">
-                                            <TableRow className="border-slate-800">
-                                                <TableHead className="text-slate-400">Indicator</TableHead>
-                                                <TableHead className="text-slate-400 text-right">Value</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {Object.entries(latestIndicators)
-                                                .filter(([key]) => !['Date', 'Timestamp', 'date', 'timestamp'].includes(key))
-                                                .map(([key, value]) => (
-                                                    <TableRow key={key} className="border-slate-800 hover:bg-slate-800/30">
-                                                        <TableCell className="font-medium text-white">{key}</TableCell>
-                                                        <TableCell className="text-right text-slate-300 font-mono">
-                                                            {typeof value === 'number' ? value.toFixed(4) : value}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                <TechnicalInsights indicators={latestIndicators} />
                             ) : (
-                                <div className="text-center py-12 text-slate-500">
-                                    No indicator data available for this symbol
+                                <div className="text-center py-12 text-slate-600 dark:text-slate-500">
+                                    No technical data available for this symbol
                                 </div>
                             )}
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                {/* Corporate Events Tab */}
+                <TabsContent value="events" className="mt-4">
+                    <CorporateEvents symbol={symbol} />
                 </TabsContent>
             </Tabs>
         </div>

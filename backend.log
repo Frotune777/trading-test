@@ -1,0 +1,229 @@
+INFO:app.reasoning.reasoning_engine:Registered pillar: trend
+INFO:app.reasoning.reasoning_engine:Registered pillar: momentum
+INFO:app.reasoning.reasoning_engine:Registered pillar: volatility
+INFO:app.reasoning.reasoning_engine:Registered pillar: liquidity
+INFO:app.reasoning.reasoning_engine:Registered pillar: sentiment
+INFO:app.reasoning.reasoning_engine:Registered pillar: regime
+INFO:app.services.reasoning_service:ReasoningService initialized with 6 QUAD pillars
+INFO:app.reasoning.reasoning_engine:Registered pillar: trend
+INFO:app.reasoning.reasoning_engine:Registered pillar: momentum
+INFO:app.reasoning.reasoning_engine:Registered pillar: volatility
+INFO:app.reasoning.reasoning_engine:Registered pillar: liquidity
+INFO:app.reasoning.reasoning_engine:Registered pillar: sentiment
+INFO:app.reasoning.reasoning_engine:Registered pillar: regime
+INFO:app.services.reasoning_service:ReasoningService initialized with 6 QUAD pillars
+INFO:     Started server process [37397]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+WARNING:app.data_sources.nse_master_data:Data for NSE not downloaded. Downloading now...
+INFO:app.data_sources.nse_master_data:Downloading NSE symbol master data...
+INFO:app.data_sources.nse_master_data:Downloaded 3216 NSE symbols and 87978 NFO symbols
+ERROR:app.data_sources.nse_master_data:An error occurred while fetching historical data: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+INFO:     127.0.0.1:48094 - "GET /api/v1/technicals/indicators/RELIANCE HTTP/1.1" 500 Internal Server Error
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+WARNING:app.data_sources.nse_master_data:Data for NSE not downloaded. Downloading now...
+INFO:app.data_sources.nse_master_data:Downloading NSE symbol master data...
+INFO:app.data_sources.nse_master_data:Downloaded 3216 NSE symbols and 87978 NFO symbols
+ERROR:app.data_sources.nse_master_data:An error occurred while fetching historical data: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=53.4, bias=BEARISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=50.0, bias=NEUTRAL
+Error fetching Corporate Action Data. Check your input
+INFO:     127.0.0.1:48096 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+INFO:     127.0.0.1:48094 - "GET /api/v1/technicals/indicators/RELIANCE HTTP/1.1" 200 OK
+INFO:app.database.db_manager:✅ Database initialized at stock_data.db
+INFO:app.database.db_manager:✅ All 35 tables verified
+INFO:     127.0.0.1:48102 - "GET /api/v1/stocks/RELIANCE/financials HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+INFO:     127.0.0.1:48096 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:app.database.db_manager:✅ Database initialized at stock_data.db
+INFO:app.database.db_manager:✅ All 35 tables verified
+INFO:     127.0.0.1:48102 - "GET /api/v1/stocks/RELIANCE/financials HTTP/1.1" 200 OK
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+INFO:     127.0.0.1:46688 - "GET /api/v1/technicals/indicators/RELIANCE HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=48.6, bias=BEARISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+Error fetching Short Selling Data. Check your input
+INFO:     127.0.0.1:48096 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:app.database.db_manager:✅ Database initialized at stock_data.db
+INFO:app.database.db_manager:✅ All 35 tables verified
+INFO:     127.0.0.1:48102 - "GET /api/v1/stocks/RELIANCE/financials HTTP/1.1" 200 OK
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+INFO:     127.0.0.1:46688 - "GET /api/v1/technicals/indicators/RELIANCE HTTP/1.1" 200 OK
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/technical_analysis.py:95: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+INFO:     127.0.0.1:41370 - "GET /api/v1/technicals/indicators/RELIANCE HTTP/1.1" 200 OK
+INFO:app.database.db_manager:✅ Database initialized at stock_data.db
+INFO:app.database.db_manager:✅ All 35 tables verified
+INFO:     127.0.0.1:41794 - "GET /api/v1/stocks/RELIANCE/financials HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=48.6, bias=BEARISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+INFO:     127.0.0.1:41810 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=48.6, bias=BEARISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+INFO:     127.0.0.1:41810 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+ERROR:app.data_sources.nse_master_data:An error occurred while fetching historical data: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=48.6, bias=BEARISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+INFO:     127.0.0.1:50958 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+ERROR:app.data_sources.nse_master_data:An error occurred while fetching historical data: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+ERROR:app.services.reasoning_service:Error analyzing RELIANCE: name 'logger' is not defined
+Traceback (most recent call last):
+  File "/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/reasoning/snapshot_builder.py", line 58, in build_snapshot
+    return await asyncio.to_thread(self.nse_derivatives.get_option_chain, symbol)
+        ^^^^^^
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/services/reasoning_service.py", line 58, in analyze_symbol
+    snapshot = await self.snapshot_builder.build_snapshot(symbol)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fortune/Desktop/py_project/js_Trading/trading-test/backend/app/reasoning/snapshot_builder.py", line 72, in build_snapshot
+    start_time = datetime.now()
+            ^^^^^^
+NameError: name 'logger' is not defined
+INFO:     127.0.0.1:53086 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:40070 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40086 - "GET /api/v1/market/status HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+INFO:     127.0.0.1:55714 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56490 - "GET /api/v1/market/status HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=81.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=90.0, bias=BULLISH
+INFO:     127.0.0.1:54414 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:app.api.v1.endpoints.recommendations:Fetching QUAD reasoning for RELIANCE
+INFO:app.services.reasoning_service:Building snapshot for RELIANCE
+ERROR:app.data_sources.nse_master_data:An error occurred while fetching historical data: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+INFO:app.services.reasoning_service:Running reasoning engine for RELIANCE
+DEBUG:app.reasoning.reasoning_engine:trend: score=100.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:momentum: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:volatility: score=83.5, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:liquidity: score=81.0, bias=BULLISH
+DEBUG:app.reasoning.reasoning_engine:sentiment: score=50.0, bias=NEUTRAL
+DEBUG:app.reasoning.reasoning_engine:regime: score=50.0, bias=NEUTRAL
+INFO:     127.0.0.1:56486 - "GET /api/v1/recommendations/RELIANCE/reasoning HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [37397]

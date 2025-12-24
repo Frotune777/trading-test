@@ -3,20 +3,36 @@ from ....data_sources.nse_utils import NseUtils
 import pandas as pd
 import yfinance as yf
 from typing import List, Dict, Any
+import asyncio
 
 router = APIRouter()
 nse = NseUtils()
 
+@router.get("/status")
 @router.get("/breadth")
 async def get_market_breadth():
     """
     Get market advance/decline ratio.
     """
     try:
-        df = nse.get_advance_decline()
+        df = await asyncio.to_thread(nse.get_advance_decline)
         if df is None or df.empty:
-            return {"data": []}
-        return {"data": df.to_dict(orient="records")}
+            return {"data": [], "advances": 0, "declines": 0, "unchanged": 0}
+            
+        # Get NIFTY 50 as the default summary
+        nifty_50 = df[df['Index'] == 'NIFTY 50']
+        if not nifty_50.empty:
+            summary = nifty_50.iloc[0].to_dict()
+            # Preserve the list in 'data' and add top-level keys for the widget
+            return {
+                "data": df.to_dict(orient="records"),
+                "index": "NIFTY 50",
+                "advances": int(summary.get('Advances', 0)),
+                "declines": int(summary.get('Declines', 0)),
+                "unchanged": int(summary.get('Unchanged', 0))
+            }
+            
+        return {"data": df.to_dict(orient="records"), "advances": 0, "declines": 0, "unchanged": 0}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -26,7 +42,7 @@ async def get_market_activity_volume():
     Get most active stocks by volume.
     """
     try:
-        df = nse.most_active_equity_stocks_by_volume()
+        df = await asyncio.to_thread(nse.most_active_equity_stocks_by_volume)
         if df is None or df.empty:
             return {"data": []}
         return {"data": df.to_dict(orient="records")}
@@ -39,7 +55,7 @@ async def get_market_activity_value():
     Get most active stocks by value.
     """
     try:
-        df = nse.most_active_equity_stocks_by_value()
+        df = await asyncio.to_thread(nse.most_active_equity_stocks_by_value)
         if df is None or df.empty:
             return {"data": []}
         return {"data": df.to_dict(orient="records")}

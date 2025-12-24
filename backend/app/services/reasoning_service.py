@@ -42,7 +42,7 @@ class ReasoningService:
         
         logger.info("ReasoningService initialized with 6 QUAD pillars")
     
-    def analyze_symbol(self, symbol: str) -> Dict[str, Any]:
+    async def analyze_symbol(self, symbol: str) -> Dict[str, Any]:
         """
         Analyze a symbol and return trade recommendation.
         
@@ -55,8 +55,8 @@ class ReasoningService:
         try:
             # Build snapshot and context
             logger.info(f"Building snapshot for {symbol}")
-            snapshot = self.snapshot_builder.build_snapshot(symbol)
-            context = self.snapshot_builder.build_session_context()
+            snapshot = await self.snapshot_builder.build_snapshot(symbol)
+            context = await self.snapshot_builder.build_session_context()
             
             # Run reasoning engine
             logger.info(f"Running reasoning engine for {symbol}")
@@ -77,13 +77,35 @@ class ReasoningService:
                 'pillar_scores': {
                     contrib.name: {
                         'score': contrib.score,
-                        'bias': contrib.bias,
+                        'bias': contrib.bias.value if hasattr(contrib.bias, 'value') else str(contrib.bias),
                         'is_placeholder': contrib.is_placeholder,
                         'weight': contrib.weight_applied,
                         'metrics': contrib.metrics
                     }
                     for contrib in intent.pillar_contributions
                 },
+                
+                # Legacy FRONTEND COMPATIBILITY (Temporary mapping until frontend uses v1.0 contract fully)
+                'pillars': {
+                    'quality': {
+                        'score': next((p.score for p in intent.pillar_contributions if p.name == 'regime'), 50.0),
+                        'reasoning': "Regime and Sentiment used as Quality proxy"
+                    },
+                    'undervaluation': {
+                        'score': next((p.score for p in intent.pillar_contributions if p.name == 'valuation'), 50.0),
+                        'reasoning': "Valuation metrics"
+                    },
+                    'acceleration': {
+                        'score': next((p.score for p in intent.pillar_contributions if p.name == 'momentum'), 50.0),
+                        'reasoning': "Momentum and Volume acceleration"
+                    },
+                    'directional': {
+                        'score': next((p.score for p in intent.pillar_contributions if p.name == 'trend'), 50.0),
+                        'reasoning': "Price trend analysis"
+                    }
+                },
+                'bias': intent.directional_bias.value,
+                'conviction': intent.conviction_score,
                 
                 # Quality metadata
                 'quality': {
@@ -109,7 +131,16 @@ class ReasoningService:
                     'ltp': snapshot.ltp,
                     'sma_50': snapshot.sma_50,
                     'sma_200': snapshot.sma_200,
-                    'rsi': snapshot.rsi
+                    'sma_20_weekly': snapshot.sma_20_weekly,
+                    'rsi': snapshot.rsi,
+                    'macd': snapshot.macd,
+                    'macd_signal': snapshot.macd_signal,
+                    'macd_hist': snapshot.macd_hist,
+                    'bb_upper': snapshot.bb_upper,
+                    'bb_middle': snapshot.bb_middle,
+                    'bb_lower': snapshot.bb_lower,
+                    'atr_pct': snapshot.atr_pct,
+                    'adosc': snapshot.adosc
                 }
             }
             
@@ -125,11 +156,11 @@ class ReasoningService:
                 'contract_version': '1.0.0'
             }
     
-    def get_recommendation_summary(self, symbol: str) -> str:
+    async def get_recommendation_summary(self, symbol: str) -> str:
         """
         Get a human-readable recommendation summary.
         """
-        result = self.analyze_symbol(symbol)
+        result = await self.analyze_symbol(symbol)
         
         if 'error' in result:
             return f"Unable to analyze {symbol}: {result['error']}"

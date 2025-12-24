@@ -1,19 +1,20 @@
-"""
-Snapshot Builder - Converts existing data sources to LiveDecisionSnapshot
-"""
-
+import asyncio
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 import pandas as pd
+import logging
 from ..core.market_snapshot import LiveDecisionSnapshot, SessionContext
 from ..services.technical_analysis import TechnicalAnalysisService
 from ..services.market_regime import MarketRegime
 from ..data_sources.nse_master_data import NSEMasterData
 
+logger = logging.getLogger(__name__)
+
 class SnapshotBuilder:
     """
     Builds LiveDecisionSnapshot and SessionContext from existing data sources.
     Acts as an adapter between old data services and new reasoning engine.
+    Refactored to be ASYNC for performance.
     """
     
     def __init__(self):
@@ -22,177 +23,172 @@ class SnapshotBuilder:
         from ..data_sources.nse_derivatives import NSEDerivatives
         self.nse_derivatives = NSEDerivatives()
     
-    def build_snapshot(
+    async def fetch_price_data(self, symbol: str, interval: str = "1d", retries: int = 3) -> pd.DataFrame:
+        """Helper to fetch price data as a task with retries"""
+        for attempt in range(retries):
+            try:
+                # Current implementation of get_history is sync
+                df = await asyncio.to_thread(
+                    self.nse_master.get_history,
+                    symbol=symbol,
+                    exchange="NSE",
+                    interval=interval
+                )
+                if df is not None and not df.empty:
+                    return df
+            except Exception as e:
+                logger.warning(f"Attempt {attempt+1}/{retries} failed for {symbol} ({interval}): {e}")
+                if attempt < retries - 1:
+                    await asyncio.sleep(1) # Wait before retry
+                else:
+                    logger.error(f"Final attempt failed for {symbol} ({interval})")
+        return pd.DataFrame()
+
+    async def fetch_equity_info(self, symbol: str) -> Dict[str, Any]:
+        """Helper to fetch equity quote/depth as a task"""
+        try:
+            return await asyncio.to_thread(self.nse_derivatives.nse_utils.equity_info, symbol)
+        except Exception as e:
+            logger.error(f"Error fetching equity info for {symbol}: {e}")
+            return {}
+
+    async def fetch_option_chain(self, symbol: str) -> pd.DataFrame:
+        """Helper to fetch option chain as a task"""
+        try:
+            return await asyncio.to_thread(self.nse_derivatives.get_option_chain, symbol)
+        except Exception as e:
+            logger.error(f"Error fetching option chain for {symbol}: {e}")
+            return pd.DataFrame()
+
+    async def build_snapshot(
         self, 
         symbol: str,
         price_df: Optional[pd.DataFrame] = None,
         option_data: Optional[dict] = None
     ) -> LiveDecisionSnapshot:
         """
-        Build a LiveDecisionSnapshot for a symbol.
-        
-        Args:
-            symbol: Stock symbol
-            price_df: Historical OHLCV DataFrame (optional, will fetch if None)
-            option_data: Option chain data dict (optional)
-            
-        Returns:
-            LiveDecisionSnapshot with all available data
+        Build a LiveDecisionSnapshot for a symbol using ASYNC parallel tasks.
         """
-        # Fetch price data if not provided
-        if price_df is None or price_df.empty:
-            # Fetch last 100 days for indicator calculation
-            price_df = self.nse_master.get_history(
-                symbol=symbol,
-                exchange="NSE",
-                interval="1d"
-            )
+        start_time = datetime.now()
         
-        if price_df is None or price_df.empty:
-            raise ValueError(f"No price data available for {symbol}")
+        # Define tasks for parallel execution
+        tasks = []
         
-        # Calculate technical indicators
+        # 1. Daily Price Data (only if not provided)
+        if price_df is None or price_df.empty:
+            tasks.append(self.fetch_price_data(symbol, "1d"))
+        else:
+            # Wrap existing df in a future
+            f = asyncio.Future()
+            f.set_result(price_df)
+            tasks.append(f)
+            
+        # 2. Weekly Price Data (for Weekly SMA)
+        tasks.append(self.fetch_price_data(symbol, "1w"))
+        
+        # 3. Equity Info (for real-time depth/spread)
+        tasks.append(self.fetch_equity_info(symbol))
+        
+        # 4. Option Chain (for sentiment)
+        if not option_data:
+            tasks.append(self.fetch_option_chain(symbol))
+        else:
+            f = asyncio.Future()
+            f.set_result(pd.DataFrame())
+            tasks.append(f)
+            
+        # 5. Sentinel Data (Insider/Bulk/Block)
+        tasks.append(asyncio.to_thread(self._fetch_sentinel_data, symbol))
+
+        # Execute all tasks in parallel
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Process results with index-based safety
+        price_df = results[0] if not isinstance(results[0], Exception) else pd.DataFrame()
+        weekly_df = results[1] if not isinstance(results[1], Exception) else pd.DataFrame()
+        quote_data = results[2] if not isinstance(results[2], Exception) else {}
+        oc_df = results[3] if not isinstance(results[3], Exception) else pd.DataFrame()
+        sentinel_data = results[4] if not isinstance(results[4], Exception) else {}
+
+        if price_df is None or price_df.empty:
+            raise ValueError(f"No price data available for {symbol} from NSE sources.")
+        
+        # Calculate technical indicators using TA-Lib
         ta = TechnicalAnalysisService(price_df)
-        ta.add_trend_indicators()
-        ta.add_momentum_indicators()
-        ta.add_volatility_indicators()  # NEW: ATR and Bollinger Bands
+        ta.calculate_all()
         df = ta.df
         
-        # Get latest values
+        # Get latest values from daily data
         current = df.iloc[-1]
-        
-        # Extract price state
         ltp = float(current['close'])
         open_price = float(current['open'])
         high = float(current['high'])
         low = float(current['low'])
         volume = int(current['volume'])
-        
-        # Previous close (from second-to-last row)
         prev_close = float(df.iloc[-2]['close']) if len(df) > 1 else ltp
-        
-        # Calculate VWAP (simple approximation)
         vwap = (high + low + ltp) / 3.0
         
-        # Extract technical indicators (Trend/Momentum)
+        # Basic indicators
         sma_50 = float(current.get('sma_50', ltp))
         sma_200 = float(current.get('sma_200', ltp))
         rsi = float(current.get('rsi', 50.0))
         macd = float(current.get('macd', 0.0))
         macd_signal = float(current.get('macd_signal', 0.0))
         macd_hist = float(current.get('macd_hist', 0.0))
-        
-        # Extract volatility indicators
         atr = float(current.get('atr', 0.0))
         atr_pct = (atr / ltp * 100.0) if ltp > 0 and atr > 0 else 0.0
         
         bb_upper = current.get('bb_upper')
         bb_middle = current.get('bb_middle')
         bb_lower = current.get('bb_lower')
-        bb_width = None
-        if bb_upper is not None and bb_lower is not None and bb_middle is not None and bb_middle > 0:
-            bb_width = ((bb_upper - bb_lower) / bb_middle * 100.0)
+        bb_width = ((bb_upper - bb_lower) / bb_middle * 100.0) if bb_middle and bb_middle > 0 else None
         
-        # Extract liquidity indicators
         adosc = current.get('adosc')
-        
-        # REAL-TIME LIQUIDITY & DEPTH
+
+        # Weekly SMA calculation
+        sma_20_weekly = None
+        if not weekly_df.empty:
+            try:
+                ta_weekly = TechnicalAnalysisService(weekly_df)
+                ta_weekly.add_trend_indicators()
+                sma_20_weekly = float(ta_weekly.df.iloc[-1].get('sma_20', ltp))
+            except Exception as e:
+                logger.warning(f"Failed to calculate Weekly SMA for {symbol}: {e}")
+
+        # Depth Data Processing
         bid_price = None
         ask_price = None
         bid_qty = None
         ask_qty = None
         spread_pct = None
         
-        try:
-            # Try fetching real-time equity info for depth
-            quote_data = self.nse_derivatives.nse_utils.equity_info(symbol)
-            if quote_data and 'tradeData' in quote_data:
-                # Parse L2 depth if available
-                ob = quote_data.get('tradeData', {}).get('marketDeptOrderBook', {})
-                bids = ob.get('bid', [])
-                asks = ob.get('ask', [])
-                
-                if bids and len(bids) > 0:
-                    bid_price = float(bids[0]['price']) if 'price' in bids[0] else None
-                    bid_qty = int(bids[0]['quantity']) if 'quantity' in bids[0] else None
-                    
-                if asks and len(asks) > 0:
-                    ask_price = float(asks[0]['price']) if 'price' in asks[0] else None
-                    ask_qty = int(asks[0]['quantity']) if 'quantity' in asks[0] else None
-                
-                if bid_price is not None and ask_price is not None and bid_price > 0:
-                    spread_pct = (ask_price - bid_price) / bid_price * 100.0
-                    
-        except Exception as e:
-            # Log but don't fail, just leave as None
-            pass
+        if quote_data and 'tradeData' in quote_data:
+            ob = quote_data.get('tradeData', {}).get('marketDeptOrderBook', {})
+            bids = ob.get('bid', [])
+            asks = ob.get('ask', [])
+            
+            if bids:
+                bid_price = float(bids[0].get('price', 0)) or None
+                bid_qty = int(bids[0].get('quantity', 0)) or None
+            if asks:
+                ask_price = float(asks[0].get('price', 0)) or None
+                ask_qty = int(asks[0].get('quantity', 0)) or None
+            
+            if bid_price and ask_price and bid_price > 0:
+                spread_pct = (ask_price - bid_price) / bid_price * 100.0
 
-        # Weekly SMA
-        sma_20_weekly = None
-        try:
-            weekly_df = self.nse_master.get_history(
-                symbol=symbol,
-                exchange="NSE",
-                interval="1w"
-            )
-            if weekly_df is not None and not weekly_df.empty:
-                ta_weekly = TechnicalAnalysisService(weekly_df)
-                ta_weekly.add_trend_indicators()
-                sma_20_weekly = float(ta_weekly.df.iloc[-1].get('sma_20', ltp))
-        except Exception as e:
-            pass
-        
-        # Extract derivatives data if available
-        delta = None
-        gamma = None
-        theta = None
-        vega = None
+        # Derivatives Data Processing
         oi_change = None
-        
         if option_data:
-            # Extract from explicitly provided option data
-            delta = option_data.get('delta')
-            gamma = option_data.get('gamma')
-            theta = option_data.get('theta')
-            vega = option_data.get('vega')
             oi_change = option_data.get('oi_change')
-        else:
-            # Try fetching real-time Option Chain for Sentiment
-            try:
-                # We want aggregate OI change to gauge sentiment
-                oc_df = self.nse_derivatives.get_option_chain(symbol)
-                if not oc_df.empty:
-                    # Sum up Change in OI for Calls vs Puts near ATM?
-                    # For simple version: Sum of all ChangeInOI (Positive = accumulation)
-                    # Note: Calls OI Change - Puts OI Change could be a metric, but let's stick to total activity
-                    # Or better: PCR of OI Change?
-                    
-                    # SentimentPillar logic looks at "snapshot.oi_change".
-                    # Let's aggregate total OI Change for Puts - Total OI Change for Calls?
-                    # Or just the raw net OI change of the active contract?
-                    
-                    # Simplification: Sum of all OI Change
-                    ce_oi_chg = oc_df['CALLS_Chng_in_OI'].sum() if 'CALLS_Chng_in_OI' in oc_df else 0
-                    pe_oi_chg = oc_df['PUTS_Chng_in_OI'].sum() if 'PUTS_Chng_in_OI' in oc_df else 0
-                    
-                    # Net OI Change: (PE OI Chg) - (CE OI Chg) ? 
-                    # Actually standard interpretation:
-                    # High PE OI Chg = Bullish (Support building)
-                    # High CE OI Chg = Bearish (Resistance building)
-                    # Let's map this to a single number "oi_change" that SentimentPillar expects.
-                    # SentimentPillar: "Positive OI change suggests new positions"
-                    
-                    # Let's store total absolute OI change as activity proxy, 
-                    # OR specific net flow.
-                    
-                    # For now, let's just pass the total OI of the near ATM strikes or just total
-                    oi_change = (pe_oi_chg + ce_oi_chg) # Net market activity
-                    
-                    # Also try to get Greeks if possible (requires Black-Scholes, usually not in raw chain)
-                    # We leave Greeks as None for now unless calculated elsewhere
-            except Exception as e:
-                pass
-        
+        elif not oc_df.empty:
+            ce_oi_chg = oc_df['CALLS_Chng_in_OI'].sum() if 'CALLS_Chng_in_OI' in oc_df else 0
+            pe_oi_chg = oc_df['PUTS_Chng_in_OI'].sum() if 'PUTS_Chng_in_OI' in oc_df else 0
+            oi_change = (pe_oi_chg + ce_oi_chg)
+
+        duration = (datetime.now() - start_time).total_seconds()
+        logger.info(f"Built async snapshot for {symbol} in {duration:.2f}s")
+
         return LiveDecisionSnapshot(
             symbol=symbol,
             timestamp=datetime.now(),
@@ -217,26 +213,18 @@ class SnapshotBuilder:
             bb_middle=float(bb_middle) if bb_middle is not None else None,
             bb_lower=float(bb_lower) if bb_lower is not None else None,
             adosc=float(adosc) if adosc is not None else None,
-            # Real-time L2 fields
             bid_price=bid_price,
             ask_price=ask_price,
             bid_qty=bid_qty,
             ask_qty=ask_qty,
             spread_pct=spread_pct,
-            # Derivatives fields
-            delta=delta,
-            gamma=gamma,
-            theta=theta,
-            vega=vega,
             oi_change=oi_change,
-            # Sentinel Data Implementation
-            **self._fetch_sentinel_data(symbol)
+            **sentinel_data
         )
-    
+
     def _fetch_sentinel_data(self, symbol: str) -> dict:
         """
-        Fetch and aggregate insider/institutional data for the symbol.
-        Last 30 days.
+        Original logic kept but wrapped for use in run_in_executor.
         """
         sentinel = {
             "insider_net_value": 0.0,
@@ -250,7 +238,6 @@ class SnapshotBuilder:
             # 1. Insider Trades
             insider_df = self.nse_derivatives.nse_utils.get_insider_trading()
             if insider_df is not None and not insider_df.empty:
-                # Normalize symbol column (case-insensitive, strip whitespace)
                 if 'symbol' in insider_df.columns:
                     symbol_trades = insider_df[insider_df['symbol'].str.strip() == symbol]
                 elif 'Symbol' in insider_df.columns:
@@ -260,13 +247,9 @@ class SnapshotBuilder:
 
                 if not symbol_trades.empty:
                     for _, trade in symbol_trades.iterrows():
-                        # secVal is the value column in this API version
                         val = float(trade.get('secVal', trade.get('valueInRs', 0)))
-                        
-                        # Check acqMode and tdpTransactionType
                         mode = str(trade.get('acqMode', '')).upper()
                         t_type = str(trade.get('tdpTransactionType', '')).upper()
-                        
                         if any(x in mode or x in t_type for x in ["ACQUISITION", "BUY", "PURCHASE"]):
                             sentinel["insider_net_value"] += val
                             sentinel["insider_buy_count"] += 1
@@ -276,78 +259,57 @@ class SnapshotBuilder:
             # 2. Bulk Deals
             bulk_df = self.nse_derivatives.nse_utils.get_bulk_deals()
             if bulk_df is not None and not bulk_df.empty:
-                # Clean column names (strip whitespace and special chars)
                 bulk_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in bulk_df.columns]
-                
                 if 'Symbol' in bulk_df.columns:
                     symbol_bulk = bulk_df[bulk_df['Symbol'].str.strip() == symbol]
                     if not symbol_bulk.empty:
                         for _, deal in symbol_bulk.iterrows():
-                            # Quantity Traded, Buy / Sell
                             qty_str = str(deal.get('Quantity Traded', '0')).replace(',', '')
                             qty = int(qty_str) if qty_str.isdigit() else 0
-                            
                             d_type = str(deal.get('Buy / Sell', '')).strip().upper()
                             if d_type == "BUY":
                                 sentinel["bulk_deal_net_qty"] += qty
                             else:
                                 sentinel["bulk_deal_net_qty"] -= qty
-                            
+                                
             # 3. Block Deals
             block_df = self.nse_derivatives.nse_utils.get_block_deals()
             if block_df is not None and not block_df.empty:
                 block_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in block_df.columns]
-                
                 if 'Symbol' in block_df.columns:
                     symbol_block = block_df[block_df['Symbol'].str.strip() == symbol]
                     if not symbol_block.empty:
                         for _, deal in symbol_block.iterrows():
                             qty_str = str(deal.get('Quantity Traded', '0')).replace(',', '')
                             qty = int(qty_str) if qty_str.isdigit() else 0
-                            
                             d_type = str(deal.get('Buy / Sell', '')).strip().upper()
                             if d_type == "BUY":
                                 sentinel["block_deal_net_qty"] += qty
                             else:
                                 sentinel["block_deal_net_qty"] -= qty
-                            
+                                
             # 4. Short Selling
             short_df = self.nse_derivatives.nse_utils.get_short_selling()
             if short_df is not None and not short_df.empty:
                 short_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in short_df.columns]
-                
                 if 'Symbol' in short_df.columns:
                     symbol_short = short_df[short_df['Symbol'].str.strip() == symbol]
                     if not symbol_short.empty:
-                        # Percentage of Short Quantity
                         sentinel["short_selling_pct"] = float(str(symbol_short.iloc[-1].get('Percentage of Short Quantity', 0)).replace(',', ''))
-                    
         except Exception as e:
-            # Log but continue
-            pass
+            logger.warning(f"Error fetching sentinel data for {symbol}: {e}")
             
         return sentinel
     
-    def build_session_context(
+    async def build_session_context(
         self,
         nifty_df: Optional[pd.DataFrame] = None
     ) -> SessionContext:
         """
-        Build SessionContext from market-wide data.
-        
-        Args:
-            nifty_df: NIFTY 50 historical data (optional, will fetch if None)
-            
-        Returns:
-            SessionContext with market regime and VIX
+        Build SessionContext from market-wide data. ASYNC.
         """
-        # Fetch NIFTY data if not provided
         if nifty_df is None or nifty_df.empty:
-            nifty_df = self.nse_master.get_history(
-                symbol="NIFTY 50",
-                exchange="NSE",
-                interval="1d"
-            )
+            nifty_df = await self.fetch_price_data("NIFTY 50", "1d")
         
         # Determine market regime
         regime = "NEUTRAL"
@@ -356,22 +318,16 @@ class SnapshotBuilder:
             regime_data = market_regime_analyzer.determine_regime()
             regime = regime_data.get('direction', 'NEUTRAL')
         
-        # Get VIX
-        vix_level = 15.0  # Default fallback
+        # VIX fetch
+        vix_level = 15.0
         vix_percentile = 50.0
-        
         try:
-            vix_df = self.nse_master.get_history(
-                symbol="INDIA VIX",
-                exchange="NSE",
-                interval="1d"
-            )
-            if vix_df is not None and not vix_df.empty:
+            vix_df = await self.fetch_price_data("INDIA VIX", "1d")
+            if not vix_df.empty:
                 vix_level = float(vix_df.iloc[-1]['Close'])
-                # Calculate percentile (approximate using last 100 days)
                 vix_percentile = (vix_df['Close'].rank(pct=True).iloc[-1]) * 100.0
         except Exception as e:
-            logger.warning(f"Failed to fetch real VIX: {e}")
+            logger.warning(f"Failed to fetch VIX: {e}")
         
         return SessionContext(
             timestamp=datetime.now(),

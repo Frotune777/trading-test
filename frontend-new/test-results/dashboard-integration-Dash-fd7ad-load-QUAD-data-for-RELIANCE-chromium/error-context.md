@@ -1,0 +1,81 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]:
+      - link "Fortune Trading" [ref=e6] [cursor=pointer]:
+        - /url: /dashboard
+        - heading "Fortune Trading" [level=1] [ref=e10]
+      - generic [ref=e11]:
+        - link "Dashboard" [ref=e12] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e13]:
+            - img [ref=e14]
+            - text: Dashboard
+        - link "QUAD Analytics" [ref=e19] [cursor=pointer]:
+          - /url: /quad
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - text: QUAD Analytics
+        - link "Screener" [ref=e29] [cursor=pointer]:
+          - /url: /dashboard/screener
+          - generic [ref=e30]:
+            - img [ref=e31]
+            - text: Screener
+        - link "Analysis" [ref=e33] [cursor=pointer]:
+          - /url: /dashboard/analysis
+          - generic [ref=e34]:
+            - img [ref=e35]
+            - text: Analysis
+        - link "Derivatives" [ref=e38] [cursor=pointer]:
+          - /url: /dashboard/derivatives
+          - generic [ref=e39]:
+            - img [ref=e40]
+            - text: Derivatives
+        - link "Insider" [ref=e43] [cursor=pointer]:
+          - /url: /dashboard/insider
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - text: Insider
+        - link "Settings" [ref=e48] [cursor=pointer]:
+          - /url: /dashboard/settings
+          - generic [ref=e49]:
+            - img [ref=e50]
+            - text: Settings
+    - main [ref=e53]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - img [ref=e57]
+          - textbox "Search stocks, ETFs, indices... (Press '/')" [ref=e60]
+        - button "Feedback" [ref=e62]
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - heading "Stock Intelligence" [level=2] [ref=e68]
+            - paragraph [ref=e69]: AI-powered analysis combining technical, fundamental, and market intelligence.
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - img [ref=e72]
+              - textbox "Enter symbol (e.g. RELIANCE)" [ref=e75]: RELIANCE
+            - button "Analyze" [ref=e76]
+        - generic [ref=e77]:
+          - tablist [ref=e78]:
+            - tab "QUAD Analysis" [selected] [ref=e79]:
+              - img
+              - text: QUAD Analysis
+            - tab "Technical Signals" [ref=e80]:
+              - img
+              - text: Technical Signals
+            - tab "Fundamentals" [ref=e81]:
+              - img
+              - text: Fundamentals
+            - tab "Raw Indicators" [ref=e82]:
+              - img
+              - text: Raw Indicators
+          - tabpanel "QUAD Analysis" [ref=e83]:
+            - generic [ref=e86]: Loading QUAD analysis...
+  - button "Open Next.js Dev Tools" [ref=e92] [cursor=pointer]:
+    - img [ref=e93]
+  - alert [ref=e96]
+```

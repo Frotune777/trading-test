@@ -46,18 +46,18 @@ export default function DerivativesPage() {
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Derivatives Engine</h2>
-                    <p className="text-slate-400 mt-2">Live Option Chain and Put-Call Ratio analysis.</p>
+                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">Derivatives Engine</h2>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">Live Option Chain and Put-Call Ratio analysis.</p>
                 </div>
-                
+
                 <form onSubmit={handleSearch} className="flex gap-2">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                        <Input 
+                        <Input
                             value={searchVal}
                             onChange={(e) => setSearchVal(e.target.value)}
-                            placeholder="Index or Stock (e.g. NIFTY)" 
-                            className="bg-slate-900 border-slate-700 pl-10 w-64 text-white"
+                            placeholder="Index or Stock (e.g. NIFTY)"
+                            className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 pl-10 w-64 text-slate-900 dark:text-white"
                         />
                     </div>
                     <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white">Fetch Chain</Button>
@@ -65,20 +65,20 @@ export default function DerivativesPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-                <Card className="bg-slate-900/50 border-slate-800">
+                <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-slate-400">Put-Call Ratio (OI)</CardTitle>
+                        <CardTitle className="text-sm text-slate-600 dark:text-slate-400">Put-Call Ratio (OI)</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-white">{pcr}</div>
-                        <p className={cn("text-xs mt-1", Number(pcr) > 1.2 ? "text-emerald-500" : (Number(pcr) < 0.7 ? "text-rose-500" : "text-slate-400"))}>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-white">{pcr}</div>
+                        <p className={cn("text-xs mt-1", Number(pcr) > 1.2 ? "text-emerald-500" : (Number(pcr) < 0.7 ? "text-rose-500" : "text-slate-600 dark:text-slate-400"))}>
                             {Number(pcr) > 1.2 ? "Bullish Sentiment" : (Number(pcr) < 0.7 ? "Bearish Sentiment" : "Neutral / Side-ways")}
                         </p>
                     </CardContent>
                 </Card>
                 <Card className="bg-slate-900/50 border-slate-800">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-slate-400">Total Calls OI</CardTitle>
+                        <CardTitle className="text-sm text-slate-600 dark:text-slate-400">Total Calls OI</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-rose-500">{totalCallsOI.toLocaleString()}</div>
@@ -86,7 +86,7 @@ export default function DerivativesPage() {
                 </Card>
                 <Card className="bg-slate-900/50 border-slate-800">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-slate-400">Total Puts OI</CardTitle>
+                        <CardTitle className="text-sm text-slate-600 dark:text-slate-400">Total Puts OI</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-emerald-500">{totalPutsOI.toLocaleString()}</div>
@@ -96,23 +96,23 @@ export default function DerivativesPage() {
 
             <Card className="bg-slate-900/50 border-slate-800">
                 <CardHeader>
-                    <CardTitle className="text-white">Option Chain: {symbol}</CardTitle>
+                    <CardTitle className="text-slate-900 dark:text-white">Option Chain: {symbol}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border border-slate-800">
+                    <div className="rounded-md border border-slate-200 dark:border-slate-800">
                         <Table>
-                            <TableHeader className="bg-slate-950/50">
-                                <TableRow className="border-slate-800">
-                                    <TableHead className="text-rose-500 font-bold text-center border-r border-slate-800">CALLS</TableHead>
-                                    <TableHead className="text-slate-400 text-center">STRIKE</TableHead>
-                                    <TableHead className="text-emerald-500 font-bold text-center border-l border-slate-800">PUTS</TableHead>
+                            <TableHeader className="bg-slate-100 dark:bg-slate-950/50">
+                                <TableRow className="border-slate-200 dark:border-slate-800">
+                                    <TableHead className="text-rose-500 font-bold text-center border-r border-slate-200 dark:border-slate-800">CALLS</TableHead>
+                                    <TableHead className="text-slate-600 dark:text-slate-400 text-center">STRIKE</TableHead>
+                                    <TableHead className="text-emerald-500 font-bold text-center border-l border-slate-200 dark:border-slate-800">PUTS</TableHead>
                                 </TableRow>
-                                <TableRow className="border-slate-800 text-[10px] uppercase text-slate-500">
-                                    <TableHead className="text-center p-1 border-r border-slate-800">
+                                <TableRow className="border-slate-200 dark:border-slate-800 text-[10px] uppercase text-slate-600 dark:text-slate-500">
+                                    <TableHead className="text-center p-1 border-r border-slate-200 dark:border-slate-800">
                                         <div className="flex justify-around"><span>OI</span><span>Price</span><span>Chg%</span></div>
                                     </TableHead>
                                     <TableHead className="text-center p-1">-</TableHead>
-                                    <TableHead className="text-center p-1 border-l border-slate-800">
+                                    <TableHead className="text-center p-1 border-l border-slate-200 dark:border-slate-800">
                                         <div className="flex justify-around"><span>Chg%</span><span>Price</span><span>OI</span></div>
                                     </TableHead>
                                 </TableRow>
@@ -121,11 +121,11 @@ export default function DerivativesPage() {
                                 {isLoading ? (
                                     <TableRow><TableCell colSpan={3} className="text-center py-10">Loading Chain...</TableCell></TableRow>
                                 ) : oc?.slice(0, 20).map((row, i) => (
-                                    <TableRow key={i} className="border-slate-800 hover:bg-slate-800/20">
-                                        <TableCell className="p-2 border-r border-slate-800">
+                                    <TableRow key={i} className="border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/20">
+                                        <TableCell className="p-2 border-r border-slate-200 dark:border-slate-800">
                                             <div className="flex justify-around text-xs">
-                                                <span className="text-slate-400">{row.CALLS_OI?.toLocaleString()}</span>
-                                                <span className="text-white font-mono">₹{row.CALLS_Last_Price}</span>
+                                                <span className="text-slate-600 dark:text-slate-400">{row.CALLS_OI?.toLocaleString()}</span>
+                                                <span className="text-slate-900 dark:text-white font-mono">₹{row.CALLS_Last_Price}</span>
                                                 <span className={cn(row.CALLS_Chng_in_OI > 0 ? "text-emerald-500" : "text-rose-500")}>
                                                     {row.CALLS_Chng_in_OI > 0 ? "+" : ""}{row.CALLS_Chng_in_OI}
                                                 </span>
@@ -134,13 +134,13 @@ export default function DerivativesPage() {
                                         <TableCell className="p-2 text-center font-bold text-blue-400 bg-blue-500/5">
                                             {row.STRIKE_PRICE}
                                         </TableCell>
-                                        <TableCell className="p-2 border-l border-slate-800">
+                                        <TableCell className="p-2 border-l border-slate-200 dark:border-slate-800">
                                             <div className="flex justify-around text-xs">
                                                 <span className={cn(row.PUTS_Chng_in_OI > 0 ? "text-emerald-500" : "text-rose-500")}>
                                                     {row.PUTS_Chng_in_OI > 0 ? "+" : ""}{row.PUTS_Chng_in_OI}
                                                 </span>
-                                                <span className="text-white font-mono">₹{row.PUTS_Last_Price}</span>
-                                                <span className="text-slate-400">{row.PUTS_OI?.toLocaleString()}</span>
+                                                <span className="text-slate-900 dark:text-white font-mono">₹{row.PUTS_Last_Price}</span>
+                                                <span className="text-slate-600 dark:text-slate-400">{row.PUTS_OI?.toLocaleString()}</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>

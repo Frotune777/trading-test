@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from io import StringIO, BytesIO
 import zipfile
+from ..core.cache_utils import cache_response
 
 
 class NseUtils:
@@ -1061,6 +1062,7 @@ class NseUtils:
             print("Error fetching Corporate Action Data. Check your input")
             return None
 
+    @cache_response(ttl_seconds=300)
     def get_insider_trading(self, from_date: str = None, to_date: str = None):
 
         try:
@@ -1124,6 +1126,7 @@ class NseUtils:
             print("Error fetching ETF list. Check your input")
             return None
 
+    @cache_response(ttl_seconds=300)
     def get_bulk_deals(self, from_date: str = None, to_date: str = None):
 
         try:
@@ -1149,6 +1152,7 @@ class NseUtils:
             print("Error fetching Bulk Deals Data. Check your input")
             return None
 
+    @cache_response(ttl_seconds=300)
     def get_block_deals(self, from_date: str = None, to_date: str = None):
 
         try:
@@ -1175,6 +1179,7 @@ class NseUtils:
             return None
 
 
+    @cache_response(ttl_seconds=300)
     def get_short_selling(self, from_date: str = None, to_date: str = None):
 
         try:

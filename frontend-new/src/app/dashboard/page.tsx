@@ -47,20 +47,20 @@ export default function DashboardPage() {
         <div className="space-y-8">
             {/* Header Section */}
             <div>
-                <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Market Pulse</h2>
-                <p className="text-slate-400 mt-2">Live market overview and institutional activity.</p>
+                <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">Market Pulse</h2>
+                <p className="text-slate-600 dark:text-slate-400 mt-2">Live market overview and institutional activity.</p>
             </div>
 
             {/* Indices Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {loadingIndices ? (
                     [1, 2, 3, 4].map(i => (
-                        <Card key={i} className="bg-slate-900 border-slate-800 animate-pulse h-32" />
+                        <Card key={i} className="bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-800 animate-pulse h-32" />
                     ))
                 ) : indices?.map((item) => (
-                    <Card key={item.name} className="bg-slate-900/50 border-slate-800 backdrop-blur hover:bg-slate-900 transition cursor-default">
+                    <Card key={item.name} className="bg-white dark:bg-slate-900/50 border-slate-300 dark:border-slate-800 backdrop-blur hover:bg-slate-100 dark:hover:bg-slate-900 transition cursor-default">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-400">
+                            <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
                                 {item.name}
                             </CardTitle>
                             {item.is_up ? (
@@ -70,13 +70,13 @@ export default function DashboardPage() {
                             )}
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">
                                 {item.value?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </div>
                             <p className={cn("text-xs flex items-center mt-1", item.is_up ? "text-emerald-500" : "text-rose-500")}>
                                 {item.is_up ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
                                 {item.change_percent ? Math.abs(item.change_percent).toFixed(2) : '0.00'}%
-                                <span className="ml-2 text-slate-500">
+                                <span className="ml-2 text-slate-400 dark:text-slate-500">
                                     ({item.change ? (item.change > 0 ? "+" : "") + item.change.toFixed(2) : '0.00'})
                                 </span>
                             </p>
@@ -87,32 +87,32 @@ export default function DashboardPage() {
 
             {/* Market Movers Section */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4 bg-slate-900/50 border-slate-800">
+                <Card className="col-span-4 bg-white dark:bg-slate-900/50 border-slate-300 dark:border-slate-800">
                     <CardHeader>
-                        <CardTitle className="text-white">Trend Leaders (Volume)</CardTitle>
+                        <CardTitle className="text-slate-900 dark:text-white">Trend Leaders (Volume)</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="relative w-full overflow-auto">
                             <table className="w-full caption-bottom text-sm text-left">
                                 <thead className="[&_tr]:border-b [&_tr]:border-slate-800">
                                     <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                        <th className="h-12 px-4 align-middle font-medium text-slate-400">Symbol</th>
-                                        <th className="h-12 px-4 align-middle font-medium text-slate-400 text-right">Price</th>
-                                        <th className="h-12 px-4 align-middle font-medium text-slate-400 text-right">% Chg</th>
-                                        <th className="h-12 px-4 align-middle font-medium text-slate-400 text-right">Volume</th>
+                                        <th className="h-12 px-4 align-middle font-medium text-slate-600 dark:text-slate-400">Symbol</th>
+                                        <th className="h-12 px-4 align-middle font-medium text-slate-600 dark:text-slate-400 text-right">Price</th>
+                                        <th className="h-12 px-4 align-middle font-medium text-slate-600 dark:text-slate-400 text-right">% Chg</th>
+                                        <th className="h-12 px-4 align-middle font-medium text-slate-600 dark:text-slate-400 text-right">Volume</th>
                                     </tr>
                                 </thead>
                                 <tbody className="[&_tr:last-child]:border-0">
                                     {loadingActive ? (
-                                        <tr><td colSpan={4} className="p-4 text-center text-slate-500">Loading market data...</td></tr>
+                                        <tr><td colSpan={4} className="p-4 text-center text-slate-600 dark:text-slate-500">Loading market data...</td></tr>
                                     ) : activeStocks?.slice(0, 10).map((stock) => (
-                                        <tr key={stock.symbol} className="border-b border-slate-800 transition-colors hover:bg-slate-800/50">
-                                            <td className="p-4 align-middle font-medium text-white">{stock.symbol}</td>
-                                            <td className="p-4 align-middle text-right text-slate-200">₹{stock.lastPrice?.toLocaleString()}</td>
-                                            <td className={cn("p-4 align-middle text-right font-medium", stock.pChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                                        <tr key={stock.symbol} className="border-b border-slate-200 dark:border-slate-800 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/50">
+                                            <td className="p-4 align-middle font-medium text-slate-900 dark:text-white">{stock.symbol}</td>
+                                            <td className="p-4 align-middle text-right text-slate-700 dark:text-slate-200">₹{stock.lastPrice?.toLocaleString()}</td>
+                                            <td className={cn("p-4 align-middle text-right font-medium", stock.pChange >= 0 ? "text-emerald-600 dark:text-emerald-500" : "text-rose-600 dark:text-rose-500")}>
                                                 {stock.pChange > 0 ? "+" : ""}{stock.pChange?.toFixed(2)}%
                                             </td>
-                                            <td className="p-4 align-middle text-right text-slate-400">{(stock.totalTradedVolume / 100000).toFixed(2)}L</td>
+                                            <td className="p-4 align-middle text-right text-slate-600 dark:text-slate-400">{(stock.totalTradedVolume / 100000).toFixed(2)}L</td>
                                         </tr>
                                     ))}
                                 </tbody>

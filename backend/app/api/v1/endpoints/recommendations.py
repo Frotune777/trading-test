@@ -65,7 +65,7 @@ async def get_reasoning(symbol: str):
     
     try:
         logger.info(f"Fetching QUAD reasoning for {symbol}")
-        result = reasoning_service.analyze_symbol(symbol.upper())
+        result = await reasoning_service.analyze_symbol(symbol.upper())
         
         if 'error' in result:
             raise HTTPException(

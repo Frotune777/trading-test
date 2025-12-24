@@ -90,9 +90,15 @@ class TechnicalAnalysisService:
     def add_patterns(self):
         """Recognize 40+ candlestick patterns using TA-Lib"""
         pattern_funcs = [func for func in dir(talib) if func.startswith('CDL')]
+        pattern_results = {}
         for func_name in pattern_funcs:
             func = getattr(talib, func_name)
-            self.df[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+            pattern_results[func_name.lower()] = func(self.df['open'], self.df['high'], self.df['low'], self.df['close'])
+        
+        # Concatenate all patterns at once to avoid fragmentation
+        if pattern_results:
+            pattern_df = pd.DataFrame(pattern_results, index=self.df.index)
+            self.df = pd.concat([self.df, pattern_df], axis=1)
 
     def calculate_stats(self) -> Dict[str, float]:
         """PILLAR 1: Statistical Analysis Functions"""
@@ -100,10 +106,47 @@ class TechnicalAnalysisService:
         vol = returns.std() * np.sqrt(252)
         sharpe = (returns.mean() * 252) / vol if vol != 0 else 0
         
+        # Calculate frontend-compatible stats
+        latest = self.df.iloc[-1]
+        recent_data = self.df.tail(20)  # Last 20 days for calculations
+        
+        # Volatility as percentage (annualized)
+        volatility = float(vol * 100)
+        
+        # Average volume (last 20 days)
+        avg_volume = float(recent_data['volume'].mean())
+        
+        # Price range (High - Low of latest day)
+        price_range = float(latest['high'] - latest['low'])
+        
+        # Trend strength based on ADX if available, otherwise calculate from price action
+        if 'adx' in self.df.columns and not pd.isna(latest.get('adx')):
+            trend_strength = float(latest['adx'])
+        else:
+            # Fallback: Calculate trend strength from SMA alignment
+            close = latest['close']
+            sma_20 = latest.get('sma_20', close)
+            sma_50 = latest.get('sma_50', close)
+            
+            # Simple trend strength: 0-100 based on price position relative to SMAs
+            if close > sma_20 and close > sma_50:
+                trend_strength = 75.0  # Strong uptrend
+            elif close > sma_20:
+                trend_strength = 60.0  # Moderate uptrend
+            elif close < sma_20 and close < sma_50:
+                trend_strength = 25.0  # Strong downtrend
+            else:
+                trend_strength = 40.0  # Weak trend
+        
         return {
             "annualized_volatility": float(vol),
             "sharpe_ratio": float(sharpe),
-            "max_drawdown": float(self._calculate_max_drawdown())
+            "max_drawdown": float(self._calculate_max_drawdown()),
+            # Frontend-compatible stats
+            "volatility": volatility,
+            "avg_volume": avg_volume,
+            "price_range": price_range,
+            "trend_strength": trend_strength
         }
 
     def _calculate_max_drawdown(self) -> float:
