@@ -75,6 +75,11 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logger.error(f"SQL error: {e}\nQuery: {query}")
             raise
+
+    def query_dict(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
+        """Execute query and return results as list of dictionaries."""
+        cursor = self.execute(query, params)
+        return [dict(row) for row in cursor.fetchall()]
     
     def commit(self):
         """Commit changes."""
@@ -1377,6 +1382,73 @@ class DatabaseManager:
             cursor.executemany("INSERT OR REPLACE INTO futures_data (symbol, expiry_date, timestamp, underlying_value, futures_price, open_interest, oi_change, volume, basis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", records)
             self.commit()
         except: self.conn.rollback()
+
+    def save_execution(self, execution_data: Dict[str, Any]):
+        """Save order execution audit log."""
+        query = """
+            INSERT INTO order_executions (
+                symbol, order_type, quantity, price, execution_mode,
+                execution_status, execution_block_reason, feed_state, 
+                ltp_source, ltp_age_ms, order_id, decision_id,
+                drift_bps, raw_payload, raw_response, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        now = datetime.now()
+        try:
+            self.execute(query, (
+                execution_data.get('symbol'),
+                execution_data.get('order_type'),
+                execution_data.get('quantity'),
+                execution_data.get('price'),
+                execution_data.get('execution_mode'),
+                execution_data.get('execution_status'),
+                execution_data.get('execution_block_reason'),
+                execution_data.get('feed_state'),
+                execution_data.get('ltp_source'),
+                execution_data.get('ltp_age_ms'),
+                execution_data.get('order_id'),
+                execution_data.get('decision_id'),
+                execution_data.get('drift_bps'),
+                json.dumps(execution_data.get('raw_payload')) if execution_data.get('raw_payload') else None,
+                json.dumps(execution_data.get('raw_response')) if execution_data.get('raw_response') else None,
+                now
+            ))
+    def save_alert(self, alert_data: Dict[str, Any]):
+        """Save a system alert to the database."""
+        query = """
+            INSERT INTO alerts (
+                alert_type, level, symbol, message, metadata
+            ) VALUES (?, ?, ?, ?, ?)
+        """
+        try:
+            self.execute(query, (
+                alert_data.get('type'),
+                alert_data.get('level'),
+                alert_data.get('symbol'),
+                alert_data.get('message'),
+                json.dumps(alert_data.get('metadata')) if alert_data.get('metadata') else None
+            ))
+            self.commit()
+            logger.info(f"Saved alert: {alert_data.get('type')} - {alert_data.get('message')}")
+        except Exception as e:
+            logger.error(f"Error saving alert: {e}")
+            self.rollback()
+
+    def get_recent_alerts(self, limit: int = 50) -> List[Dict]:
+        """Fetch latest alerts from the database."""
+        query = "SELECT * FROM alerts ORDER BY created_at DESC LIMIT ?"
+        return self.query_dict(query, (limit,))
+
+    def get_last_execution(self) -> Optional[Dict]:
+        """Get the most recent execution record."""
+        query = "SELECT * FROM order_executions ORDER BY created_at DESC LIMIT 1"
+        try:
+            cursor = self.execute(query)
+            row = cursor.fetchone()
+            return dict(row) if row else None
+        except Exception as e:
+            logger.error(f"Error getting last execution: {e}")
+            return None
 
     def close(self):
         """Close database connection."""

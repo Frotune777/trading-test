@@ -59,6 +59,19 @@ class Settings(BaseSettings):
             return v
         return f"redis://{values.get('REDIS_HOST')}:{values.get('REDIS_PORT')}/0"
 
+    # OPENALGO
+    OPENALGO_WS_URL: str = "ws://127.0.0.1:8765"
+    OPENALGO_API_URL: str = os.getenv("OPENALGO_API_URL", "http://127.0.0.1:8765/api")
+    OPENALGO_API_KEY: str = os.getenv("OPENALGO_API_KEY", "default_key")
+    OPENALGO_RECONNECT_ATTEMPTS: int = 10
+    OPENALGO_HEARTBEAT_INTERVAL: int = 30  # seconds
+    OPENALGO_MAX_SYMBOLS_PER_CONN: int = 500
+    REDIS_TICK_TTL: int = 5  # seconds
+
+    # EXECUTION SAFETY
+    EXECUTION_MODE: str = os.getenv("EXECUTION_MODE", "DRY_RUN") # "DRY_RUN" or "LIVE"
+    EXECUTION_ENABLED: bool = os.getenv("EXECUTION_ENABLED", "false").lower() == "true"
+
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", extra="ignore")
 
 settings = Settings()

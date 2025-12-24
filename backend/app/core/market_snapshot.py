@@ -65,6 +65,10 @@ class LiveDecisionSnapshot:
     block_deal_net_qty: Optional[int] = None      # Net quantity of block deals
     short_selling_pct: Optional[float] = None     # Recent short selling percentage
 
+    # Real-time Metadata (for observability)
+    ltp_source: str = "snapshot"                  # "redis_ws" or "snapshot"
+    ltp_age_ms: Optional[int] = None              # Age of tick in milliseconds
+
 @dataclass
 class SessionContext:
     """

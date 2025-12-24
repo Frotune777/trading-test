@@ -639,6 +639,31 @@ CREATE TABLE IF NOT EXISTS portfolio (
 );
 
 -- ============================================================
+-- ORDER EXECUTION & AUDIT
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS order_executions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    order_type TEXT,          -- 'BUY' or 'SELL'
+    quantity INTEGER,
+    price REAL,
+    execution_mode TEXT NOT NULL,      -- 'DRY_RUN' or 'LIVE'
+    execution_status TEXT NOT NULL,    -- 'BLOCKED', 'DRY_RUN', 'LIVE'
+    execution_block_reason TEXT,      -- E.g., 'FEED_DEGRADED', 'STALE_LTP'
+    feed_state TEXT,                   -- State at time of decision
+    ltp_source TEXT,
+    ltp_age_ms INTEGER,
+    order_id TEXT,                     -- External order ID or DRY_ID
+    decision_id TEXT,                  -- UUID from TradeDecision
+    drift_bps REAL,                    -- Price drift in basis points
+    raw_payload TEXT,                  -- JSON of the intended order
+    raw_response TEXT,                 -- JSON of the execution response
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (symbol) REFERENCES companies(symbol) ON DELETE CASCADE
+);
+
+-- ============================================================
 -- SYSTEM TABLES
 -- ============================================================
 
@@ -755,6 +780,25 @@ CREATE INDEX IF NOT EXISTS idx_custom_metrics_category ON custom_metrics(categor
 CREATE INDEX IF NOT EXISTS idx_update_log_symbol ON update_log(symbol);
 CREATE INDEX IF NOT EXISTS idx_update_log_created ON update_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_update_log_table ON update_log(table_name);
+
+-- Alerts table
+CREATE TABLE IF NOT EXISTS alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_type TEXT NOT NULL,         -- 'FEED_DOWN', 'EXECUTION_BLOCKED', etc.
+    level TEXT NOT NULL,              -- 'INFO', 'WARNING', 'CRITICAL'
+    symbol TEXT,
+    message TEXT NOT NULL,
+    metadata TEXT,                    -- JSON blob
+    is_resolved BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_type ON alerts(alert_type);
+CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at DESC);
+
+-- Order executions indexes
+CREATE INDEX IF NOT EXISTS idx_order_executions_symbol ON order_executions(symbol);
+CREATE INDEX IF NOT EXISTS idx_order_executions_created ON order_executions(created_at DESC);
 
 -- ============================================================
 -- TRIGGERS (Auto-update timestamps)
@@ -1074,7 +1118,8 @@ ALL_TABLES = [
     
     # System
     'update_log',
-    'data_sources'
+    'data_sources',
+    'order_executions'
 ]
 
 CORE_TABLES = [

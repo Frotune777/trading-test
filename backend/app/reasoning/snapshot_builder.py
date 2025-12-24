@@ -3,6 +3,10 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import pandas as pd
 import logging
+import json
+import time
+from app.core.redis import redis_client
+from app.core.config import settings
 from ..core.market_snapshot import LiveDecisionSnapshot, SessionContext
 from ..services.technical_analysis import TechnicalAnalysisService
 from ..services.market_regime import MarketRegime
@@ -189,10 +193,39 @@ class SnapshotBuilder:
         duration = (datetime.now() - start_time).total_seconds()
         logger.info(f"Built async snapshot for {symbol} in {duration:.2f}s")
 
+        # --- REFRESHNESS CONTRACT START ---
+        # Authoritative LTP Source Selection
+        final_ltp = ltp
+        ltp_source = "snapshot"
+        ltp_age_ms = None
+        
+        try:
+            exchange = "NSE" # Default, could be derived from symbol
+            redis_key = f"market:ltp:{exchange}:{symbol}"
+            cached_tick_raw = await redis_client.get(redis_key)
+            
+            if cached_tick_raw:
+                cached_tick = json.loads(cached_tick_raw)
+                received_at = cached_tick.get("received_at", 0)
+                now = time.time()
+                age_ms = int((now - received_at) * 1000)
+                
+                # Enforce 5s Freshness Contract
+                if age_ms < (settings.REDIS_TICK_TTL * 1000):
+                    final_ltp = float(cached_tick.get("ltp", ltp))
+                    ltp_source = "redis_ws"
+                    ltp_age_ms = age_ms
+                    logger.debug(f"Using fresh Redis LTP for {symbol} (age: {age_ms}ms)")
+                else:
+                    logger.debug(f"Redis LTP for {symbol} STALE (age: {age_ms}ms), using snapshot.")
+        except Exception as e:
+            logger.warning(f"Error checking Redis LTP for {symbol}: {e}")
+        # --- REFRESHNESS CONTRACT END ---
+
         return LiveDecisionSnapshot(
             symbol=symbol,
             timestamp=datetime.now(),
-            ltp=ltp,
+            ltp=final_ltp, # Use authoritative LTP
             vwap=vwap,
             open=open_price,
             high=high,
@@ -219,6 +252,8 @@ class SnapshotBuilder:
             ask_qty=ask_qty,
             spread_pct=spread_pct,
             oi_change=oi_change,
+            ltp_source=ltp_source,
+            ltp_age_ms=ltp_age_ms,
             **sentinel_data
         )
 

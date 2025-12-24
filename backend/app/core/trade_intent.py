@@ -73,7 +73,8 @@ class TradeIntent:
     # Validity Flags (NEW in v1.0)
     is_analysis_valid: bool      # False if critical data missing
     is_execution_ready: bool     # False if placeholder pillars > threshold
-    degradation_warnings: List[str]  # E.g., "Volatility pillar is placeholder"
+    execution_block_reason: Optional[str] = None # E.g., "FEED_DEGRADED", "STALE_LTP"
+    degradation_warnings: List[str] = None       # E.g., ["Volatility pillar is placeholder"]
     
     # Version & Schema
     contract_version: str = "1.0.0"  # Semantic versioning for frontend

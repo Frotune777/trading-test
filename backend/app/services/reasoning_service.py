@@ -5,7 +5,7 @@ Updated for TradeIntent v1.0 contract
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple, List
 from ..reasoning.reasoning_engine import ReasoningEngine
 from ..reasoning.snapshot_builder import SnapshotBuilder
 from ..reasoning.pillars.trend_pillar import TrendPillar
@@ -42,6 +42,80 @@ class ReasoningService:
         
         logger.info("ReasoningService initialized with 6 QUAD pillars")
     
+    async def is_execution_safe(self, symbol: str, snapshot: Any) -> tuple[bool, Optional[str]]:
+        """
+        Multi-point safety gate for automated execution.
+        Returns (is_safe, block_reason)
+        """
+        from app.core.config import settings
+        from app.core.openalgo_bridge import openalgo_client, FeedState
+        from app.core.redis import redis_client
+        
+        # 1. Global Kill Switch (Settings + Runtime Override)
+        # Check Redis for a dynamic override first
+        try:
+            runtime_enabled = await redis_client.get("runtime:execution_enabled")
+            if runtime_enabled is not None:
+                is_enabled = runtime_enabled.decode() == "true"
+            else:
+                is_enabled = settings.EXECUTION_ENABLED
+        except:
+            is_enabled = settings.EXECUTION_ENABLED
+
+        if not is_enabled:
+            return False, "EXECUTION_DISABLED"
+
+        # 2. Feed Health Check
+        status = openalgo_client.get_status()
+        state = status.get("feed_state")
+        
+        if state == FeedState.DOWN.value:
+            return False, "FEED_DOWN"
+        if state == FeedState.DEGRADED.value:
+            return False, "FEED_DEGRADED"
+        
+        # 3. Redis LTP Existence & Freshness
+        if snapshot.ltp_source != "redis_ws":
+             return False, "NO_REALTIME_DATA"
+             
+        if snapshot.ltp_age_ms is None or snapshot.ltp_age_ms > 5000:
+            return False, "STALE_LTP"
+            
+        # 4. Subscription Check
+        active_symbols = status.get("active_symbols", [])
+        target = symbol if ":" in symbol else f"NSE:{symbol}"
+        if target not in active_symbols:
+            return False, "SYMBOL_NOT_SUBSCRIBED"
+            
+        # 5. Mode Check (Returns specific reason if DRY_RUN)
+        if settings.EXECUTION_MODE == "DRY_RUN":
+            return True, "DRY_RUN_MODE"
+
+        return True, None
+
+    async def can_execute_trade(self, symbol: str, snapshot: Any) -> Dict[str, Any]:
+        """
+        Final execution safety gate.
+        Returns a structured ExecutionDecision (Dict)
+        """
+        from app.core.config import settings
+        from app.core.openalgo_bridge import openalgo_client
+        
+        is_safe, block_reason = await self.is_execution_safe(symbol, snapshot)
+        
+        # Special case: Even if safe, if we are in DRY_RUN mode, 
+        # the execution service will handle the simulation but
+        # we still flag the mode for audit purposes.
+        
+        return {
+            "is_execution_ready": is_safe,
+            "execution_mode": settings.EXECUTION_MODE,
+            "block_reason": block_reason,
+            "feed_state": openalgo_client.feed_state.value,
+            "ltp_source": snapshot.ltp_source,
+            "ltp_age_ms": snapshot.ltp_age_ms
+        }
+
     async def analyze_symbol(self, symbol: str) -> Dict[str, Any]:
         """
         Analyze a symbol and return trade recommendation.
@@ -62,11 +136,27 @@ class ReasoningService:
             logger.info(f"Running reasoning engine for {symbol}")
             intent = self.engine.analyze(snapshot, context)
             
+            # Execution Safety Gate
+            is_safe, block_reason = await self.is_execution_safe(symbol, snapshot)
+            intent.is_execution_ready = is_safe and intent.is_execution_ready
+            intent.execution_block_reason = block_reason
+            
             # Convert to API response format (v1.0 contract)
+            from app.core.trade_decision import TradeDecision
+            decision = None
+            if intent.is_execution_ready and intent.directional_bias.value in ["BULLISH", "BEARISH"]:
+                decision = TradeDecision.create(
+                    symbol=symbol,
+                    signal=intent.directional_bias.value,
+                    confidence=intent.conviction_score,
+                    ltp=snapshot.ltp
+                )
+
             return {
                 'symbol': symbol,
                 'analysis_timestamp': intent.analysis_timestamp.isoformat(),
                 'contract_version': intent.contract_version,
+                'decision_id': decision.decision_id if decision else None,
                 
                 # Core reasoning
                 'directional_bias': intent.directional_bias.value,
@@ -118,6 +208,7 @@ class ReasoningService:
                 # Validity flags
                 'is_valid': intent.is_analysis_valid,
                 'is_execution_ready': intent.is_execution_ready,
+                'execution_block_reason': intent.execution_block_reason,
                 'warnings': intent.degradation_warnings,
                 
                 # Market context (for UI display)
