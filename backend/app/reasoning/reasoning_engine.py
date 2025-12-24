@@ -114,12 +114,19 @@ class ReasoningEngine:
         if snapshot.timestamp:
             data_age = int((analysis_timestamp - snapshot.timestamp).total_seconds())
 
+        # v1.1: Populate calibration version and weights snapshot
+        calibration_version = "matrix_2024_q4"  # Current calibration version
+        pillar_weights_snapshot = self.weights.copy()  # Frozen snapshot of weights
+
         quality = AnalysisQuality(
             total_pillars=len(self.weights),
             active_pillars=len(self.pillars) - len(self.placeholder_pillars) - len(failed_pillars),
             placeholder_pillars=len(self.placeholder_pillars),
             failed_pillars=failed_pillars,
-            data_age_seconds=data_age
+            data_age_seconds=data_age,
+            # v1.1 additions
+            calibration_version=calibration_version,
+            pillar_weights_snapshot=pillar_weights_snapshot
         )
         
         # Step 3: Generate degradation warnings
@@ -171,7 +178,7 @@ class ReasoningEngine:
             is_analysis_valid=is_valid,
             is_execution_ready=is_execution_ready,
             degradation_warnings=warnings,
-            contract_version="1.0.0"
+            contract_version="1.1.0"
         )
     
     def _aggregate_scores(self, scores: Dict[str, float]) -> float:

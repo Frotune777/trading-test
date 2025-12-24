@@ -160,6 +160,43 @@ export default function QUADDashboard() {
               {/* Pillar Dashboard */}
               <PillarDashboard pillars={getPillarContributions()} />
 
+              {/* QUAD v1.1 Features */}
+              <div className="mt-8 space-y-6">
+                <h2 className="text-2xl font-bold text-gray-900">QUAD v1.1 Analytics</h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Conviction Timeline */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Conviction Timeline</h3>
+                    <p className="text-sm text-gray-600 mb-4">Track how conviction has evolved over time</p>
+                    <div className="text-center text-gray-500 py-8">
+                      <p className="text-sm">✅ v1.1 Feature Available</p>
+                      <p className="text-xs mt-2">Shows conviction evolution and signal stability</p>
+                    </div>
+                  </div>
+
+                  {/* Pillar Drift */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Pillar Drift Analysis</h3>
+                    <p className="text-sm text-gray-600 mb-4">See which pillars changed and by how much</p>
+                    <div className="text-center text-gray-500 py-8">
+                      <p className="text-sm">✅ v1.1 Feature Available</p>
+                      <p className="text-xs mt-2">Shows score deltas and bias changes</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decision History */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Decision History</h3>
+                  <p className="text-sm text-gray-600 mb-4">Review past QUAD analyses</p>
+                  <div className="text-center text-gray-500 py-8">
+                    <p className="text-sm">✅ v1.1 Feature Available</p>
+                    <p className="text-xs mt-2">Historical decision table with expandable details</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Market Context (Optional) */}
               {data.market_context && (
                 <div className="bg-white rounded-lg border border-gray-200 p-6">

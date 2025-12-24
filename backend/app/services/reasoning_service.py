@@ -197,12 +197,15 @@ class ReasoningService:
                 'bias': intent.directional_bias.value,
                 'conviction': intent.conviction_score,
                 
-                # Quality metadata
+                # Quality metadata (v1.0 + v1.1)
                 'quality': {
                     'total_pillars': intent.quality.total_pillars,
                     'active_pillars': intent.quality.active_pillars,
                     'placeholder_pillars': intent.quality.placeholder_pillars,
-                    'failed_pillars': intent.quality.failed_pillars
+                    'failed_pillars': intent.quality.failed_pillars,
+                    # v1.1 additions
+                    'calibration_version': intent.quality.calibration_version,
+                    'pillar_weights_snapshot': intent.quality.pillar_weights_snapshot
                 },
                 
                 # Validity flags
@@ -232,7 +235,10 @@ class ReasoningService:
                     'bb_lower': snapshot.bb_lower,
                     'atr_pct': snapshot.atr_pct,
                     'adosc': snapshot.adosc
-                }
+                },
+                
+                # v1.1: Include TradeIntent object for history saving
+                'trade_intent': intent
             }
             
         except Exception as e:
