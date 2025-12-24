@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MarketBreadthWidget } from "@/components/dashboard/market-breadth-widget"
+import { useMarketWebSocket } from "@/hooks/useMarketWebSocket"
 
 // Types based on API responses
 interface IndexData {
@@ -24,6 +25,7 @@ interface StockActivity {
 }
 
 export default function DashboardPage() {
+    const { livePrices, isConnected } = useMarketWebSocket(['ALL'])
 
     // Query 1: Market Indices
     const { data: indices, isLoading: loadingIndices } = useQuery({
@@ -48,7 +50,10 @@ export default function DashboardPage() {
             {/* Header Section */}
             <div>
                 <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">Market Pulse</h2>
-                <p className="text-slate-600 dark:text-slate-400 mt-2">Live market overview and institutional activity.</p>
+                <div className="flex items-center gap-2 mt-2">
+                    <p className="text-slate-600 dark:text-slate-400">Live market overview and institutional activity.</p>
+                    <div className={cn("h-2 w-2 rounded-full", isConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-400")} title={isConnected ? "WebSocket Connected" : "WebSocket Disconnected"} />
+                </div>
             </div>
 
             {/* Indices Grid */}
@@ -71,7 +76,7 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                                {item.value?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                {(livePrices[item.name] || livePrices[`NSE:${item.name}`] || item.value)?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </div>
                             <p className={cn("text-xs flex items-center mt-1", item.is_up ? "text-emerald-500" : "text-rose-500")}>
                                 {item.is_up ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
@@ -108,7 +113,9 @@ export default function DashboardPage() {
                                     ) : activeStocks?.slice(0, 10).map((stock) => (
                                         <tr key={stock.symbol} className="border-b border-slate-200 dark:border-slate-800 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/50">
                                             <td className="p-4 align-middle font-medium text-slate-900 dark:text-white">{stock.symbol}</td>
-                                            <td className="p-4 align-middle text-right text-slate-700 dark:text-slate-200">₹{stock.lastPrice?.toLocaleString()}</td>
+                                            <td className="p-4 align-middle text-right text-slate-700 dark:text-slate-200">
+                                                ₹{(livePrices[stock.symbol] || livePrices[`NSE:${stock.symbol}`] || stock.lastPrice)?.toLocaleString()}
+                                            </td>
                                             <td className={cn("p-4 align-middle text-right font-medium", stock.pChange >= 0 ? "text-emerald-600 dark:text-emerald-500" : "text-rose-600 dark:text-rose-500")}>
                                                 {stock.pChange > 0 ? "+" : ""}{stock.pChange?.toFixed(2)}%
                                             </td>

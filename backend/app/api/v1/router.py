@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import data, health, recommendations, stocks, market, derivatives, insider, technicals, reasoning, execution, alerts, analytics
+from app.api.v1.endpoints import data, health, recommendations, stocks, market, derivatives, insider, technicals, reasoning, execution, alerts, analytics, ws_market
 
 api_router = APIRouter()
 api_router.include_router(data.router, prefix="/data", tags=["data"])
@@ -13,4 +13,5 @@ api_router.include_router(reasoning.router, prefix="/reasoning", tags=["reasonin
 api_router.include_router(execution.router, prefix="/execution", tags=["execution"])
 api_router.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+api_router.include_router(ws_market.router, tags=["websocket"])
 api_router.include_router(health.router, tags=["health"])

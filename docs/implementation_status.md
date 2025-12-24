@@ -18,7 +18,7 @@ This status board tracks the migration from the legacy Streamlit dashboard and t
 - [x] Account-Level Risk Engine & Guardrails.
 
 ## 🔵 Phase 3: Frontend Feature Port (75%)
-- [x] Main Dashboard with Market Pulse.
+- [x] Main Dashboard with Market Pulse (Live Updates).
 - [x] QUAD Analytics Page (`/quad`).
 - [x] Basic Stock Search and Analysis.
 - [/] Portfolio Management (In progress).

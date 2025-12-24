@@ -2,7 +2,7 @@
 
 ## 🟢 Phase 1: Real-time & Execution (Current Priority)
 - [x] **1.1 OpenAlgo Socket Bridge**: Real-time LTP/Tick data feed
-- [ ] **1.2 Interactive Dashboard**: WebSocket-driven UI updates
+- [x] **1.2 Interactive Dashboard**: WebSocket-driven UI updates
 - [x] **1.3 OpenAlgo Order Placement**: Analysis-to-Order pipeline
 
 ## 🟡 Phase 2: Intelligence & Strategy

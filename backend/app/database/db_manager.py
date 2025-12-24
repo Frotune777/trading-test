@@ -1413,6 +1413,12 @@ class DatabaseManager:
                 json.dumps(execution_data.get('raw_response')) if execution_data.get('raw_response') else None,
                 now
             ))
+            self.commit()
+            logger.info(f"Saved execution audit for {execution_data.get('symbol')}")
+        except Exception as e:
+            logger.error(f"Error saving execution audit: {e}")
+            self.rollback()
+
     def save_alert(self, alert_data: Dict[str, Any]):
         """Save a system alert to the database."""
         query = """
