@@ -29,7 +29,7 @@ services:
     volumes:
       - ./backend:/app
       - ./ml:/app/ml
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: /venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   worker:
     build: ./backend
@@ -41,7 +41,7 @@ services:
     volumes:
       - ./backend:/app
       - ./ml:/app/ml
-    command: celery -A app.workers.celery_app worker --loglevel=info
+    command: /venv/bin/python -m celery -A app.workers.celery_app worker --loglevel=info
 
   frontend:
     build: 

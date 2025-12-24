@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional
+import pandas as pd
 from ....database.db_manager import DatabaseManager
 
 router = APIRouter()
@@ -12,18 +13,52 @@ async def get_stock_profile(symbol: str):
     """
     Get company profile and latest snapshot.
     """
-    db = get_db()
-    company = db.get_company(symbol.upper())
-    if not company:
-        raise HTTPException(status_code=404, detail="Stock not found")
-        
-    snapshot = db.get_snapshot(symbol.upper())
+    import yfinance as yf
     
-    return {
-        "profile": company,
-        "snapshot": snapshot,
-        "symbol": symbol.upper()
-    }
+    # Try with .NS suffix for NSE stocks
+    ticker_symbol = symbol.upper()
+    if not ticker_symbol.endswith('.NS'):
+        ticker_symbol = f"{ticker_symbol}.NS"
+    
+    try:
+        stock = yf.Ticker(ticker_symbol)
+        info = stock.info
+        
+        # Build profile
+        profile = {
+            "symbol": symbol.upper(),
+            "name": info.get("longName", symbol.upper()),
+            "sector": info.get("sector", ""),
+            "industry": info.get("industry", ""),
+            "isin": info.get("isin", "")
+        }
+        
+        # Build snapshot
+        snapshot = {
+            "last_price": info.get("currentPrice", info.get("regularMarketPrice", 0)),
+            "change": info.get("regularMarketChange", 0),
+            "change_percent": info.get("regularMarketChangePercent", 0),
+            "volume": info.get("volume", 0),
+            "high_52w": info.get("fiftyTwoWeekHigh", 0),
+            "low_52w": info.get("fiftyTwoWeekLow", 0),
+            "market_cap": info.get("marketCap", 0),
+            "pe_ratio": info.get("trailingPE", 0),
+            "pb_ratio": info.get("priceToBook", 0),
+            "book_value": info.get("bookValue", 0),
+            "eps": info.get("trailingEps", 0),
+            "roe": info.get("returnOnEquity", 0) * 100 if info.get("returnOnEquity") else 0,
+            "roce": 0,  # Not available in yfinance
+            "dividend_yield": info.get("dividendYield", 0) * 100 if info.get("dividendYield") else 0,
+            "face_value": 0  # Not available in yfinance
+        }
+        
+        return {
+            "profile": profile,
+            "snapshot": snapshot,
+            "symbol": symbol.upper()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Stock not found: {str(e)}")
 
 @router.get("/{symbol}/history")
 async def get_stock_history(
@@ -35,20 +70,46 @@ async def get_stock_history(
     """
     Get historical price data (OHLCV).
     """
-    db = get_db()
-    df = db.get_price_history(symbol.upper(), days=days, start_date=start_date, end_date=end_date)
+    import yfinance as yf
+    from datetime import datetime, timedelta
     
-    if df.empty:
-        return {"data": [], "symbol": symbol.upper(), "count": 0}
+    # Try with .NS suffix for NSE stocks
+    ticker_symbol = symbol.upper()
+    if not ticker_symbol.endswith('.NS'):
+        ticker_symbol = f"{ticker_symbol}.NS"
+    
+    try:
+        stock = yf.Ticker(ticker_symbol)
         
-    # Convert to list of dicts for JSON response
-    # Ensure date is string
-    data = df.to_dict(orient='records')
-    return {
-        "symbol": symbol.upper(),
-        "count": len(data),
-        "data": data
-    }
+        # Calculate date range
+        if start_date and end_date:
+            df = stock.history(start=start_date, end=end_date)
+        else:
+            end = datetime.now()
+            start = end - timedelta(days=days)
+            df = stock.history(start=start, end=end)
+        
+        if df.empty:
+            return {"data": [], "symbol": symbol.upper(), "count": 0}
+        
+        # Reset index and format
+        df = df.reset_index()
+        df.columns = [col.lower() for col in df.columns]
+        
+        # Remove timezone if present
+        df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None)
+        df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+        
+        # Convert to list of dicts for JSON response
+        data = df[['date', 'open', 'high', 'low', 'close', 'volume']].to_dict(orient='records')
+        
+        return {
+            "symbol": symbol.upper(),
+            "count": len(data),
+            "data": data
+        }
+    except Exception as e:
+        return {"data": [], "symbol": symbol.upper(), "count": 0}
 
 @router.get("/{symbol}/financials")
 async def get_stock_financials(symbol: str, limit: int = 12):
