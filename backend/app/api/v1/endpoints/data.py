@@ -103,3 +103,39 @@ async def get_indices():
             })
             
     return results
+
+@router.post("/ingest")
+async def ingest_market_data(
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    source: str = "yahoo",
+    timeframe: str = "1d"
+):
+    """
+    Manually trigger market data ingestion.
+    """
+    from app.services.data_ingestion_service import DataIngestionService
+    service = DataIngestionService()
+    
+    try:
+        result = await service.ingest_market_data(
+            symbol=symbol,
+            source=source,
+            start_date=start_date,
+            end_date=end_date,
+            timeframe=timeframe
+        )
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e), "symbol": symbol}
+
+@router.get("/availability/{symbol}")
+async def check_data_availability(symbol: str):
+    """
+    Check existing data availability for a symbol.
+    """
+    from app.services.data_ingestion_service import DataIngestionService
+    service = DataIngestionService()
+    
+    return await service.get_data_availability(symbol)

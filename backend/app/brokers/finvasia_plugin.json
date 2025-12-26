@@ -1,0 +1,50 @@
+{
+  "broker_name": "finvasia",
+  "display_name": "Finvasia (Shoonya)",
+  "version": "1.0.0",
+  "enabled": true,
+  "api_version": "NorenWClient",
+  "supports": {
+    "ltp": true,
+    "historical_data": true,
+    "positions": true,
+    "orders": true,
+    "streaming": true,
+    "margin": true,
+    "zero_brokerage": true
+  },
+  "credentials": [
+    "FINVASIA_USER_ID",
+    "FINVASIA_PASSWORD",
+    "FINVASIA_VENDOR_CODE",
+    "FINVASIA_API_SECRET",
+    "FINVASIA_IMEI"
+  ],
+  "rate_limits": {
+    "requests_per_second": 10,
+    "orders_per_second": 5
+  },
+  "symbol_format": "SYMBOL-EQ",
+  "exchanges_supported": [
+    "NSE",
+    "BSE",
+    "NFO",
+    "CDS",
+    "MCX"
+  ],
+  "product_types": [
+    "C",
+    "M",
+    "I"
+  ],
+  "order_types": [
+    "MARKET",
+    "LIMIT",
+    "SL",
+    "SL-M"
+  ],
+  "features": {
+    "zero_brokerage_delivery": true,
+    "flat_fee_intraday": true
+  }
+}

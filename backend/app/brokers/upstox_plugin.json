@@ -1,0 +1,41 @@
+{
+  "broker_name": "upstox",
+  "display_name": "Upstox",
+  "version": "1.0.0",
+  "enabled": true,
+  "api_version": "v2",
+  "supports": {
+    "ltp": true,
+    "historical_data": true,
+    "positions": true,
+    "orders": true,
+    "streaming": true,
+    "margin": true
+  },
+  "credentials": [
+    "UPSTOX_API_KEY",
+    "UPSTOX_API_SECRET",
+    "UPSTOX_ACCESS_TOKEN"
+  ],
+  "rate_limits": {
+    "requests_per_second": 25,
+    "orders_per_second": 10
+  },
+  "symbol_format": "NSE_EQ|SYMBOL",
+  "exchanges_supported": [
+    "NSE",
+    "BSE",
+    "NFO",
+    "MCX"
+  ],
+  "product_types": [
+    "D",
+    "I"
+  ],
+  "order_types": [
+    "MARKET",
+    "LIMIT",
+    "SL",
+    "SL-M"
+  ]
+}

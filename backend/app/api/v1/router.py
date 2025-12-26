@@ -2,7 +2,11 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     data, health, recommendations, stocks, market, derivatives, insider, 
     technicals, reasoning, execution, alerts, analytics, ws_market,
-    decision_history  # v1.1 addition
+    decision_history,  # v1.1 addition
+    feed_health, scheduler,  # Data pipeline additions
+    quad_analytics,  # QUAD Analytics v1.1 enhancement (READ-ONLY)
+    quad_analysis,  # QUAD Analysis v1.1 (WRITE - triggers analysis)
+    quad_scheduler  # QUAD Scheduler v1.1 (schedule management)
 )
 
 api_router = APIRouter()
@@ -18,5 +22,10 @@ api_router.include_router(execution.router, prefix="/execution", tags=["executio
 api_router.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(decision_history.router, tags=["decision-history"])  # v1.1 addition
+api_router.include_router(feed_health.router, prefix="/feed-health", tags=["feed-health"])
+api_router.include_router(scheduler.router, prefix="/scheduler", tags=["scheduler"])
+api_router.include_router(quad_analytics.router, tags=["quad-analytics"])  # QUAD Analytics v1.1 (READ-ONLY)
+api_router.include_router(quad_analysis.router, tags=["quad-analysis"])  # QUAD Analysis v1.1 (WRITE)
+api_router.include_router(quad_scheduler.router, tags=["quad-scheduler"])  # QUAD Scheduler v1.1
 api_router.include_router(ws_market.router, tags=["websocket"])
 api_router.include_router(health.router, tags=["health"])

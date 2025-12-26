@@ -1,0 +1,65 @@
+# Broker Configuration
+# Configure broker connections and settings
+
+brokers:
+  zerodha:
+    enabled: true
+    priority: 1
+    rate_limit_per_second: 3
+    timeout_seconds: 30
+    max_retries: 3
+    symbol_format: "SYMBOL"
+    
+  angelone:
+    enabled: true
+    priority: 2
+    rate_limit_per_second: 5
+    timeout_seconds: 30
+    max_retries: 3
+    symbol_format: "SYMBOL-EQ"
+    
+  fyers:
+    enabled: true
+    priority: 3
+    rate_limit_per_second: 10
+    timeout_seconds: 30
+    max_retries: 3
+    symbol_format: "EXCHANGE:SYMBOL-EQ"
+    
+  dhan:
+    enabled: true
+    priority: 4
+    rate_limit_per_second: 10
+    timeout_seconds: 30
+    max_retries: 3
+    symbol_format: "SECURITY_ID"
+
+# Connection Pool Settings
+connection_pool:
+  max_connections: 100
+  max_keepalive_connections: 20
+  keepalive_expiry_seconds: 30
+
+# Circuit Breaker Settings
+circuit_breaker:
+  failure_threshold: 3
+  recovery_timeout_seconds: 60
+  half_open_max_calls: 5
+
+# Cache Settings
+cache:
+  ltp_ttl_seconds: 5
+  symbol_token_ttl_seconds: 86400  # 24 hours
+  instrument_token_ttl_seconds: 86400
+
+# Logging
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+# Market Hours (IST)
+market_hours:
+  pre_market_start: "09:00"
+  market_open: "09:15"
+  market_close: "15:30"
+  post_market_end: "16:00"

@@ -11,8 +11,18 @@ import {
     Settings,
     TrendingUp,
     Search,
-    Brain
+    Brain,
+    Activity,
+    Shield,
+    GitCompare,
+    BarChart2,
+    TestTube,
+    Monitor,
+    FileText,
+    ChevronDown,
+    ChevronRight
 } from "lucide-react"
+import { useState } from "react"
 
 const routes = [
     {
@@ -51,15 +61,56 @@ const routes = [
         href: "/dashboard/insider",
         color: "text-emerald-500",
     },
+]
+
+const advancedRoutes = [
     {
-        label: "Settings",
-        icon: Settings,
-        href: "/dashboard/settings",
+        label: "Strategies",
+        icon: Activity,
+        href: "/strategies",
+        color: "text-blue-500",
+    },
+    {
+        label: "Broker Health",
+        icon: Shield,
+        href: "/broker-health",
+        color: "text-green-500",
+    },
+    {
+        label: "Reconciliation",
+        icon: GitCompare,
+        href: "/reconciliation",
+        color: "text-yellow-500",
+    },
+    {
+        label: "Analytics",
+        icon: BarChart2,
+        href: "/analytics",
+        color: "text-indigo-500",
+    },
+    {
+        label: "Sandbox",
+        icon: TestTube,
+        href: "/sandbox",
+        color: "text-pink-500",
+    },
+    {
+        label: "Monitoring",
+        icon: Monitor,
+        href: "/monitoring",
+        color: "text-cyan-500",
+    },
+    {
+        label: "Audit Logs",
+        icon: FileText,
+        href: "/audit",
+        color: "text-gray-500",
     },
 ]
 
 export function Sidebar() {
     const pathname = usePathname()
+    const [advancedOpen, setAdvancedOpen] = useState(false)
 
     return (
         <div className="space-y-4 py-4 flex flex-col h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-r border-slate-200 dark:border-slate-800">
@@ -89,6 +140,62 @@ export function Sidebar() {
                             </div>
                         </Link>
                     ))}
+                    
+                    {/* Advanced Section (Collapsible) */}
+                    <div className="pt-2">
+                        <button
+                            onClick={() => setAdvancedOpen(!advancedOpen)}
+                            className="text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition text-slate-600 dark:text-zinc-400"
+                        >
+                            <div className="flex items-center flex-1">
+                                {advancedOpen ? (
+                                    <ChevronDown className="h-5 w-5 mr-3" />
+                                ) : (
+                                    <ChevronRight className="h-5 w-5 mr-3" />
+                                )}
+                                Advanced
+                                <span className="ml-auto text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                                    Phase 8
+                                </span>
+                            </div>
+                        </button>
+                        
+                        {advancedOpen && (
+                            <div className="ml-4 mt-1 space-y-1">
+                                {advancedRoutes.map((route) => (
+                                    <Link
+                                        key={route.href}
+                                        href={route.href}
+                                        className={cn(
+                                            "text-sm group flex p-2 w-full justify-start font-medium cursor-pointer hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition",
+                                            pathname === route.href ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10" : "text-slate-600 dark:text-zinc-400"
+                                        )}
+                                    >
+                                        <div className="flex items-center flex-1">
+                                            <route.icon className={cn("h-4 w-4 mr-3", route.color)} />
+                                            <span className="text-xs">{route.label}</span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Settings at bottom */}
+                    <div className="pt-2">
+                        <Link
+                            href="/dashboard/settings"
+                            className={cn(
+                                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition",
+                                pathname === "/dashboard/settings" ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10" : "text-slate-600 dark:text-zinc-400"
+                            )}
+                        >
+                            <div className="flex items-center flex-1">
+                                <Settings className="h-5 w-5 mr-3" />
+                                Settings
+                            </div>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

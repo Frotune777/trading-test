@@ -1,0 +1,25 @@
+{
+  "broker_name": "dhan",
+  "display_name": "Dhan",
+  "version": "1.0.0",
+  "enabled": true,
+  "supports": {
+    "ltp": true,
+    "historical_data": true,
+    "positions": true,
+    "orders": true,
+    "streaming": true,
+    "options": true,
+    "futures": true
+  },
+  "credentials": [
+    "DHAN_CLIENT_ID",
+    "DHAN_ACCESS_TOKEN"
+  ],
+  "rate_limits": {
+    "requests_per_second": 10,
+    "orders_per_second": 15
+  },
+  "symbol_format": "SECURITY_ID",
+  "exchange_support": ["NSE", "BSE", "MCX"]
+}

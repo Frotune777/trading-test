@@ -35,7 +35,11 @@ class Settings(BaseSettings):
         return []
 
     # DATABASE
-    # When running in Docker, use 'db' as server. 
+    # Use SQLite for local development, PostgreSQL for Docker/production
+    USE_SQLITE: bool = True  # Set to False when using Docker
+    SQLITE_DB_PATH: str = "stock_data.db"
+    
+    # PostgreSQL settings (for Docker/production)
     POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
@@ -46,6 +50,13 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, v: Optional[str], values: dict) -> str:
         if isinstance(v, str):
             return v
+        
+        # Use SQLite for local development
+        if values.get('USE_SQLITE', True):
+            sqlite_path = values.get('SQLITE_DB_PATH', 'stock_data.db')
+            return f"sqlite+aiosqlite:///{sqlite_path}"
+        
+        # Use PostgreSQL for Docker/production
         return f"postgresql+asyncpg://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}/{values.get('POSTGRES_DB')}"
 
     # REDIS

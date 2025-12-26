@@ -1,0 +1,25 @@
+{
+  "broker_name": "zerodha",
+  "display_name": "Zerodha (Kite Connect)",
+  "version": "1.0.0",
+  "enabled": true,
+  "supports": {
+    "ltp": true,
+    "historical_data": true,
+    "positions": true,
+    "orders": true,
+    "streaming": true,
+    "options": true,
+    "futures": true
+  },
+  "credentials": [
+    "ZERODHA_API_KEY",
+    "ZERODHA_ACCESS_TOKEN"
+  ],
+  "rate_limits": {
+    "requests_per_second": 3,
+    "orders_per_second": 10
+  },
+  "symbol_format": "SYMBOL",
+  "exchange_support": ["NSE", "BSE", "NFO", "BFO", "MCX"]
+}

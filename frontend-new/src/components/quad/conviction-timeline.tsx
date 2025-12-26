@@ -77,7 +77,7 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
     const chartData = timeline.data_points.map(point => ({
         timestamp: new Date(point.timestamp).getTime(),
         conviction: point.conviction_score,
-        bias: point.bias,
+        bias: (point as any).directional_bias || (point as any).bias,
         label: format(new Date(point.timestamp), 'MMM dd HH:mm'),
     }));
 

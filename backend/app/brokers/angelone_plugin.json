@@ -1,0 +1,26 @@
+{
+  "broker_name": "angelone",
+  "display_name": "Angel One (SmartAPI)",
+  "version": "1.0.0",
+  "enabled": true,
+  "supports": {
+    "ltp": true,
+    "historical_data": true,
+    "positions": true,
+    "orders": true,
+    "streaming": true,
+    "options": true,
+    "futures": true
+  },
+  "credentials": [
+    "ANGELONE_API_KEY",
+    "ANGELONE_CLIENT_ID",
+    "ANGELONE_PASSWORD"
+  ],
+  "rate_limits": {
+    "requests_per_second": 5,
+    "orders_per_second": 10
+  },
+  "symbol_format": "SYMBOL-EQ",
+  "exchange_support": ["NSE", "BSE", "NFO", "MCX"]
+}
