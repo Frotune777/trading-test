@@ -18,12 +18,12 @@ interface TechnicalIndicatorsTableProps {
 export function TechnicalIndicatorsTable({ indicators, stats }: TechnicalIndicatorsTableProps) {
     if (!indicators || indicators.length === 0) {
         return (
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
                 <CardHeader>
-                    <CardTitle className="text-white">Technical Indicators</CardTitle>
+                    <CardTitle className="text-foreground">Technical Indicators</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-slate-500 text-center py-8">
+                    <div className="text-muted-foreground text-center py-8">
                         No technical indicators available
                     </div>
                 </CardContent>
@@ -69,20 +69,20 @@ export function TechnicalIndicatorsTable({ indicators, stats }: TechnicalIndicat
 
     const SignalBadge = ({ signal }: { signal?: string }) => {
         if (!signal || signal === 'neutral') {
-            return <Badge variant="outline" className="bg-slate-800 text-slate-400 border-slate-700"><Minus className="h-3 w-3 mr-1" />Neutral</Badge>
+            return <Badge variant="outline" className="bg-muted text-muted-foreground border-border"><Minus className="h-3 w-3 mr-1" />Neutral</Badge>
         }
         if (signal === 'bullish') {
-            return <Badge variant="outline" className="bg-emerald-900/30 text-emerald-500 border-emerald-700"><TrendingUp className="h-3 w-3 mr-1" />Bullish</Badge>
+            return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30"><TrendingUp className="h-3 w-3 mr-1" />Bullish</Badge>
         }
-        return <Badge variant="outline" className="bg-rose-900/30 text-rose-500 border-rose-700"><TrendingDown className="h-3 w-3 mr-1" />Bearish</Badge>
+        return <Badge variant="outline" className="bg-rose-500/10 text-rose-500 border-rose-500/30"><TrendingDown className="h-3 w-3 mr-1" />Bearish</Badge>
     }
 
     return (
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card border-border">
             <CardHeader>
-                <CardTitle className="text-white">Technical Indicators</CardTitle>
+                <CardTitle className="text-foreground">Technical Indicators</CardTitle>
                 {stats && (
-                    <div className="text-sm text-slate-400 mt-2">
+                    <div className="text-sm text-muted-foreground mt-2">
                         Volatility: {stats.volatility?.toFixed(2)}% | Avg Volume: {(stats.avg_volume / 100000).toFixed(2)}L
                     </div>
                 )}
@@ -90,10 +90,10 @@ export function TechnicalIndicatorsTable({ indicators, stats }: TechnicalIndicat
             <CardContent>
                 <div className="grid gap-3 md:grid-cols-2">
                     {indicatorList.map((indicator, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
                             <div>
-                                <div className="text-sm font-medium text-white">{indicator.name}</div>
-                                <div className="text-xs text-slate-400 mt-1">
+                                <div className="text-sm font-medium text-foreground">{indicator.name}</div>
+                                <div className="text-xs text-muted-foreground mt-1">
                                     {indicator.value.toFixed(2)}
                                 </div>
                             </div>

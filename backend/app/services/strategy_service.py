@@ -7,8 +7,9 @@ import logging
 import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime, time
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, select
+from sqlalchemy.orm import selectinload
 
 from app.database.models_strategy import (
     Strategy,
@@ -31,7 +32,7 @@ class StrategyService:
     Validates trading hours, modes, and webhook configurations.
     """
     
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
     
     async def create_strategy(
@@ -57,7 +58,10 @@ class StrategyService:
             raise ValueError("Invalid strategy name. Use only letters, numbers, spaces, hyphens, and underscores (3-50 chars)")
         
         # Check if name already exists
-        existing = self.db.query(Strategy).filter(Strategy.name == data.name).first()
+        result = await self.db.execute(
+            select(Strategy).filter(Strategy.name == data.name)
+        )
+        existing = result.scalar_one_or_none()
         if existing:
             raise ValueError(f"Strategy with name '{data.name}' already exists")
         
@@ -92,8 +96,8 @@ class StrategyService:
         )
         
         self.db.add(strategy)
-        self.db.commit()
-        self.db.refresh(strategy)
+        await self.db.commit()
+        await self.db.refresh(strategy)
         
         logger.info(f"Created strategy: {strategy.name} (ID: {strategy.id}, webhook: {webhook_id})")
         
@@ -101,17 +105,31 @@ class StrategyService:
     
     async def get_strategy(self, strategy_id: int, user_id: str) -> Optional[Strategy]:
         """Get strategy by ID (with user ownership check)"""
-        return self.db.query(Strategy).filter(
-            and_(Strategy.id == strategy_id, Strategy.user_id == user_id)
-        ).first()
+        result = await self.db.execute(
+            select(Strategy)
+            .filter(and_(Strategy.id == strategy_id, Strategy.user_id == user_id))
+            .options(selectinload(Strategy.symbol_mappings))
+        )
+        return result.scalar_one_or_none()
     
     async def get_strategy_by_webhook(self, webhook_id: str) -> Optional[Strategy]:
         """Get strategy by webhook ID (no user check - for webhook endpoint)"""
-        return self.db.query(Strategy).filter(Strategy.webhook_id == webhook_id).first()
+        result = await self.db.execute(
+            select(Strategy)
+            .filter(Strategy.webhook_id == webhook_id)
+            .options(selectinload(Strategy.symbol_mappings))
+        )
+        return result.scalar_one_or_none()
     
     async def get_user_strategies(self, user_id: str) -> List[Strategy]:
         """Get all strategies for a user"""
-        return self.db.query(Strategy).filter(Strategy.user_id == user_id).order_by(Strategy.created_at.desc()).all()
+        result = await self.db.execute(
+            select(Strategy)
+            .filter(Strategy.user_id == user_id)
+            .options(selectinload(Strategy.symbol_mappings))
+            .order_by(Strategy.created_at.desc())
+        )
+        return result.scalars().all()
     
     async def update_strategy(
         self,
@@ -166,8 +184,8 @@ class StrategyService:
             if not all([strategy.start_time, strategy.end_time, strategy.squareoff_time]):
                 raise ValueError("Intraday strategies require all time fields")
         
-        self.db.commit()
-        self.db.refresh(strategy)
+        await self.db.commit()
+        await self.db.refresh(strategy)
         
         logger.info(f"Updated strategy: {strategy.name} (ID: {strategy.id})")
         
@@ -180,8 +198,8 @@ class StrategyService:
             return None
         
         strategy.is_active = not strategy.is_active
-        self.db.commit()
-        self.db.refresh(strategy)
+        await self.db.commit()
+        await self.db.refresh(strategy)
         
         logger.info(f"Toggled strategy {strategy.name}: active={strategy.is_active}")
         
@@ -193,8 +211,8 @@ class StrategyService:
         if not strategy:
             return False
         
-        self.db.delete(strategy)
-        self.db.commit()
+        await self.db.delete(strategy)
+        await self.db.commit()
         
         logger.info(f"Deleted strategy: {strategy.name} (ID: {strategy_id})")
         
@@ -232,8 +250,8 @@ class StrategyService:
         )
         
         self.db.add(mapping)
-        self.db.commit()
-        self.db.refresh(mapping)
+        await self.db.commit()
+        await self.db.refresh(mapping)
         
         logger.info(f"Added symbol {data.symbol} to strategy {strategy.name}")
         
@@ -241,9 +259,12 @@ class StrategyService:
     
     async def get_symbol_mappings(self, strategy_id: int) -> List[StrategySymbolMapping]:
         """Get all symbol mappings for a strategy"""
-        return self.db.query(StrategySymbolMapping).filter(
-            StrategySymbolMapping.strategy_id == strategy_id
-        ).all()
+        result = await self.db.execute(
+            select(StrategySymbolMapping).filter(
+                StrategySymbolMapping.strategy_id == strategy_id
+            )
+        )
+        return result.scalars().all()
     
     async def delete_symbol_mapping(
         self,
@@ -251,9 +272,12 @@ class StrategyService:
         user_id: str
     ) -> bool:
         """Delete symbol mapping (with ownership check)"""
-        mapping = self.db.query(StrategySymbolMapping).filter(
-            StrategySymbolMapping.id == mapping_id
-        ).first()
+        result = await self.db.execute(
+            select(StrategySymbolMapping).filter(
+                StrategySymbolMapping.id == mapping_id
+            )
+        )
+        mapping = result.scalar_one_or_none()
         
         if not mapping:
             return False
@@ -263,8 +287,8 @@ class StrategyService:
         if not strategy:
             return False
         
-        self.db.delete(mapping)
-        self.db.commit()
+        await self.db.delete(mapping)
+        await self.db.commit()
         
         logger.info(f"Deleted symbol mapping {mapping.symbol} from strategy {strategy.name}")
         

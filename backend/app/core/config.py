@@ -34,10 +34,9 @@ class Settings(BaseSettings):
             return v
         return []
 
-    # DATABASE
     # Use SQLite for local development, PostgreSQL for Docker/production
     USE_SQLITE: bool = True  # Set to False when using Docker
-    SQLITE_DB_PATH: str = "stock_data.db"
+    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "stock_data.db")
     
     # PostgreSQL settings (for Docker/production)
     POSTGRES_SERVER: str = "db"

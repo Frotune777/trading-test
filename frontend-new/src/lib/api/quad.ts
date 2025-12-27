@@ -140,15 +140,15 @@ export const formatCalibrationVersion = (version?: string): string => {
 export const getBiasColorClass = (bias: string): string => {
   switch (bias.toUpperCase()) {
     case "BULLISH":
-      return "text-green-400";
+      return "text-emerald-500";
     case "BEARISH":
-      return "text-red-400";
+      return "text-rose-500";
     case "NEUTRAL":
-      return "text-gray-400";
+      return "text-muted-foreground";
     case "INVALID":
-      return "text-orange-400";
+      return "text-amber-500";
     default:
-      return "text-slate-400";
+      return "text-muted-foreground";
   }
 };
 
@@ -158,13 +158,13 @@ export const getBiasColorClass = (bias: string): string => {
 export const getDriftColorClass = (classification: string): string => {
   switch (classification.toUpperCase()) {
     case "STABLE":
-      return "text-green-400";
+      return "text-emerald-500";
     case "MODERATE":
-      return "text-yellow-400";
+      return "text-amber-500";
     case "HIGH":
-      return "text-red-400";
+      return "text-rose-500";
     default:
-      return "text-slate-400";
+      return "text-muted-foreground";
   }
 };
 

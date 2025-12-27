@@ -47,12 +47,12 @@ interface OptionChainProps {
 export function OptionChain({ data, symbol }: OptionChainProps) {
     if (!data || !data.records || !data.records.data) {
         return (
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
                 <CardHeader>
-                    <CardTitle className="text-white">Option Chain</CardTitle>
+                    <CardTitle className="text-foreground">Option Chain</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-slate-500 text-center py-8">
+                    <div className="text-muted-foreground text-center py-8">
                         No option chain data available
                     </div>
                 </CardContent>
@@ -75,11 +75,11 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
     const displayData = records.data.slice(startIndex, endIndex)
 
     return (
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card border-border">
             <CardHeader>
-                <CardTitle className="text-white">
+                <CardTitle className="text-foreground">
                     Option Chain - {symbol}
-                    <span className="text-sm text-slate-400 ml-3">
+                    <span className="text-sm text-muted-foreground ml-3">
                         Spot: ₹{underlyingValue.toLocaleString()}
                     </span>
                 </CardTitle>
@@ -87,7 +87,7 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
             <CardContent>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="border-b border-slate-700">
+                        <thead className="border-b border-border">
                             <tr>
                                 {/* Call Options */}
                                 <th className="text-emerald-500 p-2 text-right">OI</th>
@@ -97,7 +97,7 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
                                 <th className="text-emerald-500 p-2 text-right">IV</th>
 
                                 {/* Strike */}
-                                <th className="text-white p-2 text-center bg-slate-800">Strike</th>
+                                <th className="text-foreground p-2 text-center bg-muted/50">Strike</th>
 
                                 {/* Put Options */}
                                 <th className="text-rose-500 p-2 text-left">IV</th>
@@ -117,8 +117,8 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
                                     <tr
                                         key={index}
                                         className={cn(
-                                            "border-b border-slate-800 hover:bg-slate-800/30",
-                                            isATM && "bg-blue-900/20"
+                                            "border-b border-border hover:bg-accent/50",
+                                            isATM && "bg-primary/10"
                                         )}
                                     >
                                         {/* Call Data */}
@@ -128,7 +128,7 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
                                         <td className={cn("p-2 text-right", isITM_CE && "bg-emerald-900/10")}>
                                             {item.CE ? (item.CE.totalTradedVolume / 1000).toFixed(0) + 'K' : '-'}
                                         </td>
-                                        <td className={cn("p-2 text-right font-medium text-white", isITM_CE && "bg-emerald-900/10")}>
+                                        <td className={cn("p-2 text-right font-medium text-foreground", isITM_CE && "bg-emerald-500/5")}>
                                             {item.CE ? '₹' + item.CE.lastPrice.toFixed(2) : '-'}
                                         </td>
                                         <td className={cn(
@@ -144,8 +144,8 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
 
                                         {/* Strike Price */}
                                         <td className={cn(
-                                            "p-2 text-center font-bold bg-slate-800",
-                                            isATM && "text-blue-400"
+                                            "p-2 text-center font-bold bg-muted/50",
+                                            isATM && "text-primary"
                                         )}>
                                             {item.strikePrice}
                                         </td>
@@ -161,7 +161,7 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
                                         )}>
                                             {item.PE ? item.PE.pChange.toFixed(2) + '%' : '-'}
                                         </td>
-                                        <td className={cn("p-2 text-left font-medium text-white", isITM_PE && "bg-rose-900/10")}>
+                                        <td className={cn("p-2 text-left font-medium text-foreground", isITM_PE && "bg-rose-500/5")}>
                                             {item.PE ? '₹' + item.PE.lastPrice.toFixed(2) : '-'}
                                         </td>
                                         <td className={cn("p-2 text-left", isITM_PE && "bg-rose-900/10")}>
@@ -176,17 +176,17 @@ export function OptionChain({ data, symbol }: OptionChainProps) {
                         </tbody>
                     </table>
                 </div>
-                <div className="mt-4 text-xs text-slate-500 flex gap-4">
+                <div className="mt-4 text-xs text-muted-foreground flex gap-4">
                     <span className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-900/20 border border-blue-700"></div>
+                        <div className="w-3 h-3 bg-primary/20 border border-primary/50"></div>
                         ATM Strike
                     </span>
                     <span className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-emerald-900/10"></div>
+                        <div className="w-3 h-3 bg-emerald-500/10"></div>
                         ITM Calls
                     </span>
                     <span className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-rose-900/10"></div>
+                        <div className="w-3 h-3 bg-rose-500/10"></div>
                         ITM Puts
                     </span>
                 </div>

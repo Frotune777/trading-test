@@ -94,7 +94,10 @@ async def trigger_quad_analysis(
             "reasoning_summary": decision.reasoning_summary,
             "current_price": decision.current_price,
             "volume": decision.volume,
-            "created_at": decision.created_at.isoformat()
+            "created_at": decision.created_at.isoformat(),
+            
+            # Institutional v2 data
+            "institutional_v2": getattr(decision, 'institutional_v2', None)
         }
         
         logger.info(f"Manual analysis complete for {symbol}: conviction={decision.conviction}")

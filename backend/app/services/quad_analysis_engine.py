@@ -18,6 +18,8 @@ from sqlalchemy import select
 from app.services.reasoning_service import ReasoningService
 from app.database.models_quad import QUADDecision
 from app.core.config import settings
+from app.database.db_manager import DatabaseManager
+from app.services.institutional_quad_service import InstitutionalQUADService
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,12 @@ class QUADAnalysisEngine:
         """
         self.db = db
         self.reasoning_service = ReasoningService()
-        logger.info("QUADAnalysisEngine initialized")
+        
+        # Initialize Institutional QUAD Service
+        self.db_manager = DatabaseManager(settings.SQLITE_DB_PATH)
+        self.institutional_service = InstitutionalQUADService(self.db_manager)
+        
+        logger.info("QUADAnalysisEngine initialized with Institutional QUAD v2 support")
     
     async def analyze_symbol(self, symbol: str) -> QUADDecision:
         """
@@ -65,25 +72,32 @@ class QUADAnalysisEngine:
         logger.info(f"Starting QUAD analysis for {symbol}")
         
         try:
-            # Step 1: Run reasoning engine (fetches data + computes pillars)
+            # Step 1: Run legacy reasoning engine (v1.0/v1.1)
             analysis_result = await self.reasoning_service.analyze_symbol(symbol)
             
-            # Step 2: Extract pillar scores
+            # Step 2: Run institutional reasoning engine (v2.0)
+            logger.info(f"Running Institutional QUAD v2 analysis for {symbol}")
+            institutional_result = await self.institutional_service.analyze_symbol(symbol)
+            
+            # Step 3: Extract pillar scores from legacy result
             pillar_scores = self._extract_pillar_scores(analysis_result)
             
-            # Step 3: Map to QUAD decision
+            # Step 4: Map to legacy QUAD decision
             decision = self._create_quad_decision(symbol, analysis_result, pillar_scores)
             
-            # Step 4: Check for duplicates (same symbol + timestamp within 1 minute)
+            # Step 5: Check for duplicates (same symbol + timestamp within 1 minute)
             existing = await self._check_duplicate(symbol, decision.timestamp)
             if existing:
-                logger.warning(f"Duplicate decision found for {symbol} at {decision.timestamp}, skipping")
+                logger.warning(f"Duplicate decision found for {symbol} at {decision.timestamp}, skipping legacy persistence")
                 return existing
             
-            # Step 5: Persist to database
+            # Step 6: Persist legacy decision to database
             persisted_decision = await self._persist_decision(decision)
             
-            logger.info(f"QUAD analysis complete for {symbol}: conviction={persisted_decision.conviction}, signal={persisted_decision.signal}")
+            # Store institutional result in metadata for backward compatibility in response
+            persisted_decision.institutional_v2 = institutional_result
+            
+            logger.info(f"QUAD analysis complete for {symbol}: conviction={persisted_decision.conviction}, institutional_conviction={institutional_result['confidence']}%")
             return persisted_decision
             
         except Exception as e:

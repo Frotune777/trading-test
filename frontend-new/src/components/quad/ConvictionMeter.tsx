@@ -15,6 +15,8 @@
 
 import React from 'react';
 import { DirectionalBias } from '@/types/quad';
+import { cn } from '@/lib/utils';
+
 import {
   CheckCircle,
   XCircle,
@@ -48,10 +50,10 @@ export function ConvictionMeter({
 
   // Helper to get conviction color
   const getConvictionColor = (score: number): string => {
-    if (score >= 70) return 'text-green-600';
-    if (score >= 50) return 'text-yellow-600';
-    if (score >= 30) return 'text-orange-600';
-    return 'text-red-600';
+    if (score >= 70) return 'text-success';
+    if (score >= 50) return 'text-warning';
+    if (score >= 30) return 'text-warning/80';
+    return 'text-destructive';
   };
 
   // Helper to get bias styling
@@ -59,30 +61,30 @@ export function ConvictionMeter({
     switch (bias) {
       case 'BULLISH':
         return {
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
+          color: 'text-success',
+          bgColor: 'bg-success/10',
+          borderColor: 'border-success/20',
           icon: <TrendingUp className="w-5 h-5" />,
         };
       case 'BEARISH':
         return {
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
+          color: 'text-destructive',
+          bgColor: 'bg-destructive/10',
+          borderColor: 'border-destructive/20',
           icon: <TrendingDown className="w-5 h-5" />,
         };
       case 'INVALID':
         return {
-          color: 'text-gray-400',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
+          color: 'text-muted-foreground',
+          bgColor: 'bg-muted',
+          borderColor: 'border-border',
           icon: <XCircle className="w-5 h-5" />,
         };
       default:
         return {
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
+          color: 'text-muted-foreground',
+          bgColor: 'bg-muted',
+          borderColor: 'border-border',
           icon: <Minus className="w-5 h-5" />,
         };
     }
@@ -96,13 +98,13 @@ export function ConvictionMeter({
   const strokeDashoffset = circumference - (conviction / 100) * circumference;
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 p-6">
+    <div className="w-full bg-card rounded-lg border border-border p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           Analysis Conviction
         </h3>
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
           v{contractVersion}
         </span>
       </div>
@@ -116,30 +118,28 @@ export function ConvictionMeter({
               cx="100"
               cy="100"
               r={radius}
-              stroke="#e5e7eb"
+              stroke="currentColor"
               strokeWidth="12"
               fill="none"
+              className="text-muted"
             />
             {/* Progress circle */}
             <circle
               cx="100"
               cy="100"
               r={radius}
-              stroke={
-                conviction >= 70
-                  ? '#10b981'
-                  : conviction >= 50
-                  ? '#eab308'
-                  : conviction >= 30
-                  ? '#f97316'
-                  : '#ef4444'
-              }
+              stroke="currentColor"
               strokeWidth="12"
               fill="none"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className="transition-all duration-1000 ease-out"
+              className={cn(
+                "transition-all duration-1000 ease-out",
+                conviction >= 70 ? 'text-success' : 
+                conviction >= 50 ? 'text-warning' : 
+                conviction >= 30 ? 'text-warning/80' : 'text-destructive'
+              )}
             />
           </svg>
 
@@ -148,7 +148,7 @@ export function ConvictionMeter({
             <span className={`text-4xl font-bold ${getConvictionColor(conviction)}`} data-testid="conviction-score">
               {conviction.toFixed(1)}%
             </span>
-            <span className="text-sm text-gray-500 mt-1" data-testid="conviction-label">
+            <span className="text-sm text-muted-foreground mt-1" data-testid="conviction-label">
               {getConvictionLabel(conviction)}
             </span>
           </div>
@@ -175,12 +175,12 @@ export function ConvictionMeter({
           <div
             className={`flex items-center justify-between p-4 rounded-lg border ${
               isExecutionReady
-                ? 'border-green-200 bg-green-50'
-                : 'border-yellow-200 bg-yellow-50'
+                ? 'border-success/20 bg-success/10'
+                : 'border-warning/20 bg-warning/10'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className={isExecutionReady ? 'text-green-600' : 'text-yellow-600'}>
+              <div className={isExecutionReady ? 'text-success' : 'text-warning'}>
                 {isExecutionReady ? (
                   <CheckCircle className="w-5 h-5" />
                 ) : (
@@ -188,10 +188,10 @@ export function ConvictionMeter({
                 )}
               </div>
               <div>
-                <div className="text-sm text-gray-600">Execution Status</div>
+                <div className="text-sm text-foreground/60">Execution Status</div>
                 <div
                   className={`text-lg font-semibold ${
-                    isExecutionReady ? 'text-green-600' : 'text-yellow-600'
+                    isExecutionReady ? 'text-success' : 'text-warning'
                   }`}
                   data-testid="execution-ready-status"
                 >
@@ -202,8 +202,8 @@ export function ConvictionMeter({
           </div>
 
           {/* Disclaimer */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-800">
+          <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-xs text-primary/80">
               <strong>Note:</strong> This is analysis only, not trading advice. Conviction
               score represents confidence in the reasoning, not position sizing.
             </p>

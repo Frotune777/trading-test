@@ -25,13 +25,13 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
   const getBiasColor = (bias: string): string => {
     switch (bias) {
       case 'BULLISH':
-        return 'text-green-600 bg-green-50';
+        return 'text-success bg-success/10';
       case 'BEARISH':
-        return 'text-red-600 bg-red-50';
+        return 'text-destructive bg-destructive/10';
       case 'VOLATILE':
-        return 'text-orange-600 bg-orange-50';
+        return 'text-warning bg-warning/10';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -49,10 +49,10 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
 
   // Helper to get score color gradient
   const getScoreColor = (score: number): string => {
-    if (score >= 70) return 'bg-green-500';
-    if (score >= 50) return 'bg-yellow-500';
-    if (score >= 30) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (score >= 70) return 'bg-success';
+    if (score >= 50) return 'bg-warning';
+    if (score >= 30) return 'bg-warning/80';
+    return 'bg-destructive';
   };
 
   // State to track expanded card
@@ -71,10 +71,10 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           QUAD Pillar Breakdown
         </h3>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {pillars.length} pillars analyzed
         </span>
       </div>
@@ -86,8 +86,8 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
           return (
             <div
               key={pillar.name}
-              className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer ${
-                isExpanded ? 'ring-2 ring-blue-500 shadow-md' : ''
+              className={`bg-card rounded-lg border border-border p-4 hover:shadow-md transition-all cursor-pointer ${
+                isExpanded ? 'ring-2 ring-primary shadow-md' : ''
               }`}
               data-testid="pillar-card"
               onClick={() => setExpandedPillar(isExpanded ? null : pillar.name)}
@@ -95,12 +95,12 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
               {/* Pillar Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-gray-900 capitalize">
+                  <h4 className="font-medium text-foreground capitalize">
                     {pillar.name}
                   </h4>
                   {pillar.is_placeholder && (
                     <span
-                      className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800"
+                      className="px-2 py-0.5 text-xs rounded-full bg-warning/20 text-warning"
                       title="This pillar is returning neutral defaults"
                     >
                       <AlertCircle className="w-3 h-3 inline mr-1" />
@@ -108,7 +108,7 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {(pillar.weight_applied * 100).toFixed(0)}% weight
                 </span>
               </div>
@@ -116,7 +116,7 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
               {/* Score Display */}
               <div className="mb-2">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-2xl font-bold text-gray-900" data-testid="pillar-score">
+                  <span className="text-2xl font-bold text-foreground" data-testid="pillar-score">
                     {pillar.score.toFixed(1)}
                   </span>
                   <div
@@ -130,7 +130,7 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className={`h-2 rounded-full transition-all duration-500 ${getScoreColor(
                       pillar.score
@@ -141,7 +141,7 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
               </div>
 
               {/* Score Range Label */}
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>0</span>
                 <span>50</span>
                 <span>100</span>
@@ -149,19 +149,19 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
 
               {/* Expanded Details */}
               {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 animate-in fade-in slide-in-from-top-1">
-                  <p className="font-semibold text-gray-700 mb-2">Key Metrics:</p>
+                <div className="mt-4 pt-4 border-t border-border text-sm text-muted-foreground animate-in fade-in slide-in-from-top-1">
+                  <p className="font-semibold text-foreground mb-2">Key Metrics:</p>
                   {pillar.metrics && Object.keys(pillar.metrics).length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
                        {Object.entries(pillar.metrics).map(([key, value]) => (
-                         <div key={key} className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded">
-                           <span className="text-xs text-gray-500">{key}</span>
-                           <span className="text-sm font-medium text-gray-900">{String(value)}</span>
+                         <div key={key} className="flex justify-between items-center bg-muted px-2 py-1 rounded">
+                           <span className="text-xs text-muted-foreground">{key}</span>
+                           <span className="text-sm font-medium text-foreground">{String(value)}</span>
                          </div>
                        ))}
                     </div>
                   ) : (
-                    <p className="italic text-gray-400">No detailed metrics available.</p>
+                    <p className="italic text-muted-foreground/60">No detailed metrics available.</p>
                   )}
                 </div>
               )}
@@ -171,28 +171,28 @@ export function PillarDashboard({ pillars }: PillarDashboardProps) {
       </div>
 
       {/* Legend */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+      <div className="mt-6 p-4 bg-muted/50 rounded-lg">
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-gray-700">High Score (70-100)</span>
+            <div className="w-3 h-3 rounded-full bg-success" />
+            <span className="text-muted-foreground">High Score (70-100)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span className="text-gray-700">Moderate (50-70)</span>
+            <div className="w-3 h-3 rounded-full bg-warning" />
+            <span className="text-muted-foreground">Moderate (50-70)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
-            <span className="text-gray-700">Low (30-50)</span>
+            <div className="w-3 h-3 rounded-full bg-warning/60" />
+            <span className="text-muted-foreground">Low (30-50)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-gray-700">Very Low (0-30)</span>
+            <div className="w-3 h-3 rounded-full bg-destructive" />
+            <span className="text-muted-foreground">Very Low (0-30)</span>
           </div>
         </div>
       </div>
       
-      <p className="text-xs text-gray-400 text-center mt-2">
+      <p className="text-xs text-muted-foreground/60 text-center mt-2">
         Click on any pillar card to see calculation details.
       </p>
     </div>

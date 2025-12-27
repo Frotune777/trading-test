@@ -68,11 +68,11 @@ export function OverviewTab({ symbol }: OverviewTabProps) {
     if (loadingHistory) {
         return (
             <div className="space-y-4">
-                <Card className="bg-slate-900/50 border-slate-800 animate-pulse h-[500px]" />
+                <Card className="bg-muted/50 border-border animate-pulse h-[500px]" />
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-slate-900/50 border-slate-800 animate-pulse h-[200px]" />
-                    <Card className="bg-slate-900/50 border-slate-800 animate-pulse h-[200px]" />
-                    <Card className="bg-slate-900/50 border-slate-800 animate-pulse h-[200px]" />
+                    <Card className="bg-muted/50 border-border animate-pulse h-[200px]" />
+                    <Card className="bg-muted/50 border-border animate-pulse h-[200px]" />
+                    <Card className="bg-muted/50 border-border animate-pulse h-[200px]" />
                 </div>
             </div>
         )
@@ -91,12 +91,12 @@ export function OverviewTab({ symbol }: OverviewTabProps) {
             </div>
 
             {/* Corporate Actions */}
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
                 <CardHeader>
-                    <CardTitle className="text-white">Corporate Actions</CardTitle>
+                    <CardTitle className="text-foreground">Corporate Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-sm text-slate-500">
+                    <div className="text-sm text-muted-foreground">
                         No recent corporate actions available
                     </div>
                 </CardContent>

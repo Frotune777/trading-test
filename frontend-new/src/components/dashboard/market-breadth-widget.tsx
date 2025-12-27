@@ -5,11 +5,16 @@ import { api } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, TrendingDown } from "lucide-react"
 
-export function MarketBreadthWidget() {
+interface MarketBreadthWidgetProps {
+    index?: string
+}
+
+export function MarketBreadthWidget({ index }: MarketBreadthWidgetProps) {
     const { data: breadthData, isLoading } = useQuery({
-        queryKey: ['market-breadth'],
+        queryKey: ['market-breadth', index],
         queryFn: async () => {
-            const res = await api.get('/market/breadth')
+            const url = index ? `/market/breadth?index=${index.replace(/\s+/g, '')}` : '/market/breadth'
+            const res = await api.get(url)
             return res.data.data
         }
     })

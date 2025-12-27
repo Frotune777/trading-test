@@ -23,37 +23,37 @@ interface ReadinessItemProps {
 function ReadinessItem({ label, status, meta, icon }: ReadinessItemProps) {
   const getStatusColor = (s: string) => {
     switch (s) {
-      case 'READY': return 'text-emerald-500';
-      case 'COLLECTING': return 'text-amber-500';
-      case 'INSUFFICIENT': return 'text-slate-500';
-      case 'FAILED': return 'text-rose-500';
-      default: return 'text-slate-500';
+      case 'READY': return 'text-success';
+      case 'COLLECTING': return 'text-warning';
+      case 'INSUFFICIENT': return 'text-muted-foreground';
+      case 'FAILED': return 'text-destructive';
+      default: return 'text-muted-foreground';
     }
   };
 
   const getStatusBg = (s: string) => {
     switch (s) {
-      case 'READY': return 'bg-emerald-500/10';
-      case 'COLLECTING': return 'bg-amber-500/10';
-      case 'INSUFFICIENT': return 'bg-slate-500/10';
-      case 'FAILED': return 'bg-rose-500/10';
-      default: return 'bg-slate-500/10';
+      case 'READY': return 'bg-success/10';
+      case 'COLLECTING': return 'bg-warning/10';
+      case 'INSUFFICIENT': return 'bg-muted/10';
+      case 'FAILED': return 'bg-destructive/10';
+      default: return 'bg-muted/10';
     }
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 border-r border-slate-800 last:border-r-0 group cursor-default">
+    <div className="flex items-center gap-3 px-4 py-2 border-r border-border last:border-r-0 group cursor-default">
       <div className={cn("p-1.5 rounded-md", getStatusBg(status))}>
         {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: cn("w-4 h-4", getStatusColor(status)) }) : icon}
       </div>
       <div>
-        <div className="text-[10px] uppercase font-bold text-slate-500 tracking-tight leading-none mb-1">{label}</div>
+        <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight leading-none mb-1">{label}</div>
         <div className="flex items-center gap-2">
           <span className={cn("text-xs font-mono font-bold leading-none", getStatusColor(status))}>
             {status}
           </span>
           {meta && (
-            <span className="text-[10px] text-slate-600 font-mono leading-none">
+            <span className="text-[10px] text-muted-foreground/60 font-mono leading-none">
               [{meta}]
             </span>
           )}
@@ -81,7 +81,7 @@ export default function ReadinessStrip({ quality, sampleCount = 0 }: ReadinessSt
   const stabilityStatus = quality.failed_pillars.length === 0 ? 'READY' : 'FAILED';
 
   return (
-    <div className="w-full bg-slate-950 border border-slate-800 rounded-lg flex flex-wrap items-center overflow-hidden shadow-sm">
+    <div className="w-full bg-card border border-border rounded-lg flex flex-wrap items-center overflow-hidden shadow-sm">
       <ReadinessItem 
         label="Historical Depth" 
         status={historyStatus} 
@@ -108,12 +108,12 @@ export default function ReadinessStrip({ quality, sampleCount = 0 }: ReadinessSt
       />
       
       {/* Readiness Summary Badge */}
-      <div className="ml-auto flex items-center gap-3 px-6 h-full bg-slate-900 border-l border-slate-800 py-3">
+      <div className="ml-auto flex items-center gap-3 px-6 h-full bg-secondary/50 border-l border-border py-3">
         <div className="text-right">
-          <div className="text-[9px] uppercase font-bold text-slate-500 leading-none mb-1">System State</div>
+          <div className="text-[9px] uppercase font-bold text-muted-foreground leading-none mb-1">System State</div>
           <div className={cn(
              "text-xs font-black leading-none",
-             quality.placeholder_pillars > 0 ? "text-amber-500" : "text-emerald-500"
+             quality.placeholder_pillars > 0 ? "text-warning" : "text-success"
           )}>
             {quality.placeholder_pillars > 0 ? 'DEGRADED' : 'OPTIMAL'}
           </div>

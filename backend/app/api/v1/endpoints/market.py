@@ -119,3 +119,62 @@ async def get_indices():
             })
             
     return {"data": results}
+
+@router.get("/mood")
+async def get_market_mood():
+    """
+    Calculate Market Mood Index (MMI) based on multiple factors.
+    Inspired by Tickertape MMI.
+    """
+    try:
+        # 1. Broad Market Breadth
+        breadth_data = await get_market_breadth()
+        advances = breadth_data.get("advances", 0)
+        declines = breadth_data.get("declines", 0)
+        
+        breadth_score = 50
+        if (advances + declines) > 0:
+            breadth_score = (advances / (advances + declines)) * 100
+            
+        # 2. Market Regime (NIFTY 50)
+        ticker = yf.Ticker("^NSEI")
+        hist = await asyncio.to_thread(ticker.history, period="6mo")
+        
+        regime_score = 50
+        if not hist.empty:
+            # Simple trend score: current price vs 50 DMA
+            hist['SMA50'] = hist['Close'].rolling(window=50).mean()
+            current_close = hist['Close'].iloc[-1]
+            sma50 = hist['SMA50'].iloc[-1]
+            
+            if pd.notna(sma50):
+                # Distance from SMA50 normalized to 0-100
+                diff_pct = (current_close - sma50) / sma50 * 100
+                # Map -5% to +5% range to 0 to 100
+                regime_score = max(0, min(100, 50 + (diff_pct * 10)))
+        
+        # Weighted Average
+        final_score = (breadth_score * 0.4) + (regime_score * 0.6)
+        
+        status = "Neutral"
+        if final_score >= 80: status = "Extreme Greed"
+        elif final_score >= 65: status = "Greed"
+        elif final_score <= 20: status = "Extreme Fear"
+        elif final_score <= 35: status = "Fear"
+        
+        return {
+            "score": round(final_score, 1),
+            "status": status,
+            "current_val": status,
+            "previous_val": "Neutral",
+            "previous_status": "Neutral"
+        }
+    except Exception as e:
+        return {
+            "score": 50.0,
+            "status": "Neutral",
+            "current_val": "Neutral",
+            "previous_val": "Neutral",
+            "previous_status": "Neutral",
+            "error": str(e)
+        }

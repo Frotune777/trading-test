@@ -37,8 +37,8 @@ export function TechnicalTab({ symbol }: TechnicalTabProps) {
     if (loadingIndicators || loadingIntraday) {
         return (
             <div className="space-y-4">
-                <Card className="bg-slate-900/50 border-slate-800 animate-pulse h-[500px]" />
-                <Card className="bg-slate-900/50 border-slate-800 animate-pulse h-[400px]" />
+                <Card className="bg-muted/50 border-border animate-pulse h-[500px]" />
+                <Card className="bg-muted/50 border-border animate-pulse h-[400px]" />
             </div>
         )
     }

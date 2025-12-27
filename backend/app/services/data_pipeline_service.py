@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from enum import Enum
 import time
+import pandas as pd
 
 from app.core.config import settings
 from app.core.redis import redis_client
@@ -57,7 +58,7 @@ class DataPipelineService:
         self, 
         symbol: str, 
         exchange: str = "NSE",
-        source: DataSource = DataSource.OPENALGO
+        source: DataSource = DataSource.YAHOO
     ) -> bool:
         """
         Fetch LTP and cache in Redis with 5s TTL.
@@ -174,7 +175,7 @@ class DataPipelineService:
         symbols: List[str],
         interval: str = "1d",
         period: str = "1mo",
-        source: DataSource = DataSource.OPENALGO
+        source: DataSource = DataSource.YAHOO
     ) -> Dict[str, Any]:
         """
         Fetch historical data for multiple symbols in batch.
@@ -222,8 +223,56 @@ class DataPipelineService:
                     })
                     continue
                 
-                # TODO: Store in PostgreSQL historical_ohlc table
-                # For now, just log success
+                # Store in database (SQLite price_history table)
+                try:
+                    import sqlite3
+                    from datetime import datetime as dt
+                    
+                    conn = sqlite3.connect('stock_data.db')
+                    cursor = conn.cursor()
+                    
+                    # Prepare data for insertion
+                    records_inserted = 0
+                    for _, row in hist_data.iterrows():
+                        try:
+                            # Extract date
+                            date_val = row.get('date') or row.get('timestamp')
+                            if pd.isna(date_val):
+                                continue
+                            
+                            # Convert to string format
+                            if isinstance(date_val, pd.Timestamp):
+                                date_str = date_val.strftime('%Y-%m-%d %H:%M:%S')
+                            else:
+                                date_str = str(date_val)
+                            
+                            # Insert or replace (upsert)
+                            cursor.execute('''
+                                INSERT OR REPLACE INTO price_history 
+                                (symbol, date, open, high, low, close, volume)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                            ''', (
+                                symbol,
+                                date_str,
+                                float(row.get('open', 0)),
+                                float(row.get('high', 0)),
+                                float(row.get('low', 0)),
+                                float(row.get('close', 0)),
+                                int(row.get('volume', 0))
+                            ))
+                            records_inserted += 1
+                        except Exception as row_error:
+                            logger.debug(f"Error inserting row for {symbol}: {row_error}")
+                            continue
+                    
+                    conn.commit()
+                    conn.close()
+                    
+                    logger.info(f"✅ Stored {records_inserted} records for {symbol} in database")
+                    
+                except Exception as db_error:
+                    logger.error(f"Database error for {symbol}: {db_error}")
+                
                 results["successful"] += 1
                 results["symbols_processed"].append(symbol)
                 

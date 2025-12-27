@@ -36,9 +36,19 @@ interface StockData {
     snapshot: StockSnapshot
 }
 
+import { useEffect } from "react"
+import { useMarket } from "@/context/market-context"
+
 export default function StockPage() {
     const params = useParams()
     const symbol = params.symbol as string
+    const { setSymbol } = useMarket()
+
+    useEffect(() => {
+        if (symbol) {
+            setSymbol(symbol)
+        }
+    }, [symbol, setSymbol])
 
     // Fetch stock profile and snapshot
     const { data: stockData, isLoading } = useQuery({
@@ -72,20 +82,20 @@ export default function StockPage() {
     return (
         <div className="space-y-6">
             {/* Stock Header */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 backdrop-blur">
+        <div className="bg-card border border-border rounded-lg p-6 backdrop-blur">
                 <div className="flex items-start justify-between">
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-bold text-white">{symbol}</h1>
+                            <h1 className="text-3xl font-bold text-foreground">{symbol}</h1>
                             <Badge variant="outline" className="text-slate-400 border-slate-700">
                                 {profile.sector || "Equity"}
                             </Badge>
                         </div>
-                        <p className="text-slate-400 mt-1">{profile.name}</p>
+                        <p className="text-muted-foreground mt-1">{profile.name}</p>
                     </div>
 
                     <div className="text-right">
-                        <div className="text-3xl font-bold text-white">
+                        <div className="text-3xl font-bold text-foreground">
                             ₹{snapshot.last_price?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className={cn("flex items-center justify-end mt-1 text-sm font-medium",
@@ -97,28 +107,28 @@ export default function StockPage() {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border">
                     <div>
-                        <div className="text-xs text-slate-500">Volume</div>
-                        <div className="text-sm font-medium text-white mt-1">
+                        <div className="text-xs text-muted-foreground">Volume</div>
+                        <div className="text-sm font-medium text-foreground mt-1">
                             {(snapshot.volume / 100000).toFixed(2)}L
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs text-slate-500">52W High</div>
-                        <div className="text-sm font-medium text-white mt-1">
+                        <div className="text-xs text-muted-foreground">52W High</div>
+                        <div className="text-sm font-medium text-foreground mt-1">
                             ₹{snapshot.high_52w?.toLocaleString() || "--"}
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs text-slate-500">52W Low</div>
-                        <div className="text-sm font-medium text-white mt-1">
+                        <div className="text-xs text-muted-foreground">52W Low</div>
+                        <div className="text-sm font-medium text-foreground mt-1">
                             ₹{snapshot.low_52w?.toLocaleString() || "--"}
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs text-slate-500">Market Cap</div>
-                        <div className="text-sm font-medium text-white mt-1">
+                        <div className="text-xs text-muted-foreground">Market Cap</div>
+                        <div className="text-sm font-medium text-foreground mt-1">
                             {snapshot.market_cap ? `₹${(snapshot.market_cap / 10000000).toFixed(0)}Cr` : "--"}
                         </div>
                     </div>
@@ -127,11 +137,11 @@ export default function StockPage() {
 
             {/* Tabbed Content */}
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="bg-slate-900 border-slate-800 p-1">
-                    <TabsTrigger value="overview" className="data-[state=active]:bg-slate-800">Overview</TabsTrigger>
-                    <TabsTrigger value="technicals" className="data-[state=active]:bg-slate-800">Technicals</TabsTrigger>
-                    <TabsTrigger value="derivatives" className="data-[state=active]:bg-slate-800">Derivatives</TabsTrigger>
-                    <TabsTrigger value="insider" className="data-[state=active]:bg-slate-800">Insider</TabsTrigger>
+                <TabsList className="bg-muted/50 border-border p-1">
+                    <TabsTrigger value="overview" className="data-[state=active]:bg-background">Overview</TabsTrigger>
+                    <TabsTrigger value="technicals" className="data-[state=active]:bg-background">Technicals</TabsTrigger>
+                    <TabsTrigger value="derivatives" className="data-[state=active]:bg-background">Derivatives</TabsTrigger>
+                    <TabsTrigger value="insider" className="data-[state=active]:bg-background">Insider</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}

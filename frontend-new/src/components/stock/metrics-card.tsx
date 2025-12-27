@@ -15,16 +15,16 @@ interface MetricsCardProps {
 
 export function MetricsCard({ title, metrics }: MetricsCardProps) {
     return (
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card border-border">
             <CardHeader>
-                <CardTitle className="text-white">{title}</CardTitle>
+                <CardTitle className="text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-3">
                     {metrics.map((metric, index) => (
                         <div key={index} className="flex justify-between items-center">
-                            <span className="text-slate-400 text-sm">{metric.label}</span>
-                            <span className="text-white font-medium">
+                            <span className="text-muted-foreground text-sm">{metric.label}</span>
+                            <span className="text-foreground font-medium">
                                 {metric.value !== null && metric.value !== undefined
                                     ? `${metric.value}${metric.suffix || ''}`
                                     : '--'}

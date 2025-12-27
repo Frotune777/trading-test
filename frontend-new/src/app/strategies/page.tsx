@@ -186,16 +186,80 @@ export default function StrategiesPage() {
 
       {/* Create Form Modal - Placeholder */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-background rounded-lg p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-slate-950 border border-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl">
             <h2 className="text-xl font-bold mb-4">Create Strategy</h2>
-            <p className="text-muted-foreground mb-4">Strategy creation form coming soon...</p>
-            <button
-              onClick={() => setShowCreateForm(false)}
-              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-            >
-              Close
-            </button>
+            <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                try {
+                    await strategyAPI.createStrategy({
+                        name: formData.get('name') as string,
+                        platform: formData.get('platform') as any,
+                        is_intraday: formData.get('is_intraday') === 'on',
+                        trading_mode: formData.get('trading_mode') as any,
+                        description: formData.get('description') as string,
+                        squareoff_time: formData.get('squareoff_time') as string || undefined
+                    });
+                    setShowCreateForm(false);
+                    loadStrategies();
+                } catch (err: any) {
+                    setError(err.message);
+                }
+            }} className="space-y-4">
+                
+                {/* Name */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Strategy Name</label>
+                    <input name="name" required className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" placeholder="e.g., Nifty Trend Following" />
+                </div>
+
+                {/* Description */}
+                 <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <textarea name="description" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" placeholder="Brief description..." />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Platform */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Platform</label>
+                        <select name="platform" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md">
+                            <option value="TradingView">TradingView</option>
+                            <option value="ChartInk">ChartInk</option>
+                            <option value="Python">Python</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+
+                    {/* Mode */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Trading Mode</label>
+                        <select name="trading_mode" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md">
+                            <option value="BOTH">Both</option>
+                            <option value="LONG">Long Only</option>
+                            <option value="SHORT">Short Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Intraday Checkbox */}
+                <div className="flex items-center gap-2">
+                    <input type="checkbox" name="is_intraday" id="is_intraday" className="h-4 w-4 rounded border-gray-300" />
+                    <label htmlFor="is_intraday" className="text-sm">Intraday Strategy</label>
+                </div>
+
+                {/* Squareoff Time (Conditional) */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Square-off Time (IST)</label>
+                    <input type="time" name="squareoff_time" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                    <button type="button" onClick={() => setShowCreateForm(false)} className="flex-1 px-4 py-2 hover:bg-slate-800 rounded-lg">Cancel</button>
+                    <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">Create Strategy</button>
+                </div>
+            </form>
           </div>
         </div>
       )}

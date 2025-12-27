@@ -19,6 +19,9 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies using uv into the virtual environment
 RUN uv pip install --no-cache -r requirements.txt
 
+# Explicitly install aiosqlite (workaround for build issue)
+RUN uv pip install --no-cache aiosqlite
+
 COPY . .
 
 EXPOSE 8000

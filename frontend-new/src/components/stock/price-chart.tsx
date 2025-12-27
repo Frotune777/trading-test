@@ -20,12 +20,12 @@ interface PriceChartProps {
 export function PriceChart({ data, symbol }: PriceChartProps) {
     if (!data || data.length === 0) {
         return (
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
                 <CardHeader>
-                    <CardTitle className="text-white">Price Chart (1Y)</CardTitle>
+                    <CardTitle className="text-foreground">Price Chart (1Y)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[400px] flex items-center justify-center border border-dashed border-slate-700 rounded-lg text-slate-500">
+                    <div className="h-[400px] flex items-center justify-center border border-dashed border-border rounded-lg text-muted-foreground">
                         No price data available
                     </div>
                 </CardContent>
@@ -46,9 +46,9 @@ export function PriceChart({ data, symbol }: PriceChartProps) {
     const isPositive = lastPrice >= firstPrice
 
     return (
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card border-border">
             <CardHeader>
-                <CardTitle className="text-white">Price Chart (1Y)</CardTitle>
+                <CardTitle className="text-foreground">Price Chart (1Y)</CardTitle>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={400}>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { TrendingUp, Activity, Target, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { QuadService, getBiasColorClass } from '@/lib/api/quad';
 import type { ConvictionTimeline as ConvictionTimelineType } from '@/lib/api/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
@@ -38,16 +39,16 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
 
     if (loading) {
         return (
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-card border-border">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Activity className="text-blue-400 w-5 h-5 animate-pulse" />
+                        <Activity className="text-primary w-5 h-5 animate-pulse" />
                         Conviction Timeline
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-center h-64">
-                        <div className="text-slate-400">Loading timeline...</div>
+                        <div className="text-muted-foreground">Loading timeline...</div>
                     </div>
                 </CardContent>
             </Card>
@@ -56,15 +57,15 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
 
     if (error || !timeline) {
         return (
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-card border-border">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Activity className="text-blue-400 w-5 h-5" />
+                        <Activity className="text-primary w-5 h-5" />
                         Conviction Timeline
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center gap-2 text-red-400">
+                    <div className="flex items-center gap-2 text-destructive">
                         <AlertCircle className="w-4 h-4" />
                         <span className="text-sm">{error || 'No timeline data available'}</span>
                     </div>
@@ -86,12 +87,12 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
-                <div className="bg-slate-800 border border-slate-700 p-3 rounded shadow-lg">
-                    <div className="text-xs text-slate-400 mb-1">{data.label}</div>
-                    <div className="text-sm font-mono text-slate-200">
+                <div className="bg-card border border-border p-3 rounded shadow-lg">
+                    <div className="text-xs text-muted-foreground mb-1">{data.label}</div>
+                    <div className="text-sm font-mono text-foreground font-black">
                         Conviction: {data.conviction.toFixed(1)}%
                     </div>
-                    <div className={`text-sm ${getBiasColorClass(data.bias)}`}>
+                    <div className={cn("text-sm font-bold", getBiasColorClass(data.bias))}>
                         {data.bias}
                     </div>
                 </div>
@@ -103,115 +104,115 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
     // Get line color based on recent bias
     const getLineColor = () => {
         switch (timeline.recent_bias.toUpperCase()) {
-            case 'BULLISH': return '#4ade80';
-            case 'BEARISH': return '#f87171';
-            default: return '#94a3b8';
+            case 'BULLISH': return 'hsl(var(--success))';
+            case 'BEARISH': return 'hsl(var(--destructive))';
+            default: return 'hsl(var(--muted-foreground))';
         }
     };
 
     return (
-        <Card className="bg-slate-900 border-slate-800">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Activity className="text-blue-400 w-5 h-5" />
+        <Card className="bg-card border-border shadow-xl">
+            <CardHeader className="border-b border-border/50">
+                <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-black text-muted-foreground">
+                    <Activity className="text-primary w-4 h-4" />
                     Conviction Timeline ({days} days)
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="pt-6 space-y-6">
                 {/* Chart */}
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                             <XAxis 
                                 dataKey="label" 
-                                stroke="#64748b"
-                                tick={{ fill: '#64748b', fontSize: 10 }}
+                                stroke="var(--muted-foreground)"
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }}
                                 angle={-45}
                                 textAnchor="end"
                                 height={60}
                             />
                             <YAxis 
                                 domain={[0, 100]}
-                                stroke="#64748b"
-                                tick={{ fill: '#64748b', fontSize: 12 }}
-                                label={{ value: 'Conviction %', angle: -90, position: 'insideLeft', fill: '#64748b' }}
+                                stroke="var(--muted-foreground)"
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+                                label={{ value: 'Conviction %', angle: -90, position: 'insideLeft', fill: 'var(--muted-foreground)', fontSize: 10, offset: 10 }}
                             />
                             <Tooltip content={<CustomTooltip />} />
-                            <ReferenceLine y={50} stroke="#475569" strokeDasharray="3 3" />
+                            <ReferenceLine y={50} stroke="var(--border)" strokeDasharray="3 3" />
                             <Line 
                                 type="monotone" 
                                 dataKey="conviction" 
-                                stroke={getLineColor()}
-                                strokeWidth={2}
-                                dot={{ fill: getLineColor(), r: 4 }}
-                                activeDot={{ r: 6 }}
+                                stroke={getLineColor() || 'var(--primary)'}
+                                strokeWidth={3}
+                                dot={{ fill: getLineColor() || 'var(--primary)', r: 4, strokeWidth: 2, stroke: 'var(--card)' }}
+                                activeDot={{ r: 6, strokeWidth: 0 }}
                             />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-800">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-border">
                     {/* Average Conviction */}
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Avg Conviction</div>
-                        <div className="text-lg font-mono text-slate-200">
+                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Avg Conviction</div>
+                        <div className="text-2xl font-black text-foreground tabular-nums">
                             {timeline.average_conviction.toFixed(1)}%
                         </div>
                     </div>
 
                     {/* Volatility */}
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Volatility</div>
-                        <div className={`text-lg font-mono ${
-                            timeline.conviction_volatility < 10 ? 'text-green-400' :
-                            timeline.conviction_volatility < 20 ? 'text-yellow-400' :
-                            'text-red-400'
-                        }`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Volatility</div>
+                        <div className={cn("text-2xl font-black tabular-nums",
+                            timeline.conviction_volatility < 10 ? 'text-success' :
+                            timeline.conviction_volatility < 20 ? 'text-warning' :
+                            'text-destructive'
+                        )}>
                             {timeline.conviction_volatility.toFixed(1)}
                         </div>
                     </div>
 
                     {/* Bias Consistency */}
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Consistency</div>
-                        <div className={`text-lg font-mono ${
-                            timeline.bias_consistency >= 80 ? 'text-green-400' :
-                            timeline.bias_consistency >= 60 ? 'text-yellow-400' :
-                            'text-red-400'
-                        }`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Consistency</div>
+                        <div className={cn("text-2xl font-black tabular-nums",
+                            timeline.bias_consistency >= 80 ? 'text-success' :
+                            timeline.bias_consistency >= 60 ? 'text-warning' :
+                            'text-destructive'
+                        )}>
                             {timeline.bias_consistency.toFixed(0)}%
                         </div>
                     </div>
 
                     {/* Recent Bias Streak */}
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Streak</div>
-                        <div className={`text-lg font-mono ${getBiasColorClass(timeline.recent_bias)}`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Streak</div>
+                        <div className={cn("text-2xl font-black italic", getBiasColorClass(timeline.recent_bias))}>
                             {timeline.bias_streak_count}x {timeline.recent_bias.slice(0, 3)}
                         </div>
                     </div>
                 </div>
 
                 {/* Trend Indicator */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                    <span className="text-xs text-slate-500">Conviction Trend</span>
-                    <span className={`flex items-center gap-1 text-sm font-medium ${
-                        timeline.conviction_trend === 'INCREASING' ? 'text-green-400' :
-                        timeline.conviction_trend === 'DECREASING' ? 'text-red-400' :
-                        'text-slate-400'
-                    }`}>
-                        {timeline.conviction_trend === 'INCREASING' && <TrendingUp className="w-4 h-4" />}
-                        {timeline.conviction_trend === 'DECREASING' && <Activity className="w-4 h-4" />}
-                        {timeline.conviction_trend === 'STABLE' && <Target className="w-4 h-4" />}
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                    <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Conviction Trend</span>
+                    <span className={cn("flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-full border",
+                        timeline.conviction_trend === 'INCREASING' ? 'text-success bg-success/10 border-success/20' :
+                        timeline.conviction_trend === 'DECREASING' ? 'text-destructive bg-destructive/10 border-destructive/20' :
+                        'text-muted-foreground bg-muted border-border'
+                    )}>
+                        {timeline.conviction_trend === 'INCREASING' && <TrendingUp className="w-3.5 h-3.5" />}
+                        {timeline.conviction_trend === 'DECREASING' && <Activity className="w-3.5 h-3.5" />}
+                        {timeline.conviction_trend === 'STABLE' && <Target className="w-3.5 h-3.5" />}
                         {timeline.conviction_trend}
                     </span>
                 </div>
 
                 {/* Sample Count */}
-                <div className="text-xs text-slate-500 text-center">
-                    Based on {timeline.sample_count} analysis{timeline.sample_count !== 1 ? 'es' : ''}
+                <div className="text-[9px] text-muted-foreground/40 text-center uppercase tracking-[0.3em]">
+                    SAMPLED FROM {timeline.sample_count} ENGINE STATE{timeline.sample_count !== 1 ? 'S' : ''}
                 </div>
             </CardContent>
         </Card>

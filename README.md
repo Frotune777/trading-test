@@ -33,7 +33,7 @@ We maintain a comprehensive documentation suit in the project root and `docs/` f
 ---
 
 ## 🏗️ Tech Stack
--   **Frontend**: Next.js 14, Tailwind 4, Shadcn/UI, Recharts.
+-   **Frontend**: Next.js 14, Tailwind 4, Shadcn/UI, Recharts. Features **Global Market State** & Standardized Layouts.
 -   **Backend**: Python 3.11, FastAPI, Pydantic v2, TA-Lib.
 -   **ML**: XGBoost, scikit-learn, TA-Lib.
 -   **Infra**: Docker, PostgreSQL (TimescaleDB), Redis.
