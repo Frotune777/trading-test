@@ -46,18 +46,31 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Set all CORS enabled origins
-# Set all CORS enabled origins
-origins = ["http://localhost:3006", "http://localhost:3000", "http://localhost:3010"]
+# CORS Configuration
+# Allow frontend origins for development
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3006", 
+    "http://localhost:3010",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3006",
+    "http://127.0.0.1:3010"
+]
+
+# Add any additional origins from settings
 if settings.BACKEND_CORS_ORIGINS:
     origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
+
+logger.info(f"CORS enabled for origins: {origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

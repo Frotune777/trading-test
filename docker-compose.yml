@@ -45,7 +45,7 @@ services:
       - ./ml:/app/ml
       - stock_data:/app/data
     environment:
-      - USE_SQLITE=true
+      - USE_SQLITE=false
       - SQLITE_DB_PATH=/app/data/stock_data.db
       - OPENALGO_WS_URL=ws://host.docker.internal:8765
       - OPENALGO_API_URL=http://host.docker.internal:8765/api
@@ -70,7 +70,7 @@ services:
       - ./ml:/app/ml
       - stock_data:/app/data
     environment:
-      - USE_SQLITE=true
+      - USE_SQLITE=false
       - SQLITE_DB_PATH=/app/data/stock_data.db
     command: /venv/bin/python -m celery -A app.workers.celery_app worker --loglevel=info
 

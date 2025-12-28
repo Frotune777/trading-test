@@ -87,3 +87,29 @@ class DataFetchLog(Base):
     
     def __repr__(self):
         return f"<DataFetchLog(symbol={self.symbol}, success={self.success}, requested_at={self.requested_at})>"
+
+
+class PriceHistory(Base):
+    """
+    Simple price history table for NSE data.
+    Used by risk metrics calculations.
+    """
+    __tablename__ = "price_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    date = Column(DateTime, nullable=False, index=True)
+    open = Column(Numeric(12, 2))
+    high = Column(Numeric(12, 2))
+    low = Column(Numeric(12, 2))
+    close = Column(Numeric(12, 2))
+    volume = Column(BigInteger)
+    created_at = Column(DateTime, server_default=func.now())
+    
+    __table_args__ = (
+        UniqueConstraint('symbol', 'date', name='uix_price_history_symbol_date'),
+        Index('idx_price_history_symbol_date', 'symbol', 'date'),
+    )
+    
+    def __repr__(self):
+        return f"<PriceHistory(symbol={self.symbol}, date={self.date}, close={self.close})>"

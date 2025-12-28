@@ -84,7 +84,7 @@ class InstitutionalQUADService:
             
             # 3. ASSEMBLE DECISION
             logger.info("Assembling final decision")
-            decision = self.decision_assembler.assemble(pillar_outputs)
+            decision = self.decision_assembler.assemble(pillar_outputs, symbol)
             
             # 4. ADD METADATA
             computation_time_ms = int((time.time() - start_time) * 1000)

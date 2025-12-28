@@ -7,7 +7,8 @@ from app.api.v1.endpoints import (
     quad_analytics,  # QUAD Analytics v1.1 enhancement (READ-ONLY)
     quad_analysis,  # QUAD Analysis v1.1 (WRITE - triggers analysis)
     quad_scheduler,  # QUAD Scheduler v1.1 (schedule management)
-    strategy  # Strategy Management
+    strategy,  # Strategy Management
+    risk_metrics  # Risk Metrics (VaR, Beta, Sharpe)
 )
 
 api_router = APIRouter()
@@ -29,5 +30,6 @@ api_router.include_router(quad_analytics.router, tags=["quad-analytics"])  # QUA
 api_router.include_router(quad_analysis.router, tags=["quad-analysis"])  # QUAD Analysis v1.1 (WRITE)
 api_router.include_router(quad_scheduler.router, tags=["quad-scheduler"])  # QUAD Scheduler v1.1
 api_router.include_router(strategy.router, tags=["strategy"])  # Strategy Management
+api_router.include_router(risk_metrics.router, tags=["risk-metrics"])  # Risk Metrics
 api_router.include_router(ws_market.router, tags=["websocket"])
 api_router.include_router(health.router, tags=["health"])

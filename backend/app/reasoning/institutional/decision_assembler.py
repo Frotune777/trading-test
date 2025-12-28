@@ -42,7 +42,7 @@ class BayesianDecisionAssembler:
         
         logger.info("Initialized BayesianDecisionAssembler")
     
-    def assemble(self, pillar_outputs: List[PillarOutput]) -> Dict:
+    def assemble(self, pillar_outputs: List[PillarOutput], symbol: str = 'UNKNOWN') -> Dict:
         """
         Combine pillar outputs into final decision.
         
@@ -57,6 +57,7 @@ class BayesianDecisionAssembler:
         
         Args:
             pillar_outputs: List of all 6 pillar outputs
+            symbol: Stock symbol being analyzed
             
         Returns:
             Dict containing final decision data
@@ -68,7 +69,7 @@ class BayesianDecisionAssembler:
         
         if validity == DecisionValidity.INVALID:
             logger.error(f"Decision INVALID: {blocking_reasons}")
-            return self._create_invalid_decision(pillar_outputs, blocking_reasons)
+            return self._create_invalid_decision(pillar_outputs, blocking_reasons, symbol)
         
         # 2. ADJUST WEIGHTS (regime-based)
         adjusted_weights = self._adjust_weights_for_regime(pillar_outputs)
@@ -105,7 +106,7 @@ class BayesianDecisionAssembler:
         # 10. ASSEMBLE DECISION
         decision = {
             'timestamp': datetime.now(),
-            'symbol': pillar_outputs[0].symbol if pillar_outputs else 'UNKNOWN',
+            'symbol': symbol,
             
             # Final probabilities
             'prob_strong_bearish': final_probs[0],
@@ -282,13 +283,13 @@ class BayesianDecisionAssembler:
             for p in pillars
         }
     
-    def _create_invalid_decision(self, pillars: List[PillarOutput], reasons: List[str]) -> Dict:
+    def _create_invalid_decision(self, pillars: List[PillarOutput], reasons: List[str], symbol: str = 'UNKNOWN') -> Dict:
         """Create invalid decision when validation fails."""
         logger.error(f"Creating INVALID decision: {reasons}")
         
         return {
             'timestamp': datetime.now(),
-            'symbol': pillars[0].symbol if pillars else 'UNKNOWN',
+            'symbol': symbol,
             
             # Neutral distribution
             'prob_strong_bearish': 0.0,

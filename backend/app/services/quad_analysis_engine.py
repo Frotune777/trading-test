@@ -75,9 +75,14 @@ class QUADAnalysisEngine:
             # Step 1: Run legacy reasoning engine (v1.0/v1.1)
             analysis_result = await self.reasoning_service.analyze_symbol(symbol)
             
-            # Step 2: Run institutional reasoning engine (v2.0)
-            logger.info(f"Running Institutional QUAD v2 analysis for {symbol}")
-            institutional_result = await self.institutional_service.analyze_symbol(symbol)
+            # Step 2: Run institutional reasoning engine (v2.0) - optional
+            institutional_result = None
+            try:
+                logger.info(f"Running Institutional QUAD v2 analysis for {symbol}")
+                institutional_result = await self.institutional_service.analyze_symbol(symbol)
+            except Exception as e:
+                logger.warning(f"Institutional QUAD v2 analysis failed (non-critical): {e}")
+                # Continue with legacy analysis only
             
             # Step 3: Extract pillar scores from legacy result
             pillar_scores = self._extract_pillar_scores(analysis_result)
@@ -94,10 +99,13 @@ class QUADAnalysisEngine:
             # Step 6: Persist legacy decision to database
             persisted_decision = await self._persist_decision(decision)
             
-            # Store institutional result in metadata for backward compatibility in response
-            persisted_decision.institutional_v2 = institutional_result
+            # Store institutional result in metadata if available
+            if institutional_result:
+                persisted_decision.institutional_v2 = institutional_result
+                logger.info(f"QUAD analysis complete for {symbol}: conviction={persisted_decision.conviction}, institutional_conviction={institutional_result['confidence']}%")
+            else:
+                logger.info(f"QUAD analysis complete for {symbol}: conviction={persisted_decision.conviction} (legacy only)")
             
-            logger.info(f"QUAD analysis complete for {symbol}: conviction={persisted_decision.conviction}, institutional_conviction={institutional_result['confidence']}%")
             return persisted_decision
             
         except Exception as e:
