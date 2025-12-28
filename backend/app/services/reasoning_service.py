@@ -116,12 +116,17 @@ class ReasoningService:
             "ltp_age_ms": snapshot.ltp_age_ms
         }
 
-    async def analyze_symbol(self, symbol: str) -> Dict[str, Any]:
+    async def analyze_symbol(
+        self, 
+        symbol: str, 
+        db: Optional[Any] = None # Accepts AsyncSession
+    ) -> Dict[str, Any]:
         """
         Analyze a symbol and return trade recommendation.
         
         Args:
             symbol: Stock symbol to analyze
+            db: Database session for fetching preferences (optional)
             
         Returns:
             Dict with v1.0 contract fields (frontend-compatible)
@@ -132,9 +137,24 @@ class ReasoningService:
             snapshot = await self.snapshot_builder.build_snapshot(symbol)
             context = await self.snapshot_builder.build_session_context()
             
+            # Fetch user preferences if DB is available
+            custom_weights = None
+            if db:
+                from sqlalchemy import select
+                from app.database.models_quad import QUADUserPreferences
+                try:
+                    stmt = select(QUADUserPreferences).where(QUADUserPreferences.user_id == 'default')
+                    result = await db.execute(stmt)
+                    pref = result.scalar_one_or_none()
+                    if pref and pref.weights:
+                        custom_weights = pref.weights
+                        logger.info(f"Using custom weights for {symbol}")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch user preferences: {e}")
+            
             # Run reasoning engine
             logger.info(f"Running reasoning engine for {symbol}")
-            intent = self.engine.analyze(snapshot, context)
+            intent = self.engine.analyze(snapshot, context, custom_weights=custom_weights)
             
             # Execution Safety Gate
             is_safe, block_reason = await self.is_execution_safe(symbol, snapshot)

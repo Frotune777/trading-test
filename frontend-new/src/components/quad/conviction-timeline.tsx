@@ -112,31 +112,31 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
 
     return (
         <Card className="bg-card border-border shadow-xl">
-            <CardHeader className="border-b border-border/50">
-                <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-black text-muted-foreground">
-                    <Activity className="text-primary w-4 h-4" />
-                    Conviction Timeline ({days} days)
+            <CardHeader className="py-2 border-b border-border/50">
+                <CardTitle className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">
+                    <Activity className="text-primary w-3.5 h-3.5" />
+                    Conviction Timeline
                 </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
+            <CardContent className="pt-4 p-4 space-y-4">
                 {/* Chart */}
-                <div className="h-64">
+                <div className="h-48 min-w-0">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                             <XAxis 
                                 dataKey="label" 
                                 stroke="var(--muted-foreground)"
-                                tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }}
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 8 }}
                                 angle={-45}
                                 textAnchor="end"
-                                height={60}
+                                height={40}
                             />
                             <YAxis 
                                 domain={[0, 100]}
                                 stroke="var(--muted-foreground)"
-                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
-                                label={{ value: 'Conviction %', angle: -90, position: 'insideLeft', fill: 'var(--muted-foreground)', fontSize: 10, offset: 10 }}
+                                tick={{ fill: 'var(--muted-foreground)', fontSize: 8 }}
+                                width={30}
                             />
                             <Tooltip content={<CustomTooltip />} />
                             <ReferenceLine y={50} stroke="var(--border)" strokeDasharray="3 3" />
@@ -144,28 +144,29 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                                 type="monotone" 
                                 dataKey="conviction" 
                                 stroke={getLineColor() || 'var(--primary)'}
-                                strokeWidth={3}
-                                dot={{ fill: getLineColor() || 'var(--primary)', r: 4, strokeWidth: 2, stroke: 'var(--card)' }}
-                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{ r: 4, strokeWidth: 0 }}
+                                isAnimationActive={false}
                             />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-border">
+                <div className="grid grid-cols-4 gap-2 pt-4 border-t border-border">
                     {/* Average Conviction */}
                     <div>
-                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Avg Conviction</div>
-                        <div className="text-2xl font-black text-foreground tabular-nums">
-                            {timeline.average_conviction.toFixed(1)}%
+                        <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Avg</div>
+                        <div className="text-base font-black text-foreground tabular-nums">
+                            {timeline.average_conviction.toFixed(0)}%
                         </div>
                     </div>
 
                     {/* Volatility */}
                     <div>
-                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Volatility</div>
-                        <div className={cn("text-2xl font-black tabular-nums",
+                        <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Vol</div>
+                        <div className={cn("text-base font-black tabular-nums",
                             timeline.conviction_volatility < 10 ? 'text-success' :
                             timeline.conviction_volatility < 20 ? 'text-warning' :
                             'text-destructive'
@@ -176,8 +177,8 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
 
                     {/* Bias Consistency */}
                     <div>
-                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Consistency</div>
-                        <div className={cn("text-2xl font-black tabular-nums",
+                        <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Cons</div>
+                        <div className={cn("text-base font-black tabular-nums",
                             timeline.bias_consistency >= 80 ? 'text-success' :
                             timeline.bias_consistency >= 60 ? 'text-warning' :
                             'text-destructive'
@@ -188,31 +189,29 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
 
                     {/* Recent Bias Streak */}
                     <div>
-                        <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Streak</div>
-                        <div className={cn("text-2xl font-black italic", getBiasColorClass(timeline.recent_bias))}>
-                            {timeline.bias_streak_count}x {timeline.recent_bias.slice(0, 3)}
+                        <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Streak</div>
+                        <div className={cn("text-base font-black italic", getBiasColorClass(timeline.recent_bias))}>
+                            {timeline.bias_streak_count}x
                         </div>
                     </div>
                 </div>
 
                 {/* Trend Indicator */}
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Conviction Trend</span>
-                    <span className={cn("flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-full border",
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Trend</span>
+                    <span className={cn("flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full border",
                         timeline.conviction_trend === 'INCREASING' ? 'text-success bg-success/10 border-success/20' :
                         timeline.conviction_trend === 'DECREASING' ? 'text-destructive bg-destructive/10 border-destructive/20' :
                         'text-muted-foreground bg-muted border-border'
                     )}>
-                        {timeline.conviction_trend === 'INCREASING' && <TrendingUp className="w-3.5 h-3.5" />}
-                        {timeline.conviction_trend === 'DECREASING' && <Activity className="w-3.5 h-3.5" />}
-                        {timeline.conviction_trend === 'STABLE' && <Target className="w-3.5 h-3.5" />}
+                        {timeline.conviction_trend === 'INCREASING' && <TrendingUp className="w-2.5 h-2.5" />}
                         {timeline.conviction_trend}
                     </span>
                 </div>
 
                 {/* Sample Count */}
-                <div className="text-[9px] text-muted-foreground/40 text-center uppercase tracking-[0.3em]">
-                    SAMPLED FROM {timeline.sample_count} ENGINE STATE{timeline.sample_count !== 1 ? 'S' : ''}
+                <div className="text-[7px] text-muted-foreground/40 text-center uppercase tracking-[0.2em]">
+                    SAMPLED FROM {timeline.sample_count} ENGINE STATES
                 </div>
             </CardContent>
         </Card>

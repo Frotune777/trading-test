@@ -71,6 +71,14 @@ class MarketAPI {
         };
     }
   }
+
+  async getHistory(symbol: string, days: number = 30): Promise<{ symbol: string; data: any[] }> {
+    return this.request<{ symbol: string; data: any[] }>(`/api/v1/market/history/${symbol}?days=${days}`);
+  }
+
+  async getVolumeProfile(symbol: string, days: number = 30, bins: number = 40): Promise<any> {
+    return this.request<any>(`/api/v1/market/volume-profile/${symbol}?days=${days}&bins=${bins}`);
+  }
 }
 
 export const marketAPI = new MarketAPI();

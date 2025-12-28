@@ -3,6 +3,7 @@ from typing import Dict, Optional, List
 from datetime import datetime
 from ..core.market_snapshot import LiveDecisionSnapshot, SessionContext
 from ..core.trade_intent import TradeIntent, DirectionalBias, PillarContribution, AnalysisQuality
+from ..core.exceptions import DataIncompleteError
 from .pillars.base_pillar import BasePillar
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,8 @@ class ReasoningEngine:
     def analyze(
         self, 
         snapshot: LiveDecisionSnapshot, 
-        context: SessionContext
+        context: SessionContext,
+        custom_weights: Optional[Dict[str, float]] = None
     ) -> TradeIntent:
         """
         Main reasoning function.
@@ -56,12 +58,23 @@ class ReasoningEngine:
         Args:
             snapshot: Current instrument state
             context: Market-wide state
+            custom_weights: Optional custom weight override
             
         Returns:
             TradeIntent v1.0 with quality metadata
         """
         analysis_timestamp = datetime.now()
         
+        # Determine weights to use
+        active_weights = self.weights.copy()
+        if custom_weights:
+            # Validate and merge
+            total_custom = sum(custom_weights.values())
+            if abs(total_custom - 1.0) < 0.01: # Approximate check
+                 active_weights = custom_weights
+            else:
+                 logger.warning(f"Custom weights sum to {total_custom}, ignoring overrides")
+                 
         if not self.pillars:
             logger.warning("No pillars registered, returning INVALID analysis")
             return self._create_invalid_intent(
@@ -88,11 +101,27 @@ class ReasoningEngine:
                     score=score,
                     bias=bias,
                     is_placeholder=(pillar_name in self.placeholder_pillars),
-                    weight_applied=self.weights[pillar_name],
+                    weight_applied=active_weights[pillar_name],
                     metrics=metrics
                 ))
                 
                 logger.debug(f"{pillar_name}: score={score}, bias={bias}")
+                
+            except DataIncompleteError as e:
+                logger.warning(f"Pillar {pillar_name} incomplete: {e}")
+                scores[pillar_name] = 50.0
+                biases[pillar_name] = "NEUTRAL"
+                failed_pillars.append(pillar_name)
+                
+                pillar_contributions.append(PillarContribution(
+                    name=pillar_name,
+                    score=50.0,
+                    bias="NEUTRAL",
+                    is_placeholder=True,  # Failure = placeholder behavior
+                    weight_applied=active_weights[pillar_name],
+                    metrics={"error": "DATA_INCOMPLETE", "details": str(e)}
+                ))
+            
             except Exception as e:
                 logger.error(f"Pillar {pillar_name} failed: {e}")
                 scores[pillar_name] = 50.0  # Neutral fallback
@@ -105,7 +134,7 @@ class ReasoningEngine:
                     score=50.0,
                     bias="NEUTRAL",
                     is_placeholder=True,  # Failed = placeholder behavior
-                    weight_applied=self.weights[pillar_name],
+                    weight_applied=active_weights[pillar_name],
                     metrics={"error": str(e)}
                 ))
         
@@ -116,7 +145,7 @@ class ReasoningEngine:
 
         # v1.1: Populate calibration version and weights snapshot
         calibration_version = "matrix_2024_q4"  # Current calibration version
-        pillar_weights_snapshot = self.weights.copy()  # Frozen snapshot of weights
+        pillar_weights_snapshot = active_weights.copy()  # Frozen snapshot of weights
 
         quality = AnalysisQuality(
             total_pillars=len(self.weights),
@@ -137,7 +166,7 @@ class ReasoningEngine:
             warnings.append(f"{pillar_name.capitalize()} pillar failed during analysis")
         
         # Step 4: Weighted aggregation
-        conviction_score = self._aggregate_scores(scores)
+        conviction_score = self._aggregate_scores(scores, active_weights)
         
         # Apply conviction cap if too many placeholders
         if quality.placeholder_pillars > self.MAX_PLACEHOLDER_THRESHOLD:
@@ -181,11 +210,11 @@ class ReasoningEngine:
             contract_version="1.1.0"
         )
     
-    def _aggregate_scores(self, scores: Dict[str, float]) -> float:
+    def _aggregate_scores(self, scores: Dict[str, float], weights: Dict[str, float]) -> float:
         """Weighted sum of pillar scores."""
         total = 0.0
         for pillar_name, score in scores.items():
-            weight = self.weights.get(pillar_name, 0.0)
+            weight = weights.get(pillar_name, 0.0)
             total += score * weight
         return round(total, 2)
     

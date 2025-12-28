@@ -73,7 +73,7 @@ class QUADAnalysisEngine:
         
         try:
             # Step 1: Run legacy reasoning engine (v1.0/v1.1)
-            analysis_result = await self.reasoning_service.analyze_symbol(symbol)
+            analysis_result = await self.reasoning_service.analyze_symbol(symbol, self.db)
             
             # Step 2: Run institutional reasoning engine (v2.0) - optional
             institutional_result = None

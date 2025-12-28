@@ -134,6 +134,19 @@ class FeedHealthMonitor:
             import json
             state_data = json.loads(feed_state) if isinstance(feed_state, str) else feed_state
             
+            # Check freshness (e.g. updated within last 60s)
+            last_updated = state_data.get("timestamp", 0)
+            now = time.time()
+            is_stale = (now - last_updated) > 60
+            
+            if is_stale:
+                 return {
+                     "status": "STALE",
+                     "healthy": False,
+                     "message": f"OpenAlgo state stale (>60s ago)",
+                     "last_updated": last_updated
+                 }
+
             is_healthy = state_data.get("feed_state") == "HEALTHY"
             
             return {
@@ -167,6 +180,19 @@ class FeedHealthMonitor:
             
             import json
             health_data = json.loads(pipeline_health) if isinstance(pipeline_health, str) else pipeline_health
+            
+            # Check freshness
+            last_updated = health_data.get("timestamp", 0)
+            now = time.time()
+            is_stale = (now - last_updated) > 120 # Pipeline allows longer gaps (e.g. 2 mins)
+            
+            if is_stale:
+                 return {
+                     "status": "STALE",
+                     "healthy": False,
+                     "message": f"Pipeline status stale (>120s ago)",
+                     "last_updated": last_updated
+                 }
             
             is_healthy = health_data.get("status") == "HEALTHY"
             circuit_breaker = health_data.get("circuit_breaker_active", False)
@@ -247,21 +273,12 @@ class FeedHealthMonitor:
     async def _count_active_symbols(self) -> int:
         """Count symbols with fresh LTP data (<5s)"""
         try:
-            # Get all LTP keys
-            keys = await redis_client.keys("ltp:*")
-            
-            if not keys:
-                return 0
-            
-            now = time.time()
+            # Use scan_iter for non-blocking iteration
             active_count = 0
-            
-            for key in keys:
-                ttl = await redis_client.ttl(key)
-                # If TTL exists and > 0, it's active
-                if ttl > 0:
-                    active_count += 1
-            
+            async for key in redis_client.scan_iter("ltp:*"):
+                 ttl = await redis_client.ttl(key)
+                 if ttl > 0:
+                     active_count += 1
             return active_count
             
         except Exception:
@@ -271,20 +288,12 @@ class FeedHealthMonitor:
     async def _count_stale_symbols(self) -> int:
         """Count symbols with stale data (>5s or expired)"""
         try:
-            # Get all market:ltp keys (from OpenAlgo bridge)
-            keys = await redis_client.keys("market:ltp:*")
-            
-            if not keys:
-                return 0
-            
+            # Use scan_iter for non-blocking iteration
             stale_count = 0
-            
-            for key in keys:
+            async for key in redis_client.scan_iter("market:ltp:*"):
                 ttl = await redis_client.ttl(key)
-                # If TTL is -1 (no expiry) or -2 (expired), it's stale
                 if ttl < 0:
                     stale_count += 1
-            
             return stale_count
             
         except Exception:

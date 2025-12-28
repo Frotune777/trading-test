@@ -153,3 +153,94 @@ class TechnicalAnalysisService:
         roll_max = self.df['close'].cummax()
         daily_drawdown = self.df['close'] / roll_max - 1.0
         return daily_drawdown.cummin().min()
+
+    def calculate_volume_profile(self, bins: int = 40) -> Dict[str, Any]:
+        """
+        Calculate volume profile (Volume by Price)
+        
+        Args:
+            bins: Number of price bins
+            
+        Returns:
+            Dictionary with levels, volumes, POC, VAH, and VAL
+        """
+        if self.df.empty:
+            return {}
+            
+        min_price = float(self.df['low'].min())
+        max_price = float(self.df['high'].max())
+        
+        if min_price == max_price:
+            return {}
+            
+        bin_size = (max_price - min_price) / bins
+        
+        # Initialize bins
+        profile = []
+        for i in range(bins):
+            level_bottom = min_price + (i * bin_size)
+            level_top = level_bottom + bin_size
+            profile.append({
+                "price": float((level_bottom + level_top) / 2),
+                "volume": 0.0,
+                "buy_volume": 0.0,
+                "sell_volume": 0.0
+            })
+            
+        # Distribute volume
+        # We'll use a simple distribution: assign volume to the bin containing the 'close' price
+        # and differentiate by candle direction
+        for _, row in self.df.iterrows():
+            idx = int((row['close'] - min_price) / bin_size)
+            if idx >= bins: idx = bins - 1
+            if idx < 0: idx = 0
+            
+            vol = float(row['volume'])
+            profile[idx]['volume'] += vol
+            if row['close'] >= row['open']:
+                profile[idx]['buy_volume'] += vol
+            else:
+                profile[idx]['sell_volume'] += vol
+                
+        # Find Point of Control (POC)
+        max_vol_bin = max(profile, key=lambda x: x['volume'])
+        poc = max_vol_bin['price']
+        
+        # Calculate Value Area (70% of total volume)
+        total_volume = sum(b['volume'] for b in profile)
+        target_va_volume = total_volume * 0.70
+        
+        # Start from POC and expand
+        poc_idx = profile.index(max_vol_bin)
+        va_indices = {poc_idx}
+        current_va_volume = max_vol_bin['volume']
+        
+        left = poc_idx - 1
+        right = poc_idx + 1
+        
+        while current_va_volume < target_va_volume and (left >= 0 or right < bins):
+            vol_left = profile[left]['volume'] if left >= 0 else 0
+            vol_right = profile[right]['volume'] if right < bins else 0
+            
+            if vol_left >= vol_right and left >= 0:
+                va_indices.add(left)
+                current_va_volume += vol_left
+                left -= 1
+            elif right < bins:
+                va_indices.add(right)
+                current_va_volume += vol_right
+                right += 1
+            else:
+                break
+                
+        va_prices = [profile[i]['price'] for i in va_indices]
+        vah = float(max(va_prices)) if va_prices else poc
+        val = float(min(va_prices)) if va_prices else poc
+        
+        return {
+            "profile": profile,
+            "poc": float(poc),
+            "vah": vah,
+            "val": val,
+            "total_volume": float(total_volume)
+        }

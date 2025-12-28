@@ -1,5 +1,6 @@
 from .base_pillar import BasePillar
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
+from ...core.exceptions import DataIncompleteError
 from typing import Tuple
 
 class LiquidityPillar(BasePillar):
@@ -35,16 +36,12 @@ class LiquidityPillar(BasePillar):
                     snapshot.ask_qty > 0)
         has_adosc = snapshot.adosc is not None
         
-        # Early return if no data
+        # Early return if no data (FAIL CLOSED logic)
         if not (has_spread or has_depth):
-             # Return valid structure even if data missing (User Experience improvement)
-             return 50.0, "NEUTRAL", {
-                 "Spread %": "N/A",
-                 "Bid Qty": "N/A",
-                 "Ask Qty": "N/A", 
-                 "Depth Ratio": "N/A",
-                 "ADOSC": round(snapshot.adosc, 2) if has_adosc else "N/A"
-             }
+             raise DataIncompleteError(
+                 f"Missing critical liquidity data for {snapshot.symbol}", 
+                 missing_fields=["spread", "depth"]
+             )
         
         # Component scores using calibration matrix
         spread_score = self._score_spread(snapshot.spread_pct) if has_spread else None

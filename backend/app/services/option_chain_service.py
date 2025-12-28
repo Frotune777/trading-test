@@ -31,19 +31,14 @@ class OptionChainService:
         "APOLLOHOSP", "BPCL", "TATACONSUM", "HEROMOTOCO"
     ]
     
-    def __init__(self, db_path: str = 'stock_data.db'):
-        self.db_path = db_path
+    def __init__(self, db_manager=None):
+        from app.database.db_manager import DatabaseManager
+        self.db_manager = db_manager or DatabaseManager()
         self.nse_utils = NseUtils()
     
     def fetch_and_store(self, symbols: List[str] = None) -> Dict[str, Any]:
         """
         Fetch option chain data for given symbols
-        
-        Args:
-            symbols: List of symbols (default: FNO_SYMBOLS)
-            
-        Returns:
-            Dict with fetch results
         """
         if symbols is None:
             symbols = self.FNO_SYMBOLS
@@ -69,10 +64,10 @@ class OptionChainService:
                 total_stored += stored
                 successful += 1
                 
-                logger.info(f"✅ {symbol}: Stored {stored} option records")
+                logger.debug(f"✅ {symbol}: Stored {stored} option records")
                 
             except Exception as e:
-                logger.debug(f"Error fetching option chain for {symbol}: {e}")
+                logger.error(f"Error fetching option chain for {symbol}: {e}")
                 failed += 1
                 continue
         
@@ -89,44 +84,34 @@ class OptionChainService:
     
     def _store_data(self, symbol: str, df: pd.DataFrame) -> int:
         """
-        Store option chain data in database
-        
-        Returns:
-            Number of records stored
+        Store option chain data in database (PostgreSQL via DatabaseManager)
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         records_stored = 0
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now()
+        
+        params_list = []
         
         for _, row in df.iterrows():
             try:
                 # Helper to get value or None
                 def get_val(key, default=None):
                     val = row.get(key, default)
-                    if pd.isna(val):
+                    if pd.isna(val) or val is None:
                         return default
                     return val
                 
                 # Parse expiry date
                 expiry = get_val('expiryDate')
-                if expiry and not pd.isna(expiry):
+                if expiry:
                     try:
-                        expiry_date = datetime.strptime(expiry, '%d-%b-%Y').strftime('%Y-%m-%d')
+                        expiry_date = datetime.strptime(expiry, '%d-%b-%Y').date()
                     except:
                         expiry_date = None
                 else:
                     expiry_date = None
                 
-                # Insert or replace
-                cursor.execute('''
-                    INSERT OR REPLACE INTO option_chain
-                    (symbol, expiry_date, strike_price, option_type,
-                     open_interest, change_in_oi, volume, iv,
-                     ltp, bid_price, ask_price, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
+                # Insert parameters
+                params_list.append((
                     symbol,
                     expiry_date,
                     float(get_val('strikePrice', 0)),
@@ -143,11 +128,31 @@ class OptionChainService:
                 records_stored += 1
                 
             except Exception as e:
-                logger.debug(f"Error storing option row for {symbol}: {e}")
+                logger.debug(f"Error preparing option row for {symbol}: {e}")
                 continue
         
-        conn.commit()
-        conn.close()
+        if params_list:
+            # Note: Using parameterized SQL for PostgreSQL.
+            # We use ON CONFLICT to mimic REPLACE behavior.
+            # Target columns for unique constraint: (symbol, expiry_date, strike_price, option_type, timestamp)
+            # Actually, timestamp is part of unique constraint in some schemas, let's check.
+            query = '''
+                INSERT INTO option_chain
+                (symbol, expiry_date, strike_price, option_type,
+                 open_interest, change_in_oi, volume, iv,
+                 ltp, bid_price, ask_price, "timestamp")
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (symbol, expiry_date, strike_price, option_type, "timestamp") 
+                DO UPDATE SET
+                    open_interest = EXCLUDED.open_interest,
+                    change_in_oi = EXCLUDED.change_in_oi,
+                    volume = EXCLUDED.volume,
+                    iv = EXCLUDED.iv,
+                    ltp = EXCLUDED.ltp,
+                    bid_price = EXCLUDED.bid_price,
+                    ask_price = EXCLUDED.ask_price
+            '''
+            self.db_manager.executemany(query, params_list)
         
         return records_stored
 

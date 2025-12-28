@@ -1,5 +1,6 @@
 from .base_pillar import BasePillar
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
+from ...core.exceptions import DataIncompleteError
 from typing import Tuple
 
 class TrendPillar(BasePillar):
@@ -24,8 +25,10 @@ class TrendPillar(BasePillar):
         
         # Check if technical indicators are available
         if not snapshot.sma_50 or not snapshot.sma_200:
-            # No technical data, return neutral
-            return 50.0, "NEUTRAL", {}
+            raise DataIncompleteError(
+                f"Missing trend indicators (SMA50/200) for {snapshot.symbol}",
+                missing_fields=["sma_50", "sma_200"]
+            )
         
         # 1. Daily Trend (30 points)
         daily_score = 0

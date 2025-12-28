@@ -3,7 +3,7 @@ QUAD Analytics Database Models
 Pydantic and SQLAlchemy models for QUAD analytics
 """
 
-from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, Boolean, Text, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, Boolean, Text, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
@@ -56,6 +56,10 @@ class QUADDecision(Base):
     meta_data = Column(JSON)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
+    )
 
 
 class QUADPrediction(Base):
@@ -147,6 +151,42 @@ class QUADSignalAccuracy(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class RiskMetrics(Base):
+    """Risk metrics (VaR, Beta, Sharpe)"""
+    __tablename__ = "risk_metrics"
+    __table_args__ = {'extend_existing': True}
+    
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    calculated_at = Column(DateTime, nullable=False)
+    
+    var_95_30d = Column(DECIMAL(10, 4))
+    var_99_30d = Column(DECIMAL(10, 4))
+    var_95_60d = Column(DECIMAL(10, 4))
+    var_99_60d = Column(DECIMAL(10, 4))
+    var_95_90d = Column(DECIMAL(10, 4))
+    var_99_90d = Column(DECIMAL(10, 4))
+    
+    beta = Column(DECIMAL(10, 4))  # Legacy support
+    beta_30d = Column(DECIMAL(10, 4))
+    beta_60d = Column(DECIMAL(10, 4))
+    beta_252d = Column(DECIMAL(10, 4))
+    
+    sharpe_ratio = Column(DECIMAL(10, 4))  # Legacy support
+    sharpe_30d = Column(DECIMAL(10, 4))
+    sharpe_60d = Column(DECIMAL(10, 4))
+    sharpe_252d = Column(DECIMAL(10, 4))
+    
+    volatility = Column(DECIMAL(10, 4))  # Legacy support
+    volatility_30d = Column(DECIMAL(10, 4))
+    volatility_60d = Column(DECIMAL(10, 4))
+    volatility_252d = Column(DECIMAL(10, 4))
+    
+    data_points_used = Column(Integer)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 # ==================== Pydantic Models ====================
 
 class PillarScores(BaseModel):
@@ -162,6 +202,7 @@ class PillarScores(BaseModel):
 class QUADDecisionCreate(BaseModel):
     """Create QUAD decision"""
     symbol: str
+    timestamp: Optional[datetime] = None  # Market data timestamp (logical time)
     conviction: int = Field(..., ge=0, le=100)
     signal: SignalType
     pillars: PillarScores
@@ -286,8 +327,23 @@ class SignalAccuracyMetrics(BaseModel):
     total_signals: int
     correct_signals: int
     win_rate: float
+    rolling_win_rates: Dict[str, float] = Field(default_factory=dict)
     avg_conviction_winning: float
     avg_conviction_losing: float
     total_profit_loss: float
     best_signal: Optional[Dict[str, Any]]
     worst_signal: Optional[Dict[str, Any]]
+
+
+class QUADUserPreferences(Base):
+    """User preferences for QUAD system"""
+    __tablename__ = "quad_user_preferences"
+    
+    user_id = Column(String(50), primary_key=True, default="default")
+    weights = Column(JSON, nullable=False)  # Stores {'trend': 0.3, ...}
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class QUADUserPreferencesCreate(BaseModel):
+    """Create/Update user preferences"""
+    weights: Dict[str, float]
+

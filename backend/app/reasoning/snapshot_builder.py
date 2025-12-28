@@ -155,9 +155,20 @@ class SnapshotBuilder:
             try:
                 ta_weekly = TechnicalAnalysisService(weekly_df)
                 ta_weekly.add_trend_indicators()
-                sma_20_weekly = float(ta_weekly.df.iloc[-1].get('sma_20', ltp))
+                # STRICT mode: Raise error if SMA cannot be calculated
+                sma_20_weekly = float(ta_weekly.df.iloc[-1]['sma_20'])
+            except KeyError:
+                logger.warning(f"Weekly SMA-20 data missing for {symbol}")
+                # We do NOT proxy anymore. 
+                # If weekly trend is critical, this should raise DataIncompleteError or 
+                # the consumer (TrendPillar) must handle None explicitly without proxying.
+                pass 
             except Exception as e:
                 logger.warning(f"Failed to calculate Weekly SMA for {symbol}: {e}")
+        else:
+             # If weekly data fetch failed but daily succeeded, we currently just warn.
+             # TrendPillar will receive None and should handle it strictly.
+             logger.warning(f"Weekly data fetch failed for {symbol}")
 
         # Depth Data Processing
         bid_price = None

@@ -70,3 +70,5 @@ trigger: always_on
 44. The Agent must not schedule itself to trade.
 45. Any future autonomy must be opt-in and reversible.
 46. The current data source requires manual refresh. Broker account integration for automated data fetching will be implemented in a later stage.
+47. Analyse the project at code level before making any plan.
+48. Update the documents when required. 

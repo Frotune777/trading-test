@@ -5,7 +5,7 @@ RESTful API for QUAD decision tracking, predictions, and alerts
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from app.database.models_quad import (
@@ -17,6 +17,8 @@ from app.database.models_quad import (
 from app.services.quad_analytics_service import QUADAnalyticsService
 from app.services.quad_ml_service import QUADMLService
 from app.services.quad_alert_service import QUADAlertService
+from app.services.peer_comparison_service import PeerComparisonService
+from app.services.backtest_service import BacktestService
 from app.core.database import get_db
 
 router = APIRouter(prefix="/quad", tags=["QUAD Analytics"])
@@ -235,3 +237,52 @@ async def acknowledge_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
     
     return {"message": "Alert acknowledged"}
+@router.post("/{symbol}/evaluate")
+async def evaluate_accuracy(
+    symbol: str,
+    window: int = Query(5, ge=1, le=30),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Manually trigger signal accuracy evaluation for a symbol
+    
+    - **symbol**: Stock symbol
+    - **window**: evaluation window in days (default: 5)
+    """
+    service = QUADAnalyticsService(db)
+    return await service.evaluate_decisions(symbol, window)
+
+@router.get("/{symbol}/peers", response_model=Dict[str, Any])
+async def get_peer_comparison(
+    symbol: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get sector peer comparison for a symbol
+    """
+    service = PeerComparisonService(db)
+    return await service.get_peer_comparison(symbol)
+
+@router.get("/{symbol}/backtest", response_model=Dict[str, Any])
+async def get_backtest(
+    symbol: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    initial_capital: float = 100000.0,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get backtest results and equity curve for a symbol
+    """
+    service = BacktestService(db)
+    results = await service.get_equity_curve(
+        symbol=symbol,
+        start_date=start_date,
+        end_date=end_date,
+        initial_capital=initial_capital
+    )
+    
+    if "error" in results:
+        raise HTTPException(status_code=404, detail=results["error"])
+        
+    return results

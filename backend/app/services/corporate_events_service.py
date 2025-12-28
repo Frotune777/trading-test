@@ -18,20 +18,14 @@ class CorporateEventsService:
     Service to fetch and store NSE corporate events data
     """
     
-    def __init__(self, db_path: str = 'stock_data.db'):
-        self.db_path = db_path
+    def __init__(self, db_manager=None):
+        from app.database.db_manager import DatabaseManager
+        self.db_manager = db_manager or DatabaseManager()
         self.nse_utils = NseUtils()
     
     def fetch_and_store(self, days: int = 90, event_filter: str = None) -> Dict[str, Any]:
         """
         Fetch corporate events for the last N days and store in database
-        
-        Args:
-            days: Number of days to fetch (default: 90)
-            event_filter: Optional filter (e.g., 'Dividend', 'Bonus', 'Split')
-            
-        Returns:
-            Dict with fetch results
         """
         try:
             # Calculate date range
@@ -80,33 +74,10 @@ class CorporateEventsService:
     
     def _store_data(self, df: pd.DataFrame) -> int:
         """
-        Store corporate events in database
-        
-        Returns:
-            Number of records stored
+        Store corporate events in database (PostgreSQL via DatabaseManager)
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Create table if not exists
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS corporate_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                symbol TEXT,
-                company TEXT,
-                event_type TEXT,
-                event_subject TEXT,
-                ex_date DATE,
-                record_date DATE,
-                bc_start_date DATE,
-                bc_end_date DATE,
-                details TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(symbol, event_subject, ex_date)
-            )
-        ''')
-        
         records_stored = 0
+        params_list = []
         
         for _, row in df.iterrows():
             try:
@@ -122,49 +93,51 @@ class CorporateEventsService:
                     if not date_str or pd.isna(date_str) or date_str == '-':
                         return None
                     try:
-                        return datetime.strptime(date_str, '%d-%b-%Y').strftime('%Y-%m-%d')
+                        return datetime.strptime(date_str, '%d-%b-%Y').date()
                     except:
                         return None
                 
                 # Determine event type from subject
                 subject = get_val('subject', '')
-                event_type = 'Other'
+                event_type = 'other'
                 if 'dividend' in subject.lower():
-                    event_type = 'Dividend'
+                    event_type = 'dividend'
                 elif 'bonus' in subject.lower():
-                    event_type = 'Bonus'
+                    event_type = 'bonus'
                 elif 'split' in subject.lower():
-                    event_type = 'Split'
+                    event_type = 'split'
                 elif 'rights' in subject.lower():
-                    event_type = 'Rights'
+                    event_type = 'rights'
                 elif 'buyback' in subject.lower():
-                    event_type = 'Buyback'
+                    event_type = 'buyback'
                 
-                # Insert or replace
-                cursor.execute('''
-                    INSERT OR REPLACE INTO corporate_events
-                    (symbol, company, event_type, event_subject,
-                     ex_date, record_date, bc_start_date, bc_end_date, details)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
+                # Map to corporate_actions table from schema.py
+                params_list.append((
                     get_val('symbol'),
-                    get_val('comp'),
-                    event_type,
-                    subject,
                     parse_date(get_val('exDate')),
                     parse_date(get_val('recordDate')),
-                    parse_date(get_val('bcStartDate')),
-                    parse_date(get_val('bcEndDate')),
-                    get_val('details')
+                    subject,  # purpose
+                    get_val('details'),
+                    event_type
                 ))
                 records_stored += 1
                 
             except Exception as e:
-                logger.debug(f"Error storing corporate event row: {e}")
+                logger.debug(f"Error preparing corporate event row: {e}")
                 continue
         
-        conn.commit()
-        conn.close()
+        if params_list:
+            # PostgreSQL compatible INSERT with ON CONFLICT
+            query = '''
+                INSERT INTO corporate_actions
+                (symbol, ex_date, record_date, purpose, details, action_type)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT (symbol, purpose, ex_date) DO UPDATE SET
+                    record_date = EXCLUDED.record_date,
+                    details = EXCLUDED.details,
+                    action_type = EXCLUDED.action_type
+            '''
+            self.db_manager.executemany(query, params_list)
         
         return records_stored
 

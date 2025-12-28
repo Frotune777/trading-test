@@ -18,19 +18,14 @@ class InsiderTradingService:
     Service to fetch and store NSE insider trading data
     """
     
-    def __init__(self, db_path: str = 'stock_data.db'):
-        self.db_path = db_path
+    def __init__(self, db_manager=None):
+        from app.database.db_manager import DatabaseManager
+        self.db_manager = db_manager or DatabaseManager()
         self.nse_utils = NseUtils()
     
     def fetch_and_store(self, days: int = 30) -> Dict[str, Any]:
         """
         Fetch insider trading data for the last N days and store in database
-        
-        Args:
-            days: Number of days to fetch (default: 30)
-            
-        Returns:
-            Dict with fetch results
         """
         try:
             # Calculate date range
@@ -78,15 +73,10 @@ class InsiderTradingService:
     
     def _store_data(self, df: pd.DataFrame) -> int:
         """
-        Store insider trading data in database
-        
-        Returns:
-            Number of records stored
+        Store insider trading data in database (PostgreSQL via DatabaseManager)
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         records_stored = 0
+        params_list = []
         
         for _, row in df.iterrows():
             try:
@@ -96,7 +86,7 @@ class InsiderTradingService:
                     acquisition_date = None
                 else:
                     try:
-                        acquisition_date = datetime.strptime(acq_from, '%d-%b-%Y').strftime('%Y-%m-%d')
+                        acquisition_date = datetime.strptime(acq_from, '%d-%b-%Y').date()
                     except:
                         acquisition_date = None
                 
@@ -106,7 +96,7 @@ class InsiderTradingService:
                     intimation_date = None
                 else:
                     try:
-                        intimation_date = datetime.strptime(intim_dt, '%d-%b-%Y').strftime('%Y-%m-%d')
+                        intimation_date = datetime.strptime(intim_dt, '%d-%b-%Y').date()
                     except:
                         intimation_date = None
                 
@@ -124,29 +114,20 @@ class InsiderTradingService:
                 sell_val = get_val('sellValue', 0)
                 
                 if buy_qty and buy_qty != 0:
-                    transaction_type = 'Buy'
+                    transaction_type = 'buy'
                     shares = int(buy_qty)
                     value = float(buy_val) if buy_val else 0.0
                 elif sell_qty and sell_qty != 0:
-                    transaction_type = 'Sell'
+                    transaction_type = 'sell'
                     shares = int(sell_qty)
                     value = float(sell_val) if sell_val else 0.0
                 else:
-                    transaction_type = get_val('tdpTransactionType', 'Unknown')
+                    transaction_type = str(get_val('tdpTransactionType', 'unknown')).lower()
                     shares = 0
                     value = 0.0
                 
-                # Insert or replace - match actual schema:
-                # symbol, person_name, person_category, securities_type,
-                # transaction_type, number_of_securities, value,
-                # acquisition_date, intimation_date
-                cursor.execute('''
-                    INSERT OR REPLACE INTO insider_trading
-                    (symbol, person_name, person_category, securities_type,
-                     transaction_type, number_of_securities, value,
-                     acquisition_date, intimation_date)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
+                # Map to insider_trading table from schema.py
+                params_list.append((
                     get_val('symbol'),
                     get_val('acqName'),
                     get_val('personCategory'),
@@ -160,11 +141,21 @@ class InsiderTradingService:
                 records_stored += 1
                 
             except Exception as e:
-                logger.debug(f"Error storing insider trading row: {e}")
+                logger.debug(f"Error preparing insider trading row: {e}")
                 continue
         
-        conn.commit()
-        conn.close()
+        if params_list:
+            # PostgreSQL compatible INSERT. 
+            # Note: We should ideally have a unique constraint on (symbol, person_name, acquisition_date, transaction_type, number_of_securities)
+            # For now, we just insert. Duplicate management should be handled by the unique constraint in schema.py.
+            query = '''
+                INSERT INTO insider_trading
+                (symbol, person_name, person_category, securities_type,
+                 transaction_type, number_of_securities, value,
+                 acquisition_date, intimation_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            '''
+            self.db_manager.executemany(query, params_list)
         
         return records_stored
 

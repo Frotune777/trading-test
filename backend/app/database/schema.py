@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS companies (
     isin TEXT,
     listing_date DATE,
     market_cap_category TEXT,  -- 'Large Cap', 'Mid Cap', 'Small Cap'
-    is_fno_enabled BOOLEAN DEFAULT 0,
-    is_index_constituent BOOLEAN DEFAULT 0,
+    is_fno_enabled BOOLEAN DEFAULT FALSE,
+    is_index_constituent BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS results_calendar (
     result_type TEXT,  -- 'quarterly', 'annual'
     financial_year TEXT,
     quarter TEXT,
-    is_announced BOOLEAN DEFAULT 0,
+    is_announced BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (symbol) REFERENCES companies(symbol) ON DELETE CASCADE
 );
@@ -683,7 +683,7 @@ CREATE TABLE IF NOT EXISTS update_log (
 CREATE TABLE IF NOT EXISTS data_sources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source_name TEXT UNIQUE NOT NULL,  -- 'nse', 'screener', 'yahoo'
-    is_active BOOLEAN DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     last_success TIMESTAMP,
     last_error TIMESTAMP,
     error_count INTEGER DEFAULT 0,
@@ -789,7 +789,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     symbol TEXT,
     message TEXT NOT NULL,
     metadata TEXT,                    -- JSON blob
-    is_resolved BOOLEAN DEFAULT 0,
+    is_resolved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -801,51 +801,11 @@ CREATE INDEX IF NOT EXISTS idx_order_executions_symbol ON order_executions(symbo
 CREATE INDEX IF NOT EXISTS idx_order_executions_created ON order_executions(created_at DESC);
 
 -- ============================================================
--- TRIGGERS (Auto-update timestamps)
--- ============================================================
-
-CREATE TRIGGER IF NOT EXISTS update_companies_timestamp 
-AFTER UPDATE ON companies
-BEGIN
-    UPDATE companies SET updated_at = CURRENT_TIMESTAMP WHERE symbol = NEW.symbol;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_snapshot_timestamp 
-AFTER UPDATE ON latest_snapshot
-BEGIN
-    UPDATE latest_snapshot SET updated_at = CURRENT_TIMESTAMP WHERE symbol = NEW.symbol;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_quarterly_timestamp 
-AFTER UPDATE ON quarterly_results
-BEGIN
-    UPDATE quarterly_results SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_annual_timestamp 
-AFTER UPDATE ON annual_results
-BEGIN
-    UPDATE annual_results SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_index_constituents_timestamp 
-AFTER UPDATE ON index_constituents
-BEGIN
-    UPDATE index_constituents SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
-CREATE TRIGGER IF NOT EXISTS update_custom_metrics_timestamp 
-AFTER UPDATE ON custom_metrics
-BEGIN
-    UPDATE custom_metrics SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;
-
--- ============================================================
 -- VIEWS (Pre-joined queries for common use cases)
 -- ============================================================
 
 -- Stock overview with latest data
-CREATE VIEW IF NOT EXISTS v_stock_overview AS
+CREATE OR REPLACE VIEW v_stock_overview AS
 SELECT 
     c.symbol,
     c.company_name,
@@ -868,7 +828,7 @@ FROM companies c
 LEFT JOIN latest_snapshot ls ON c.symbol = ls.symbol;
 
 -- Recent quarterly performance
-CREATE VIEW IF NOT EXISTS v_recent_quarterly AS
+CREATE OR REPLACE VIEW v_recent_quarterly AS
 SELECT 
     qr.symbol,
     c.company_name,
@@ -883,7 +843,7 @@ JOIN companies c ON qr.symbol = c.symbol
 ORDER BY qr.quarter DESC;
 
 -- FII/DII activity summary
-CREATE VIEW IF NOT EXISTS v_fii_dii_summary AS
+CREATE OR REPLACE VIEW v_fii_dii_summary AS
 SELECT 
     date,
     fii_net_value,
@@ -898,7 +858,7 @@ FROM fii_dii_activity
 ORDER BY date DESC;
 
 -- Option chain PCR analysis
-CREATE VIEW IF NOT EXISTS v_pcr_analysis AS
+CREATE OR REPLACE VIEW v_pcr_analysis AS
 SELECT 
     symbol,
     expiry_date,
@@ -915,7 +875,7 @@ FROM option_chain_summary
 ORDER BY date DESC, symbol;
 
 -- Insider trading summary
-CREATE VIEW IF NOT EXISTS v_insider_summary AS
+CREATE OR REPLACE VIEW v_insider_summary AS
 SELECT 
     symbol,
     transaction_type,
@@ -929,7 +889,7 @@ GROUP BY symbol, transaction_type
 ORDER BY total_value DESC;
 
 -- Market breadth trend
-CREATE VIEW IF NOT EXISTS v_market_breadth_trend AS
+CREATE OR REPLACE VIEW v_market_breadth_trend AS
 SELECT 
     date,
     advances,
@@ -949,7 +909,7 @@ FROM market_breadth
 ORDER BY date DESC;
 
 -- Update status summary
-CREATE VIEW IF NOT EXISTS v_update_summary AS
+CREATE OR REPLACE VIEW v_update_summary AS
 SELECT 
     table_name,
     COUNT(*) as update_count,
@@ -962,7 +922,7 @@ GROUP BY table_name
 ORDER BY last_update DESC;
 
 -- Stock with strongest institutional buying
-CREATE VIEW IF NOT EXISTS v_institutional_buying AS
+CREATE OR REPLACE VIEW v_institutional_buying AS
 SELECT 
     bd.symbol,
     c.company_name,

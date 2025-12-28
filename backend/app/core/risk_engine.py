@@ -19,6 +19,7 @@ class RiskEngine:
     MAX_DAILY_LOSS = -50000.0 # Stop if lost 50k INR today
     MAX_ACCOUNT_EXPOSURE = 2000000.0 # 20 Lakh INR total notional
     MAX_TRADES_PER_DAY = 50
+    MAX_POSITION_QUANTITY = 1000  # Max shares per symbol (Hard Limit)
     
     def __init__(self, db_path: str = "stock_data.db"):
         self.db = DatabaseManager(db_path)
@@ -28,18 +29,32 @@ class RiskEngine:
         Pre-trade risk check.
         Returns (is_safe, block_reason)
         """
-        # 1. Daily Trade Count Check
+        # 0. Global Kill Switch Check (Redis)
+        try:
+            kill_switch = await redis_client.get("risk:kill_switch")
+            if kill_switch and kill_switch == "active":
+                return False, "RISK_BLOCK: Global Kill Switch is ACTIVE"
+        except Exception as e:
+            logger.error(f"Error checking kill switch: {e}")
+            # Fail closed if verification fails
+            return False, "RISK_BLOCK: Failed to verify Kill Switch status"
+
+        # 1. Position Size Check (Hard Limit)
+        if quantity > self.MAX_POSITION_QUANTITY:
+             return False, f"RISK_LIMIT_REACHED: Quantity {quantity} > Max Limit {self.MAX_POSITION_QUANTITY}"
+
+        # 2. Daily Trade Count Check
         today_trades = await self._get_today_trade_count()
         if today_trades >= self.MAX_TRADES_PER_DAY:
             return False, f"RISK_LIMIT_REACHED: Daily trade count ({today_trades}) >= {self.MAX_TRADES_PER_DAY}"
 
-        # 2. Daily P&L Check (Placeholder - would usually come from Broker/Position service)
+        # 3. Daily P&L Check (Placeholder - would usually come from Broker/Position service)
         # For now, we simulate by checking realized P&L from our audit logs for today
         daily_pnl = await self._calculate_simulated_realized_pnl()
         if daily_pnl <= self.MAX_DAILY_LOSS:
             return False, f"RISK_LIMIT_REACHED: Daily loss limit ({daily_pnl:.0f}) <= {self.MAX_DAILY_LOSS}"
 
-        # 3. Exposure Check
+        # 4. Exposure Check
         total_exposure = await self._calculate_current_exposure()
         new_trade_notional = quantity * price
         if total_exposure + new_trade_notional > self.MAX_ACCOUNT_EXPOSURE:

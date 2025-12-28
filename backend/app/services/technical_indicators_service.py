@@ -19,31 +19,23 @@ class TechnicalIndicatorsService:
     Uses TA-Lib via TechnicalAnalysisService
     """
     
-    def __init__(self, db_path: str = 'stock_data.db'):
-        self.db_path = db_path
+    def __init__(self, db_manager=None):
+        from app.database.db_manager import DatabaseManager
+        self.db_manager = db_manager or DatabaseManager()
     
     def calculate_for_symbol(self, symbol: str, min_periods: int = 50) -> Dict[str, Any]:
         """
         Calculate technical indicators for a single symbol
-        
-        Args:
-            symbol: Stock symbol
-            min_periods: Minimum number of data points required
-            
-        Returns:
-            Dict with calculation results
         """
         try:
-            # Fetch price history
-            conn = sqlite3.connect(self.db_path)
-            query = f"""
+            # Fetch price history using DatabaseManager (PostgreSQL)
+            query = """
                 SELECT date, open, high, low, close, volume
                 FROM price_history
-                WHERE symbol = '{symbol}'
+                WHERE symbol = ?
                 ORDER BY date ASC
             """
-            df = pd.read_sql_query(query, conn)
-            conn.close()
+            df = pd.DataFrame(self.db_manager.query_dict(query, (symbol,)))
             
             if df.empty or len(df) < min_periods:
                 logger.warning(f"Insufficient data for {symbol}: {len(df)} records (need {min_periods})")
@@ -81,16 +73,10 @@ class TechnicalIndicatorsService:
     
     def _store_indicators(self, symbol: str, df: pd.DataFrame) -> int:
         """
-        Store calculated indicators in technical_indicators table
-        Matches actual database schema
-        
-        Returns:
-            Number of records stored
+        Store calculated indicators in technical_indicators table (PostgreSQL via DatabaseManager)
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         records_stored = 0
+        params_list = []
         
         for idx, row in df.iterrows():
             try:
@@ -101,27 +87,18 @@ class TechnicalIndicatorsService:
                 # Prepare date
                 date_val = row['date']
                 if isinstance(date_val, pd.Timestamp):
-                    date_str = date_val.strftime('%Y-%m-%d')
+                    date_obj = date_val.date()
                 else:
-                    date_str = str(date_val)
+                    date_obj = pd.to_datetime(date_val).date()
                 
                 # Helper to get value or None
                 def get_val(key):
                     val = row.get(key)
                     return None if pd.isna(val) else float(val)
                 
-                # Insert matching actual schema:
-                # sma_20, sma_50, sma_200, ema_12, ema_26, rsi_14, macd, macd_signal,
-                # bollinger_upper, bollinger_middle, bollinger_lower, atr_14, adx_14
-                cursor.execute('''
-                    INSERT OR REPLACE INTO technical_indicators
-                    (symbol, date, sma_20, sma_50, sma_200, ema_12, ema_26,
-                     rsi_14, macd, macd_signal, 
-                     bollinger_upper, bollinger_middle, bollinger_lower,
-                     atr_14, adx_14)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    symbol, date_str,
+                # Insert parameters mapping to actual schema
+                params_list.append((
+                    symbol, date_obj,
                     get_val('sma_20'),
                     get_val('sma_50'),
                     get_val('sma_200'),
@@ -139,27 +116,45 @@ class TechnicalIndicatorsService:
                 records_stored += 1
                 
             except Exception as e:
-                logger.debug(f"Error storing indicator row for {symbol}: {e}")
+                logger.debug(f"Error preparing indicator row for {symbol}: {e}")
                 continue
         
-        conn.commit()
-        conn.close()
+        if params_list:
+            # PostgreSQL compatible INSERT with ON CONFLICT
+            query = '''
+                INSERT INTO technical_indicators
+                (symbol, date, sma_20, sma_50, sma_200, ema_12, ema_26,
+                 rsi_14, macd, macd_signal, 
+                 bollinger_upper, bollinger_middle, bollinger_lower,
+                 atr_14, adx_14)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (symbol, date) DO UPDATE SET
+                    sma_20 = EXCLUDED.sma_20,
+                    sma_50 = EXCLUDED.sma_50,
+                    sma_200 = EXCLUDED.sma_200,
+                    ema_12 = EXCLUDED.ema_12,
+                    ema_26 = EXCLUDED.ema_26,
+                    rsi_14 = EXCLUDED.rsi_14,
+                    macd = EXCLUDED.macd,
+                    macd_signal = EXCLUDED.macd_signal,
+                    bollinger_upper = EXCLUDED.bollinger_upper,
+                    bollinger_middle = EXCLUDED.bollinger_middle,
+                    bollinger_lower = EXCLUDED.bollinger_lower,
+                    atr_14 = EXCLUDED.atr_14,
+                    adx_14 = EXCLUDED.adx_14
+            '''
+            self.db_manager.executemany(query, params_list)
         
         return records_stored
     
     def calculate_for_all_symbols(self) -> Dict[str, Any]:
         """
         Calculate indicators for all symbols in price_history
-        
-        Returns:
-            Summary of calculation results
         """
-        # Get all symbols
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('SELECT DISTINCT symbol FROM price_history')
-        symbols = [row[0] for row in cursor.fetchall()]
-        conn.close()
+        # Get all symbols using DatabaseManager (PostgreSQL)
+        query = 'SELECT DISTINCT symbol FROM price_history'
+        symbols_raw = self.db_manager.query_dict(query)
+        symbols = [row['symbol'] for row in symbols_raw]
         
         logger.info(f"Calculating indicators for {len(symbols)} symbols")
         

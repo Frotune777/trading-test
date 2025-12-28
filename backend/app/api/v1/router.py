@@ -8,7 +8,13 @@ from app.api.v1.endpoints import (
     quad_analysis,  # QUAD Analysis v1.1 (WRITE - triggers analysis)
     quad_scheduler,  # QUAD Scheduler v1.1 (schedule management)
     strategy,  # Strategy Management
-    risk_metrics  # Risk Metrics (VaR, Beta, Sharpe)
+    risk_metrics,  # Risk Metrics (VaR, Beta, Sharpe)
+    trade_signals, # Trade Signals (SL/TP, S/R Zones)
+    preferences, # User Preferences (Weights)
+    risk_control, # New Risk Control router
+    auth,  # User Authentication (Argon2/Fernet)
+    action_center,  # Action Center (Order Approval Workflow)
+    monitoring, # Monitoring endpoints
 )
 
 api_router = APIRouter()
@@ -30,6 +36,12 @@ api_router.include_router(quad_analytics.router, tags=["quad-analytics"])  # QUA
 api_router.include_router(quad_analysis.router, tags=["quad-analysis"])  # QUAD Analysis v1.1 (WRITE)
 api_router.include_router(quad_scheduler.router, tags=["quad-scheduler"])  # QUAD Scheduler v1.1
 api_router.include_router(strategy.router, tags=["strategy"])  # Strategy Management
-api_router.include_router(risk_metrics.router, tags=["risk-metrics"])  # Risk Metrics
+api_router.include_router(risk_metrics.router, prefix="/risk", tags=["risk-metrics"])  # Risk Metrics
+api_router.include_router(trade_signals.router, tags=["trade-signals"]) # Trade Signals
 api_router.include_router(ws_market.router, tags=["websocket"])
 api_router.include_router(health.router, tags=["health"])
+api_router.include_router(auth.router, tags=["authentication"])  # User Authentication
+api_router.include_router(action_center.router, tags=["action-center"])  # Action Center
+api_router.include_router(preferences.router, tags=["preferences"])
+api_router.include_router(risk_control.router, prefix="/risk-control", tags=["risk-control"])
+api_router.include_router(monitoring.router, tags=["monitoring"])  # Monitoring endpoints

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useQuadAnalytics } from '@/hooks/useQuadAnalytics';
 import { useMarket } from "@/context/market-context"
@@ -11,6 +11,13 @@ import ConvictionTimeline from '@/components/quad/conviction-timeline';
 import PerformanceTracker from '@/components/quad/PerformanceTracker';
 import CorrelationMatrix from '@/components/quad/CorrelationMatrix';
 import AlertManager from '@/components/quad/AlertManager';
+import RiskMetrics from '@/components/quad/RiskMetrics';
+import TradeSetup from '@/components/quad/TradeSetup';
+import PriceChart from '@/components/charts/PriceChart';
+import VolumeProfile from '@/components/charts/VolumeProfile';
+import SignalAccuracy from '@/components/quad/SignalAccuracy';
+import PeerComparison from '@/components/quad/PeerComparison';
+import BacktestResults from '@/components/quad/BacktestResults';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +33,20 @@ import { cn } from '@/lib/utils';
 import PillarDrift from '@/components/quad/pillar-drift';
 import DecisionHistory from '@/components/quad/decision-history';
 
+function ClientTime() {
+  const [time, setTime] = useState<string>('');
+  
+  useEffect(() => {
+    setTime(new Date().toLocaleTimeString());
+    const timer = setInterval(() => {
+      setTime(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return <span>SYS-TIME: {time || '--:--:--'}</span>;
+}
+
 export default function QUADDashboard() {
   const { symbol } = useMarket()
   const { reasoning, statistics, timeline, loading, error, fetchAll } = useQuadAnalytics();
@@ -36,44 +57,44 @@ export default function QUADDashboard() {
   }, [symbol]); // Re-fetch when global symbol changes
 
   return (
-      <div className="p-0 space-y-8 animate-in fade-in duration-700">
+      <div className="p-0 space-y-4 animate-in fade-in duration-700">
         {/* Institutional Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-border">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1 border-b border-border">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                <Layers className="w-6 h-6 text-primary-foreground" />
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                <Layers className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h1 className="text-3xl font-black tracking-tighter uppercase italic">QUAD Analytics</h1>
-              <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 px-2">v1.1.0-STABLE</Badge>
+              <h1 className="text-2xl font-black tracking-tighter uppercase italic">QUAD Analytics</h1>
+              <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 px-2 text-[10px]">v1.1.0-STABLE</Badge>
             </div>
-            <p className="text-muted-foreground text-sm font-medium">Institutional Multi-Dimensional Reasoning & Risk Calibration Engine</p>
+            <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Institutional Multi-Dimensional Reasoning & Risk Calibration</p>
           </div>
           
           {/* Symbol selector is now in global Header */}
         </div>
         
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 space-y-4">
-            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <div className="text-muted-foreground font-mono tracking-widest animate-pulse">CALIBRATING {symbol} MATRIX...</div>
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <div className="text-muted-foreground font-mono text-xs tracking-widest animate-pulse">CALIBRATING {symbol} MATRIX...</div>
           </div>
         ) : error ? (
-          <div className="p-12 bg-destructive/5 border border-destructive/20 rounded-2xl text-center space-y-4">
-            <ShieldCheck className="w-12 h-12 text-destructive mx-auto" />
-            <h2 className="text-xl font-bold text-foreground">Analysis Sync Failed</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">{error}</p>
+          <div className="p-8 bg-destructive/5 border border-destructive/20 rounded-xl text-center space-y-4">
+            <ShieldCheck className="w-10 h-10 text-destructive mx-auto" />
+            <h2 className="text-lg font-bold text-foreground">Analysis Sync Failed</h2>
+            <p className="text-muted-foreground text-xs max-w-md mx-auto">{error}</p>
             <button 
               onClick={() => fetchAll(symbol)}
-              className="px-6 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors font-bold text-sm border border-border"
+              className="px-4 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors font-bold text-xs border border-border"
             >
               RETRY CONNECTION
             </button>
           </div>
         ) : reasoning ? (
-          <div className="space-y-8 max-w-[1600px] mx-auto animate-in fade-in duration-700">
+          <div className="space-y-4 max-w-[1600px] mx-auto animate-in fade-in duration-700">
             {/* Command Section */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <CommandCard 
                 symbol={reasoning!.symbol}
                 signal={reasoning!.directional_bias as any}
@@ -88,72 +109,88 @@ export default function QUADDashboard() {
                 quality={reasoning!.quality} 
                 sampleCount={statistics?.total_decisions || 0}
               />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <RiskMetrics symbol={symbol} />
+                <TradeSetup symbol={symbol} />
+              </div>
             </section>
 
             {/* Pillar Contributions & Narrative */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-              <div className="xl:col-span-8 space-y-8">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+              <div className="xl:col-span-8 space-y-4 min-w-0">
+                <PriceChart symbol={symbol} />
                 <PillarContribution pillars={reasoning.pillar_scores} />
                 
                 <Card className="bg-card border-border overflow-hidden">
-                  <CardHeader className="py-4 border-b border-border bg-muted/30">
-                    <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground font-black">Reasoning Narrative Output</CardTitle>
+                  <CardHeader className="py-2 px-4 border-b border-border bg-muted/30">
+                    <CardTitle className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Reasoning Narrative Output</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6">
-                    <p className="text-foreground leading-relaxed font-medium">
+                  <CardContent className="p-4">
+                    <p className="text-foreground leading-relaxed text-sm font-medium">
                       {reasoning!.reasoning}
                     </p>
                   </CardContent>
                 </Card>
               </div>
 
-              <div className="xl:col-span-4 space-y-8">
+              <div className="xl:col-span-4 space-y-4 min-w-0">
                 <ConvictionTimeline symbol={symbol} days={30} />
                 <PillarDrift symbol={symbol} />
-                <PerformanceTracker symbol={symbol} days={90} />
+                <VolumeProfile symbol={symbol} />
               </div>
             </div>
 
 
 
-            <div className="space-y-4">
+            <div className="space-y-2">
                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-muted-foreground">Decision History Log</h3>
-                  <Badge variant="outline" className="text-[10px] border-border text-muted-foreground bg-muted/20">ARCHIVE</Badge>
+                  <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Decision History Log</h3>
+                  <Badge variant="outline" className="text-[9px] border-border text-muted-foreground bg-muted/20">ARCHIVE</Badge>
                </div>
                <DecisionHistory symbol={symbol} limit={20} />
             </div>
 
-            {/* Advanced Metrics */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-black text-muted-foreground">Cross-Pillar Correlation</h3>
-                  {(!statistics || statistics.total_decisions < 30) && (
-                    <Badge variant="outline" className="text-[10px] border-border text-muted-foreground bg-muted/20">INSUFFICIENT DATA</Badge>
+            {/* Advanced Metrics & Performance Analysis */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+              {/* Correlation & Context */}
+              <div className="xl:col-span-4 space-y-4 min-w-0">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Cross-Pillar Correlation</h3>
+                    {(!statistics || statistics.total_decisions < 30) && (
+                      <Badge variant="outline" className="text-[9px] border-border text-muted-foreground bg-muted/20">INSUFFICIENT DATA</Badge>
+                    )}
+                  </div>
+                  {statistics && statistics.total_decisions >= 30 ? (
+                    <CorrelationMatrix symbol={symbol} days={90} />
+                  ) : (
+                    <div className="bg-muted/10 border border-border rounded-xl p-8 text-center flex flex-col items-center justify-center space-y-3 h-[300px]">
+                      <div className="p-3 bg-muted/20 rounded-full border border-border">
+                        <BarChart4 className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h4 className="text-muted-foreground font-bold mb-1 uppercase tracking-wider text-[11px]">Correlation Baseline Pending</h4>
+                        <p className="text-muted-foreground/60 text-[10px] max-w-xs mx-auto italic">
+                          Statistical covariance mapping requires a minimum of 30 historical decisions. 
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
-                {statistics && statistics.total_decisions >= 30 ? (
-                  <CorrelationMatrix symbol={symbol} days={90} />
-                ) : (
-                  <div className="bg-muted/10 border border-border rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-4 h-[400px]">
-                    <div className="p-4 bg-muted/20 rounded-full border border-border">
-                      <BarChart4 className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h4 className="text-muted-foreground font-bold mb-1 uppercase tracking-wider text-sm">Correlation Baseline Pending</h4>
-                      <p className="text-muted-foreground/60 text-[11px] max-w-xs mx-auto italic">
-                        Statistical covariance mapping requires a minimum of 30 historical decisions. 
-                        Currently tracking at <span className="text-primary font-bold">{statistics?.total_decisions || 0}/30</span> nodes.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <PeerComparison symbol={symbol} />
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-xs uppercase tracking-[0.2em] font-black text-muted-foreground">Signal Persistence & Alerts</h3>
-                <AlertManager symbol={symbol} />
+              {/* Performance Analysis */}
+              <div className="xl:col-span-8 space-y-4 min-w-0">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <SignalAccuracy symbol={symbol} />
+                  <BacktestResults symbol={symbol} />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground">Signal Persistence & Alerts</h3>
+                  <AlertManager symbol={symbol} />
+                </div>
               </div>
             </div>
           </div>
@@ -174,7 +211,7 @@ export default function QUADDashboard() {
             <span className="flex items-center gap-2"><ChevronRight className="w-3 h-3 text-primary" /> FEED-HEALTH: <span className="text-emerald-500">NOMINAL</span></span>
           </div>
           <div className="flex items-center gap-4">
-             <span>SYS-TIME: {new Date().toLocaleTimeString()}</span>
+             <ClientTime />
              <span className="text-foreground px-2 py-0.5 bg-muted rounded">ENCRYPTION: AES-256-GCM</span>
           </div>
         </div>

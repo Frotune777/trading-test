@@ -112,6 +112,22 @@ export const QuadService = {
     });
     return response.data;
   },
+
+  /**
+   * Get backtest results and equity curve for a symbol
+   * 
+   * @param symbol - Stock symbol
+   * @param initialCapital - Initial simulation capital (default: 100000)
+   */
+  getBacktest: async (
+    symbol: string,
+    initialCapital: number = 100000
+  ): Promise<any> => {
+    const response = await api.get(`/quad/${symbol}/backtest`, {
+      params: { initial_capital: initialCapital },
+    });
+    return response.data;
+  },
 };
 
 /**

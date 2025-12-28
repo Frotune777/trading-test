@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
-from ....data_sources.nse_utils import NseUtils
+from typing import List, Dict, Any, Optional
+import asyncio
 import pandas as pd
 import yfinance as yf
-from typing import List, Dict, Any
-import asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from app.core.database import get_db
+from fastapi import APIRouter, HTTPException, Depends, Query
+from app.data_sources.nse_utils import NseUtils
 
 router = APIRouter()
 nse = NseUtils()
@@ -178,3 +181,123 @@ async def get_market_mood():
             "previous_status": "Neutral",
             "error": str(e)
         }
+
+@router.get("/history/{symbol}")
+async def get_symbol_history(
+    symbol: str,
+    days: int = Query(30, ge=5, le=365),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get historical OHLCV data for a symbol from internal database.
+    """
+    try:
+        # Normalize symbol
+        symbol = symbol.upper()
+        
+        result = await db.execute(
+            text("""
+                SELECT date, open, high, low, close, volume
+                FROM price_history
+                WHERE symbol = :symbol
+                ORDER BY date DESC
+                LIMIT :limit
+            """),
+            {"symbol": symbol, "limit": days}
+        )
+        
+        rows = result.fetchall()
+        
+        if not rows:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No historical data found for {symbol}"
+            )
+            
+        data = []
+        for row in reversed(rows): # Return in chronological order
+            data.append({
+                "time": row[0].strftime("%Y-%m-%d"),
+                "open": float(row[1]),
+                "high": float(row[2]),
+                "low": float(row[3]),
+                "close": float(row[4]),
+                "volume": int(row[5])
+            })
+            
+        return {"symbol": symbol, "data": data}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/volume-profile/{symbol}", response_model=Dict[str, Any])
+async def get_volume_profile(
+    symbol: str,
+    days: int = Query(30, ge=5, le=365),
+    bins: int = Query(40, ge=10, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get Volume Profile (Volume by Price) for a symbol.
+    
+    Returns:
+    - profile: List of bins with price, volume, buy/sell volume
+    - poc: Point of Control (highest volume price)
+    - vah: Value Area High
+    - val: Value Area Low
+    - total_volume: sum of volume across all bins
+    """
+    try:
+        from app.services.technical_analysis import TechnicalAnalysisService
+        import pandas as pd
+        
+        # 1. Normalize symbol
+        symbol = symbol.upper()
+        
+        # 2. Fetch historical data
+        result = await db.execute(
+            text("""
+                SELECT date, open, high, low, close, volume
+                FROM price_history
+                WHERE symbol = :symbol
+                ORDER BY date DESC
+                LIMIT :limit
+            """),
+            {"symbol": symbol, "limit": days}
+        )
+        
+        rows = result.fetchall()
+        
+        if not rows:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No historical data found for {symbol}"
+            )
+            
+        # 3. Convert to DataFrame (reverse for chronological order if needed, 
+        # but TA service handles the whole df anyway)
+        df_rows = []
+        for row in reversed(rows):
+            df_rows.append({
+                "open": float(row[1]),
+                "high": float(row[2]),
+                "low": float(row[3]),
+                "close": float(row[4]),
+                "volume": int(row[5])
+            })
+            
+        df = pd.DataFrame(df_rows)
+        
+        # 4. Calculate volume profile
+        ta_service = TechnicalAnalysisService(df)
+        profile_data = ta_service.calculate_volume_profile(bins=bins)
+        
+        return profile_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error calculating volume profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

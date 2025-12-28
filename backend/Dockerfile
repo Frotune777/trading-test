@@ -24,6 +24,9 @@ RUN uv pip install --no-cache aiosqlite
 
 COPY . .
 
+# Set PYTHONPATH so pytest can find app modules
+ENV PYTHONPATH=/app
+
 EXPOSE 8000
 
 # Use python -m uvicorn from the venv

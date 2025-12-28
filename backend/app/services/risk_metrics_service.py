@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
-from app.database.models_risk import RiskMetrics
+from app.database.models_quad import RiskMetrics
 from app.database.models_historical import PriceHistory
 
 logger = logging.getLogger(__name__)

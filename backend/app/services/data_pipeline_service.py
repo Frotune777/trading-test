@@ -223,16 +223,15 @@ class DataPipelineService:
                     })
                     continue
                 
-                # Store in database (SQLite price_history table)
+                # Store in database (PostgreSQL via DatabaseManager)
                 try:
-                    import sqlite3
-                    from datetime import datetime as dt
-                    
-                    conn = sqlite3.connect('stock_data.db')
-                    cursor = conn.cursor()
+                    from app.database.db_manager import DatabaseManager
+                    db_manager = DatabaseManager()
                     
                     # Prepare data for insertion
                     records_inserted = 0
+                    params_list = []
+                    
                     for _, row in hist_data.iterrows():
                         try:
                             # Extract date
@@ -240,20 +239,15 @@ class DataPipelineService:
                             if pd.isna(date_val):
                                 continue
                             
-                            # Convert to string format
+                            # Convert to date/datetime object
                             if isinstance(date_val, pd.Timestamp):
-                                date_str = date_val.strftime('%Y-%m-%d %H:%M:%S')
+                                date_obj = date_val.to_pydatetime()
                             else:
-                                date_str = str(date_val)
+                                date_obj = pd.to_datetime(date_val).to_pydatetime()
                             
-                            # Insert or replace (upsert)
-                            cursor.execute('''
-                                INSERT OR REPLACE INTO price_history 
-                                (symbol, date, open, high, low, close, volume)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)
-                            ''', (
+                            params_list.append((
                                 symbol,
-                                date_str,
+                                date_obj,
                                 float(row.get('open', 0)),
                                 float(row.get('high', 0)),
                                 float(row.get('low', 0)),
@@ -262,13 +256,24 @@ class DataPipelineService:
                             ))
                             records_inserted += 1
                         except Exception as row_error:
-                            logger.debug(f"Error inserting row for {symbol}: {row_error}")
+                            logger.debug(f"Error preparing row for {symbol}: {row_error}")
                             continue
                     
-                    conn.commit()
-                    conn.close()
-                    
-                    logger.info(f"✅ Stored {records_inserted} records for {symbol} in database")
+                    if params_list:
+                        # PostgreSQL compatible INSERT with ON CONFLICT
+                        query = '''
+                            INSERT INTO price_history 
+                            (symbol, date, open, high, low, close, volume)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT (symbol, date) DO UPDATE SET
+                                open = EXCLUDED.open,
+                                high = EXCLUDED.high,
+                                low = EXCLUDED.low,
+                                close = EXCLUDED.close,
+                                volume = EXCLUDED.volume
+                        '''
+                        db_manager.executemany(query, params_list)
+                        logger.info(f"✅ Stored {records_inserted} records for {symbol} in PostgreSQL")
                     
                 except Exception as db_error:
                     logger.error(f"Database error for {symbol}: {db_error}")
