@@ -299,7 +299,10 @@ let wsInstance: WebSocketService | null = null;
 
 export function getWebSocketService(apiKey?: string): WebSocketService {
   if (!wsInstance) {
-    const url = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8765';
+    // Get WebSocket URL from environment or use default
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
+    // Remove any trailing slashes
+    const url = wsUrl.replace(/\/$/, '');
     wsInstance = new WebSocketService(url, apiKey || '');
   }
   return wsInstance;

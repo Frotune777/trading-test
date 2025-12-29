@@ -20,12 +20,14 @@ export const useMarketWebSocket = (symbols: string[] = ['ALL']) => {
 
     const connect = useCallback(() => {
         // Construct WS URL - handle both local development and production-like scenarios
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = process.env.NEXT_PUBLIC_WS_URL || 'localhost:8000';
-        const wsUrl = `${protocol}//${host}/api/v1/ws`;
+        if (ws.current?.readyState === WebSocket.OPEN) return;
 
-        console.log(`Connecting to WebSocket: ${wsUrl}`);
-        ws.current = new WebSocket(wsUrl);
+        // Backend WebSocket is at /api/v1/ws
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+        const url = `${wsUrl}/api/v1/ws`;
+
+        console.log('Connecting to WebSocket:', url);
+        ws.current = new WebSocket(url);
 
         ws.current.onopen = () => {
             console.log('Market WebSocket connected');
