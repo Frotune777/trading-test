@@ -91,7 +91,7 @@ class ReasoningEngine:
         
         for pillar_name, pillar in self.pillars.items():
             try:
-                score, bias, metrics = pillar.analyze(snapshot, context)
+                score, bias, metrics, explanation = pillar.analyze(snapshot, context)
                 scores[pillar_name] = score
                 biases[pillar_name] = bias
                 
@@ -102,7 +102,8 @@ class ReasoningEngine:
                     bias=bias,
                     is_placeholder=(pillar_name in self.placeholder_pillars),
                     weight_applied=active_weights[pillar_name],
-                    metrics=metrics
+                    metrics=metrics,
+                    explanation=explanation
                 ))
                 
                 logger.debug(f"{pillar_name}: score={score}, bias={bias}")
@@ -119,7 +120,8 @@ class ReasoningEngine:
                     bias="NEUTRAL",
                     is_placeholder=True,  # Failure = placeholder behavior
                     weight_applied=active_weights[pillar_name],
-                    metrics={"error": "DATA_INCOMPLETE", "details": str(e)}
+                    metrics={"error": "DATA_INCOMPLETE", "details": str(e)},
+                    explanation=f"Pillar failed due to incomplete data: {e}"
                 ))
             
             except Exception as e:
@@ -135,7 +137,8 @@ class ReasoningEngine:
                     bias="NEUTRAL",
                     is_placeholder=True,  # Failed = placeholder behavior
                     weight_applied=active_weights[pillar_name],
-                    metrics={"error": str(e)}
+                    metrics={"error": str(e)},
+                    explanation=f"Pillar failed with an unexpected error: {e}"
                 ))
         
         # Step 2: Build quality metadata

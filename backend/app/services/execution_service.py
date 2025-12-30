@@ -5,11 +5,12 @@ import json
 from typing import Dict, Any, Optional
 from datetime import datetime
 import httpx
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.database.db_manager import DatabaseManager
 from app.services.reasoning_service import ReasoningService
 from app.services.alert_service import AlertService
-from app.core.risk_engine import RiskEngine
+from app.services.risk_manager import RiskManager
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,17 @@ class ExecutionService:
         self.db = DatabaseManager(db_path)
         self.reasoning = ReasoningService()
         self.alerts = AlertService(db_path)
-        self.risk = RiskEngine(db_path)
+        self.risk_manager = RiskManager()
 
-    async def execute_order(self, symbol: str, order_payload: Dict[str, Any], snapshot: Any, decision: Optional[Any] = None) -> Dict[str, Any]:
+    async def execute_order(
+        self, 
+        symbol: str, 
+        order_payload: Dict[str, Any], 
+        snapshot: Any, 
+        db: AsyncSession,
+        user_id: int,
+        decision: Optional[Any] = None
+    ) -> Dict[str, Any]:
         """
         Main entry point for order execution.
         
@@ -40,13 +49,24 @@ class ExecutionService:
         if settings.EXECUTION_MODE == "LIVE" and not decision:
              return {"status": "FAILED", "error": "MISSING_TRADE_DECISION", "decision": None}
 
-        # 0.1 Account-Level Risk check
-        is_safe, block_reason = await self.risk.check_risk(
-            symbol, 
-            order_payload.get("quantity", 0), 
-            snapshot.ltp
+        # 0.1 Account-Level Risk check (Using new RiskManager)
+        from app.brokers.base_adapter import Order
+        mock_order = Order(
+            symbol=symbol,
+            exchange=order_payload.get("exchange", "NSE"),
+            quantity=order_payload.get("quantity", 0),
+            transaction_type=order_payload.get("action", "BUY"),
+            order_type=order_payload.get("order_type", "MARKET")
         )
-        if not is_safe:
+        
+        risk_result = await self.risk_manager.validate_order(
+            order=mock_order,
+            db=db,
+            user_id=user_id
+        )
+        
+        if not risk_result["allowed"]:
+            block_reason = ", ".join(risk_result["blocked_reasons"])
             execution_record = {
                 "symbol": symbol,
                 "order_type": order_payload.get("action"),
@@ -61,11 +81,11 @@ class ExecutionService:
             
             await self.alerts.emit(
                 alert_type="ACCOUNT_RISK_BLOCKED",
-                message=f"Trade blocked by Risk Engine for {symbol}: {block_reason}",
+                message=f"Trade blocked by Risk Governor for {symbol}: {block_reason}",
                 level="CRITICAL",
                 symbol=symbol
             )
-            return {"status": "BLOCKED", "block_reason": block_reason, "source": "RISK_ENGINE"}
+            return {"status": "BLOCKED", "block_reason": block_reason, "source": "RISK_GOVERNOR"}
 
         # 1. Final Safety Gate Check
         gate_decision = await self.reasoning.can_execute_trade(symbol, snapshot)

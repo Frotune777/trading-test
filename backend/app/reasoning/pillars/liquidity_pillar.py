@@ -9,23 +9,15 @@ class LiquidityPillar(BasePillar):
     Implements calibration matrix from pillar_calibration_matrices.md v1.0
     """
     
-    def analyze(self, snapshot: LiveDecisionSnapshot, context: SessionContext) -> Tuple[float, str]:
+    def analyze(self, snapshot: LiveDecisionSnapshot, context: SessionContext) -> Tuple[float, str, dict, str]:
         """
         Analyze liquidity using calibrated thresholds.
         
-        Calibration Matrix (v1.0):
-        - Spread%: <0.05 (95), 0.05-0.10 (85), 0.10-0.20 (70), 0.20-0.30 (50), 0.30-0.50 (30), >0.50 (10)
-        - Depth Ratio: <0.5 (60,BEAR), 0.5-0.7 (70,BEAR), 0.7-1.3 (80,NEUT), 1.3-2.0 (70,BULL), >2.0 (60,BULL)
-        - ADOSC: >2000 (+15,BULL), 1000-2000 (+10), 0-1000 (+5), -1000-0 (-5), -2000--1000 (-10,BEAR), <-2000 (-15,BEAR)
-        
-        Composite:
-        - Without ADOSC: (Spread × 0.60) + (Depth × 0.40)
-        - With ADOSC: (Spread × 0.50) + (Depth × 0.30) + (Volume × 0.20) + ADOSC_Adjustment
-        
         Returns:
-        Returns:
-            (score: float, bias: str, metrics: dict) where score ∈ [0,100]
+            (score: float, bias: str, metrics: dict, explanation: str) where score ∈ [0,100]
         """
+        explanation_parts = []
+        
         # Track data availability
         has_spread = (snapshot.bid_price is not None and 
                      snapshot.ask_price is not None and
@@ -44,8 +36,8 @@ class LiquidityPillar(BasePillar):
              )
         
         # Component scores using calibration matrix
-        spread_score = self._score_spread(snapshot.spread_pct) if has_spread else None
-        depth_score, depth_bias = self._score_depth(snapshot.bid_qty, snapshot.ask_qty) if has_depth else (None, "NEUTRAL")
+        spread_score = self._score_spread(snapshot.spread_pct, explanation_parts) if has_spread else None
+        depth_score, depth_bias = self._score_depth(snapshot.bid_qty, snapshot.ask_qty, explanation_parts) if has_depth else (None, "NEUTRAL")
         
         # Base composite scoring
         if has_adosc:
@@ -70,7 +62,7 @@ class LiquidityPillar(BasePillar):
             base_score = weighted_score / total_weight if total_weight > 0 else 50.0
             
             # Apply ADOSC adjustment
-            adosc_adjustment = self._score_adosc_adjustment(snapshot.adosc)
+            adosc_adjustment = self._score_adosc_adjustment(snapshot.adosc, explanation_parts)
             score = base_score + adosc_adjustment
         else:
             # Without ADOSC formula
@@ -92,8 +84,10 @@ class LiquidityPillar(BasePillar):
             total_depth = snapshot.bid_qty + snapshot.ask_qty
             if total_depth < 100:
                 score = 15.0  # Critically thin
+                explanation_parts.append("Market depth is critically thin, indicating very high liquidity risk.")
             elif total_depth < 1000:
                 score *= 0.6  # Thin depth penalty
+                explanation_parts.append("Market depth is thin, increasing liquidity risk.")
         
         # Bias determination (Calibration Matrix Rules)
         bias = self._determine_bias(
@@ -101,7 +95,8 @@ class LiquidityPillar(BasePillar):
             snapshot.bid_qty if has_depth else None,
             snapshot.ask_qty if has_depth else None,
             snapshot.adosc if has_adosc else None,
-            depth_bias
+            depth_bias,
+            explanation_parts
         )
         
         metrics = {
@@ -112,115 +107,108 @@ class LiquidityPillar(BasePillar):
              "ADOSC": round(snapshot.adosc, 2) if has_adosc else "N/A"
         }
 
-        return self._validate_score(score), bias, metrics
+        explanation = " ".join(explanation_parts)
+
+        return self._validate_score(score), bias, metrics, explanation
     
-    def _score_spread(self, spread_pct: float) -> float:
+    def _score_spread(self, spread_pct: float, explanation_parts: list) -> float:
         """
         Score bid-ask spread % using calibration matrix.
-        
-        Thresholds:
-        - < 0.05%: 95 (Excellent)
-        - 0.05-0.10%: 85 (Very Good)
-        - 0.10-0.20%: 70 (Good)
-        - 0.20-0.30%: 50 (Fair)
-        - 0.30-0.50%: 30 (Poor)
-        - > 0.50%: 10 (Very Poor)
         """
         if spread_pct < 0.05:
+            explanation_parts.append(f"The bid-ask spread is extremely tight ({spread_pct:.4f}%), indicating excellent liquidity.")
             return 95.0
         elif spread_pct < 0.10:
+            explanation_parts.append(f"The bid-ask spread is very tight ({spread_pct:.4f}%), indicating very good liquidity.")
             return 85.0
         elif spread_pct < 0.20:
+            explanation_parts.append(f"The bid-ask spread is tight ({spread_pct:.4f}%), indicating good liquidity.")
             return 70.0
         elif spread_pct < 0.30:
+            explanation_parts.append(f"The bid-ask spread is fair ({spread_pct:.4f}%), indicating average liquidity.")
             return 50.0
         elif spread_pct < 0.50:
+            explanation_parts.append(f"The bid-ask spread is wide ({spread_pct:.4f}%), indicating poor liquidity.")
             return 30.0
         else:  # >= 0.50
+            explanation_parts.append(f"The bid-ask spread is very wide ({spread_pct:.4f}%), indicating very poor liquidity and high transaction costs.")
             return 10.0
     
-    def _score_depth(self, bid_qty: int, ask_qty: int) -> Tuple[float, str]:
+    def _score_depth(self, bid_qty: int, ask_qty: int, explanation_parts: list) -> Tuple[float, str]:
         """
         Score market depth balance using calibration matrix.
-        
-        Returns: (score, bias)
-        
-        Thresholds (Depth Ratio = bid_qty ÷ ask_qty):
-        - < 0.5: 60, BEARISH (Heavy Ask)
-        - 0.5-0.7: 70, BEARISH (Ask Skewed)
-        - 0.7-1.3: 80, NEUTRAL (Balanced)
-        - 1.3-2.0: 70, BULLISH (Bid Skewed)
-        - > 2.0: 60, BULLISH (Heavy Bid)
         """
         depth_ratio = bid_qty / ask_qty if ask_qty > 0 else 0.0
         
         if depth_ratio < 0.5:
+            explanation_parts.append(f"Market depth is heavily skewed towards sellers (ratio: {depth_ratio:.2f}), suggesting strong selling pressure.")
             return 60.0, "BEARISH"
         elif depth_ratio < 0.7:
+            explanation_parts.append(f"Market depth is skewed towards sellers (ratio: {depth_ratio:.2f}), suggesting selling pressure.")
             return 70.0, "BEARISH"
         elif depth_ratio <= 1.3:
+            explanation_parts.append(f"Market depth is balanced (ratio: {depth_ratio:.2f}), suggesting no immediate pressure in either direction.")
             return 80.0, "NEUTRAL"
         elif depth_ratio <= 2.0:
+            explanation_parts.append(f"Market depth is skewed towards buyers (ratio: {depth_ratio:.2f}), suggesting buying pressure.")
             return 70.0, "BULLISH"
         else:  # > 2.0
+            explanation_parts.append(f"Market depth is heavily skewed towards buyers (ratio: {depth_ratio:.2f}), suggesting strong buying pressure.")
             return 60.0, "BULLISH"
     
-    def _score_adosc_adjustment(self, adosc: float) -> float:
+    def _score_adosc_adjustment(self, adosc: float, explanation_parts: list) -> float:
         """
         Calculate ADOSC adjustment using calibration matrix.
-        
-        Returns: adjustment value (can be negative)
-        
-        Thresholds:
-        - > 2000: +15 (Strong Accumulation)
-        - 1000-2000: +10 (Accumulation)
-        - 0-1000: +5 (Weak Accumulation)
-        - -1000-0: -5 (Weak Distribution)
-        - -2000--1000: -10 (Distribution)
-        - < -2000: -15 (Strong Distribution)
         """
         if adosc > 2000:
+            explanation_parts.append(f"ADOSC is very high ({adosc:.2f}), indicating strong accumulation (buying).")
             return 15.0
         elif adosc > 1000:
+            explanation_parts.append(f"ADOSC is high ({adosc:.2f}), indicating accumulation (buying).")
             return 10.0
         elif adosc > 0:
+            explanation_parts.append(f"ADOSC is slightly positive ({adosc:.2f}), indicating weak accumulation.")
             return 5.0
         elif adosc > -1000:
+            explanation_parts.append(f"ADOSC is slightly negative ({adosc:.2f}), indicating weak distribution (selling).")
             return -5.0
         elif adosc > -2000:
+            explanation_parts.append(f"ADOSC is low ({adosc:.2f}), indicating distribution (selling).")
             return -10.0
         else:  # <= -2000
+            explanation_parts.append(f"ADOSC is very low ({adosc:.2f}), indicating strong distribution (selling).")
             return -15.0
     
     def _determine_bias(self, spread_pct: float = None, bid_qty: int = None, 
-                       ask_qty: int = None, adosc: float = None, depth_bias: str = "NEUTRAL") -> str:
+                       ask_qty: int = None, adosc: float = None, depth_bias: str = "NEUTRAL", explanation_parts: list = None) -> str:
         """
         Determine directional bias using calibration rules.
-        
-        Rules:
-        1. If Spread > 0.30% OR Total_Depth < 1000 → "BEARISH" (Poor liquidity)
-        2. Elif Depth_Ratio > 1.5 AND ADOSC > 1000 → "BULLISH" (Strong buying)
-        3. Elif Depth_Ratio < 0.7 AND ADOSC < -1000 → "BEARISH" (Strong selling)
-        4. Else → "NEUTRAL"
         """
         # Rule 1: Poor liquidity conditions
         if spread_pct is not None and spread_pct > 0.30:
+            if explanation_parts: explanation_parts.append("Wide spread is contributing to a 'BEARISH' bias due to poor liquidity.")
             return "BEARISH"
         
         if bid_qty is not None and ask_qty is not None:
             total_depth = bid_qty + ask_qty
             if total_depth < 1000:
+                if explanation_parts: explanation_parts.append("Thin market depth is contributing to a 'BEARISH' bias due to high liquidity risk.")
                 return "BEARISH"
             
             depth_ratio = bid_qty / ask_qty if ask_qty > 0 else 0.0
             
             # Rule 2: Strong buying interest
             if depth_ratio > 1.5 and adosc is not None and adosc > 1000:
+                if explanation_parts: explanation_parts.append("High depth ratio and strong ADOSC are contributing to a 'BULLISH' bias.")
                 return "BULLISH"
             
             # Rule 3: Strong selling pressure
             if depth_ratio < 0.7 and adosc is not None and adosc < -1000:
+                if explanation_parts: explanation_parts.append("Low depth ratio and weak ADOSC are contributing to a 'BEARISH' bias.")
                 return "BEARISH"
         
         # Rule 4: Default to depth-based bias or neutral
+        if depth_bias != "NEUTRAL" and explanation_parts:
+             explanation_parts.append(f"The depth bias of '{depth_bias}' is the primary driver of the overall liquidity bias.")
+
         return depth_bias if depth_bias != "NEUTRAL" else "NEUTRAL"

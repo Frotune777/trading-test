@@ -39,7 +39,7 @@ export default function StrategiesPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this strategy?')) return;
-    
+
     try {
       await strategyAPI.deleteStrategy(id);
       await loadStrategies();
@@ -89,18 +89,24 @@ export default function StrategiesPage() {
           >
             {/* Header */}
             <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">{strategy.name}</h3>
+              <div className="flex-1 cursor-pointer" onClick={() => window.location.href = `/strategies/${strategy.id}`}>
+                <h3 className="font-semibold text-lg hover:text-blue-600">{strategy.name}</h3>
                 <p className="text-sm text-muted-foreground">{strategy.platform}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => window.location.href = `/strategies/${strategy.id}`}
+                  className="p-2 rounded bg-blue-100 text-blue-600 hover:bg-blue-200"
+                  title="Edit Code"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => handleToggle(strategy.id)}
-                  className={`p-2 rounded ${
-                    strategy.is_active
+                  className={`p-2 rounded ${strategy.is_active
                       ? 'bg-green-100 text-green-600 hover:bg-green-200'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                    }`}
                   title={strategy.is_active ? 'Active' : 'Inactive'}
                 >
                   {strategy.is_active ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
@@ -157,11 +163,10 @@ export default function StrategiesPage() {
             {/* Status Badge */}
             <div className="flex gap-2">
               <span
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  strategy.is_active
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${strategy.is_active
                     ? 'bg-green-100 text-green-800'
                     : 'bg-gray-100 text-gray-800'
-                }`}
+                  }`}
               >
                 {strategy.is_active ? 'Active' : 'Inactive'}
               </span>
@@ -190,75 +195,75 @@ export default function StrategiesPage() {
           <div className="bg-slate-950 border border-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl">
             <h2 className="text-xl font-bold mb-4">Create Strategy</h2>
             <form onSubmit={async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                try {
-                    await strategyAPI.createStrategy({
-                        name: formData.get('name') as string,
-                        platform: formData.get('platform') as any,
-                        is_intraday: formData.get('is_intraday') === 'on',
-                        trading_mode: formData.get('trading_mode') as any,
-                        description: formData.get('description') as string,
-                        squareoff_time: formData.get('squareoff_time') as string || undefined
-                    });
-                    setShowCreateForm(false);
-                    loadStrategies();
-                } catch (err: any) {
-                    setError(err.message);
-                }
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              try {
+                await strategyAPI.createStrategy({
+                  name: formData.get('name') as string,
+                  platform: formData.get('platform') as any,
+                  is_intraday: formData.get('is_intraday') === 'on',
+                  trading_mode: formData.get('trading_mode') as any,
+                  description: formData.get('description') as string,
+                  squareoff_time: formData.get('squareoff_time') as string || undefined
+                });
+                setShowCreateForm(false);
+                loadStrategies();
+              } catch (err: any) {
+                setError(err.message);
+              }
             }} className="space-y-4">
-                
-                {/* Name */}
+
+              {/* Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Strategy Name</label>
+                <input name="name" required className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" placeholder="e.g., Nifty Trend Following" />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <textarea name="description" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" placeholder="Brief description..." />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Platform */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Strategy Name</label>
-                    <input name="name" required className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" placeholder="e.g., Nifty Trend Following" />
+                  <label className="text-sm font-medium">Platform</label>
+                  <select name="platform" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md">
+                    <option value="TradingView">TradingView</option>
+                    <option value="ChartInk">ChartInk</option>
+                    <option value="Python">Python</option>
+                    <option value="Manual">Manual</option>
+                  </select>
                 </div>
 
-                {/* Description */}
-                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Description</label>
-                    <textarea name="description" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" placeholder="Brief description..." />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Platform */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Platform</label>
-                        <select name="platform" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md">
-                            <option value="TradingView">TradingView</option>
-                            <option value="ChartInk">ChartInk</option>
-                            <option value="Python">Python</option>
-                            <option value="Manual">Manual</option>
-                        </select>
-                    </div>
-
-                    {/* Mode */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Trading Mode</label>
-                        <select name="trading_mode" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md">
-                            <option value="BOTH">Both</option>
-                            <option value="LONG">Long Only</option>
-                            <option value="SHORT">Short Only</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* Intraday Checkbox */}
-                <div className="flex items-center gap-2">
-                    <input type="checkbox" name="is_intraday" id="is_intraday" className="h-4 w-4 rounded border-gray-300" />
-                    <label htmlFor="is_intraday" className="text-sm">Intraday Strategy</label>
-                </div>
-
-                {/* Squareoff Time (Conditional) */}
+                {/* Mode */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Square-off Time (IST)</label>
-                    <input type="time" name="squareoff_time" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" />
+                  <label className="text-sm font-medium">Trading Mode</label>
+                  <select name="trading_mode" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md">
+                    <option value="BOTH">Both</option>
+                    <option value="LONG">Long Only</option>
+                    <option value="SHORT">Short Only</option>
+                  </select>
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                    <button type="button" onClick={() => setShowCreateForm(false)} className="flex-1 px-4 py-2 hover:bg-slate-800 rounded-lg">Cancel</button>
-                    <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">Create Strategy</button>
-                </div>
+              {/* Intraday Checkbox */}
+              <div className="flex items-center gap-2">
+                <input type="checkbox" name="is_intraday" id="is_intraday" className="h-4 w-4 rounded border-gray-300" />
+                <label htmlFor="is_intraday" className="text-sm">Intraday Strategy</label>
+              </div>
+
+              {/* Squareoff Time (Conditional) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Square-off Time (IST)</label>
+                <input type="time" name="squareoff_time" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md" />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setShowCreateForm(false)} className="flex-1 px-4 py-2 hover:bg-slate-800 rounded-lg">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">Create Strategy</button>
+              </div>
             </form>
           </div>
         </div>

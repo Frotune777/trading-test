@@ -5,14 +5,12 @@ Models for strategy management and webhook-based automation.
 
 from sqlalchemy import Column, Integer, String, Boolean, Time, DateTime, ForeignKey, Text, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime, time
 import enum
 from typing import Optional
 from pydantic import BaseModel
 import uuid
-
-Base = declarative_base()
+from app.core.database import Base
 
 
 class TradingMode(str, enum.Enum):
@@ -56,6 +54,9 @@ class Strategy(Base):
     start_time = Column(Time, nullable=True)      # Entry window start
     end_time = Column(Time, nullable=True)        # Entry window end
     squareoff_time = Column(Time, nullable=True)  # Auto-squareoff time
+    
+    # Strategy code (for Python platform)
+    strategy_code = Column(Text, nullable=True)  # Python DSL code
     
     # Metadata
     description = Column(Text, nullable=True)

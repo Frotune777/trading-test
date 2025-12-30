@@ -11,6 +11,36 @@ app_path = str(Path(__file__).parent.parent)
 if app_path not in sys.path:
     sys.path.insert(0, app_path)
 
+# Avoid network calls during test collection
+from unittest.mock import patch, AsyncMock, MagicMock
+
+class AsyncMagicMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncMagicMock, self).__call__(*args, **kwargs)
+
+def patch_async_mock():
+    return AsyncMock()
+
+# Mock Redis to avoid connection hangs
+mock_redis = MagicMock()
+mock_redis.get = AsyncMock(return_value=None)
+mock_redis.set = AsyncMock(return_value=True)
+mock_redis.ping = AsyncMock(return_value=True)
+
+patchers = [
+    patch('app.core.redis.redis_client', mock_redis),
+    patch('app.core.redis.get_redis_client', return_value=mock_redis),
+    patch('app.data_sources.nse_master_data.NSEMasterData.download_symbol_master', return_value=None),
+    patch('app.data_sources.nse_master_data.NSEMasterData.get_nse_symbol_master', return_value=None),
+    patch('app.services.feed_health_monitor.FeedHealthMonitor.start_monitoring', new_callable=patch_async_mock),
+    patch('app.services.feed_health_monitor.FeedHealthMonitor.stop_monitoring', new_callable=patch_async_mock),
+    patch('app.core.scheduler_config.SchedulerConfig.start', return_value=None),
+    patch('app.core.scheduler_config.SchedulerConfig.stop', return_value=None),
+]
+
+for p in patchers:
+    p.start()
+
 def pytest_configure(config):
     """
     Pytest hook that runs before collection.

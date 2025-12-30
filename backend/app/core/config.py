@@ -99,10 +99,18 @@ class Settings(BaseSettings):
             )
         return v
 
-    # EXECUTION SAFETY
-    EXECUTION_MODE: str = os.getenv("EXECUTION_MODE", "DRY_RUN") # "DRY_RUN" or "LIVE"
+    # EXECUTION CONTROL
     EXECUTION_ENABLED: bool = os.getenv("EXECUTION_ENABLED", "false").lower() == "true"
-
-    model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", extra="ignore")
+    EXECUTION_MODE: str = os.getenv("EXECUTION_MODE", "DRY_RUN")  # LIVE, DRY_RUN, DISABLED
+    
+    # TELEGRAM BOT (Optional - for alerts)
+    TELEGRAM_BOT_TOKEN: Optional[str] = os.getenv("TELEGRAM_BOT_TOKEN", None)
+    TELEGRAM_CHAT_ID: Optional[str] = os.getenv("TELEGRAM_CHAT_ID", None)
+    
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="allow"
+    )
 
 settings = Settings()

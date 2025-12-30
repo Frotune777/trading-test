@@ -14,3 +14,8 @@ build/
 stock_data.db
 background_jobs.log
 celerybeat-schedule
+migration_venv/
+test_results.txt
+test_report.md
+backend/tests/integration/test_p*
+*.log

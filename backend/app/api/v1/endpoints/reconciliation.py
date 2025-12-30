@@ -1,10 +1,6 @@
-"""
-Position Reconciliation API Endpoints
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional, Dict, Any
 import logging
 
 from app.database.models_position import (
@@ -13,7 +9,7 @@ from app.database.models_position import (
     ReconciliationReportResponse,
     PositionSnapshotResponse
 )
-from app.services.position_reconciliation import PositionReconciliationService
+from app.services.reconciliation_service import PositionReconciliationService
 from app.brokers.base_adapter import BrokerType
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -25,15 +21,11 @@ logger = logging.getLogger(__name__)
 @router.post("/run", response_model=ReconciliationRunResponse)
 async def trigger_reconciliation(
     broker: Optional[str] = Query(None, description="Specific broker to reconcile (None = all)"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
     """
     Trigger position reconciliation manually.
-    
-    - **broker**: Optional specific broker (zerodha, angelone, etc.)
-    
-    Reconciles positions with broker(s) and detects discrepancies.
     """
     try:
         service = PositionReconciliationService(db)
@@ -49,19 +41,7 @@ async def trigger_reconciliation(
                 )
         
         run = await service.reconcile_positions(broker_type)
-        
-        return ReconciliationRunResponse(
-            id=run.id,
-            run_time=run.run_time,
-            brokers_checked=run.brokers_checked,
-            total_positions=run.total_positions,
-            discrepancies_found=run.discrepancies_found,
-            auto_corrections=run.auto_corrections,
-            status=run.status,
-            error_message=run.error_message,
-            duration_ms=run.duration_ms,
-            completed_at=run.completed_at
-        )
+        return run
         
     except Exception as e:
         logger.error(f"Error triggering reconciliation: {e}")
@@ -74,152 +54,60 @@ async def trigger_reconciliation(
 @router.get("/runs", response_model=List[ReconciliationRunResponse])
 async def list_reconciliation_runs(
     limit: int = Query(10, ge=1, le=100),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
     """List recent reconciliation runs."""
     service = PositionReconciliationService(db)
-    runs = service.get_reconciliation_runs(limit)
-    
-    return [
-        ReconciliationRunResponse(
-            id=run.id,
-            run_time=run.run_time,
-            brokers_checked=run.brokers_checked,
-            total_positions=run.total_positions,
-            discrepancies_found=run.discrepancies_found,
-            auto_corrections=run.auto_corrections,
-            status=run.status,
-            error_message=run.error_message,
-            duration_ms=run.duration_ms,
-            completed_at=run.completed_at
-        )
-        for run in runs
-    ]
+    runs = await service.get_reconciliation_runs(limit)
+    return runs
 
 
 @router.get("/discrepancies", response_model=List[DiscrepancyResponse])
 async def list_discrepancies(
     hours: int = Query(24, ge=1, le=168, description="Look back period in hours"),
     resolved: Optional[bool] = Query(None, description="Filter by resolved status"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    """
-    List position discrepancies.
-    
-    - **hours**: Look back period (default 24 hours)
-    - **resolved**: Filter by resolved status (None = all)
-    """
+    """List position discrepancies."""
     service = PositionReconciliationService(db)
-    discrepancies = service.get_recent_discrepancies(hours, resolved)
-    
-    return [
-        DiscrepancyResponse(
-            id=d.id,
-            symbol=d.symbol,
-            exchange=d.exchange,
-            broker=d.broker,
-            local_quantity=d.local_quantity,
-            broker_quantity=d.broker_quantity,
-            difference=d.difference,
-            local_avg_price=float(d.local_avg_price) if d.local_avg_price else None,
-            broker_avg_price=float(d.broker_avg_price) if d.broker_avg_price else None,
-            detected_at=d.detected_at,
-            resolved=d.resolved,
-            resolved_at=d.resolved_at,
-            resolution_action=d.resolution_action,
-            resolution_method=d.resolution_method
-        )
-        for d in discrepancies
-    ]
+    discrepancies = await service.get_recent_discrepancies(hours, resolved)
+    return discrepancies
 
 
-@router.get("/report/{run_id}")
+@router.get("/report/{run_id}", response_model=Dict[str, Any])
 async def get_reconciliation_report(
     run_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    """
-    Get detailed reconciliation report for a specific run.
-    
-    Includes:
-    - Run summary
-    - All discrepancies found
-    - Position snapshots
-    """
+    """Get detailed reconciliation report."""
     service = PositionReconciliationService(db)
-    report = service.generate_reconciliation_report(run_id)
+    report = await service.generate_reconciliation_report(run_id)
     
     if not report:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Reconciliation run {run_id} not found"
         )
-    
-    # Convert to response models
-    return {
-        "run_id": report["run_id"],
-        "run_time": report["run_time"],
-        "status": report["status"],
-        "duration_ms": report["duration_ms"],
-        "summary": report["summary"],
-        "discrepancies": [
-            DiscrepancyResponse(
-                id=d.id,
-                symbol=d.symbol,
-                exchange=d.exchange,
-                broker=d.broker,
-                local_quantity=d.local_quantity,
-                broker_quantity=d.broker_quantity,
-                difference=d.difference,
-                local_avg_price=float(d.local_avg_price) if d.local_avg_price else None,
-                broker_avg_price=float(d.broker_avg_price) if d.broker_avg_price else None,
-                detected_at=d.detected_at,
-                resolved=d.resolved,
-                resolved_at=d.resolved_at,
-                resolution_action=d.resolution_action,
-                resolution_method=d.resolution_method
-            )
-            for d in report["discrepancies"]
-        ],
-        "snapshots": [
-            PositionSnapshotResponse(
-                id=s.id,
-                broker=s.broker,
-                symbol=s.symbol,
-                exchange=s.exchange,
-                quantity=s.quantity,
-                average_price=float(s.average_price) if s.average_price else 0.0,
-                current_price=float(s.current_price) if s.current_price else None,
-                pnl=float(s.pnl) if s.pnl else None,
-                product_type=s.product_type,
-                snapshot_time=s.snapshot_time
-            )
-            for s in report["snapshots"]
-        ]
-    }
-
+    return report
 
 @router.post("/discrepancies/{discrepancy_id}/resolve", response_model=DiscrepancyResponse)
 async def resolve_discrepancy(
     discrepancy_id: int,
     resolution_action: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    """
-    Manually resolve a discrepancy.
-    
-    - **resolution_action**: Description of how it was resolved
-    """
+    """Manually resolve a discrepancy."""
     from app.database.models_position import PositionDiscrepancy
     from datetime import datetime
+    from sqlalchemy import select
     
-    discrepancy = db.query(PositionDiscrepancy).filter(
-        PositionDiscrepancy.id == discrepancy_id
-    ).first()
+    stmt = select(PositionDiscrepancy).where(PositionDiscrepancy.id == discrepancy_id)
+    result = await db.execute(stmt)
+    discrepancy = result.scalar_one_or_none()
     
     if not discrepancy:
         raise HTTPException(
@@ -232,22 +120,7 @@ async def resolve_discrepancy(
     discrepancy.resolution_action = resolution_action
     discrepancy.resolution_method = "MANUAL"
     
-    db.commit()
-    db.refresh(discrepancy)
+    await db.commit()
+    await db.refresh(discrepancy)
     
-    return DiscrepancyResponse(
-        id=discrepancy.id,
-        symbol=discrepancy.symbol,
-        exchange=discrepancy.exchange,
-        broker=discrepancy.broker,
-        local_quantity=discrepancy.local_quantity,
-        broker_quantity=discrepancy.broker_quantity,
-        difference=discrepancy.difference,
-        local_avg_price=float(discrepancy.local_avg_price) if discrepancy.local_avg_price else None,
-        broker_avg_price=float(discrepancy.broker_avg_price) if discrepancy.broker_avg_price else None,
-        detected_at=discrepancy.detected_at,
-        resolved=discrepancy.resolved,
-        resolved_at=discrepancy.resolved_at,
-        resolution_action=discrepancy.resolution_action,
-        resolution_method=discrepancy.resolution_method
-    )
+    return discrepancy

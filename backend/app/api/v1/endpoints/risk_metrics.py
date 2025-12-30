@@ -103,3 +103,71 @@ async def calculate_risk_metrics(symbol: str, db: AsyncSession = Depends(get_db)
     except Exception as e:
         logger.error(f"Error calculating risk metrics for {symbol}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/dashboard/health")
+async def get_risk_dashboard(db: AsyncSession = Depends(get_db)):
+    """
+    Get portfolio-wide risk health dashboard.
+    """
+    try:
+        from app.services.risk_manager import RiskManager
+        from app.core.openalgo_bridge import openalgo_client
+        from app.database.models_monitoring import PnLSnapshot, TradePerformance
+        from sqlalchemy import func
+        
+        risk_manager = RiskManager()
+        user_id = 1 # TODO: Get from auth context
+        
+        # 1. Kill Switch Status
+        kill_switch = await redis_client.get("risk:kill_switch") or "inactive"
+        
+        # 2. Daily P&L vs Limit
+        stmt = select(PnLSnapshot).where(
+            PnLSnapshot.user_id == user_id,
+            PnLSnapshot.timestamp >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        ).order_by(PnLSnapshot.timestamp.desc()).limit(1)
+        res = await db.execute(stmt)
+        pnl_snap = res.scalar_one_or_none()
+        current_pnl = pnl_snap.day_pnl if pnl_snap else 0.0
+        
+        # 3. Order Count today
+        stmt = select(func.count()).select_from(TradePerformance).where(
+            TradePerformance.user_id == user_id,
+            TradePerformance.entry_time >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        )
+        res = await db.execute(stmt)
+        order_count = res.scalar() or 0
+        
+        # 4. Feed Health
+        status = openalgo_client.get_status()
+        
+        # 5. Top Risk Symbols (Highest VaR 95)
+        stmt = select(RiskMetrics).order_by(RiskMetrics.var_95_30d.asc()).limit(5)
+        res = await db.execute(stmt)
+        top_risk = res.scalars().all()
+        
+        return {
+            "kill_switch": kill_switch,
+            "daily_pnl": {
+                "value": current_pnl,
+                "limit": risk_manager.max_daily_loss,
+                "status": "DANGER" if current_pnl <= risk_manager.max_daily_loss else "OK"
+            },
+            "order_count": {
+                "value": order_count,
+                "limit": risk_manager.max_orders_per_day,
+                "status": "DANGER" if order_count >= risk_manager.max_orders_per_day else "OK"
+            },
+            "feed_health": status.get("feed_state", "UNKNOWN"),
+            "top_risk_symbols": [
+                {
+                    "symbol": m.symbol,
+                    "var_95": float(m.var_95_30d) if m.var_95_30d else 0.0,
+                    "beta": float(m.beta_252d or 1.0)
+                } for m in top_risk
+            ],
+            "timestamp": datetime.now()
+        }
+    except Exception as e:
+        logger.error(f"Error fetching risk dashboard: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

@@ -22,8 +22,8 @@ SessionLocal = async_sessionmaker(
 )
 
 # Synchronous Engine (For legacy DatabaseManager consolidation)
-# Convert postgresql+asyncpg:// to postgresql://
-sync_uri = settings.SQLALCHEMY_DATABASE_URI.replace("postgresql+asyncpg://", "postgresql://")
+# Convert postgresql+asyncpg:// to postgresql:// and sqlite+aiosqlite:// to sqlite://
+sync_uri = settings.SQLALCHEMY_DATABASE_URI.replace("postgresql+asyncpg://", "postgresql://").replace("sqlite+aiosqlite://", "sqlite://")
 sync_engine = create_engine(sync_uri, pool_pre_ping=True)
 SessionLocalSync = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 

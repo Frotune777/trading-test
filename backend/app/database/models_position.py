@@ -2,13 +2,11 @@
 Position Reconciliation Database Models
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, DECIMAL, ARRAY, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, DECIMAL, ARRAY, Text, JSON
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
-
-Base = declarative_base()
+from app.core.database import Base
 
 
 class PositionSnapshot(Base):
@@ -54,7 +52,7 @@ class ReconciliationRun(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     run_time = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    brokers_checked = Column(ARRAY(String), nullable=False)
+    brokers_checked = Column(ARRAY(String).with_variant(JSON, "sqlite"), nullable=False)
     total_positions = Column(Integer, default=0)
     discrepancies_found = Column(Integer, default=0)
     auto_corrections = Column(Integer, default=0)

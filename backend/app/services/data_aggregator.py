@@ -94,3 +94,86 @@ class HybridAggregator:
         for symbol in symbols:
             results[symbol] = self.get_stock_data(symbol)
         return results
+
+
+class DataAggregator(HybridAggregator):
+    """
+    Legacy DataAggregator wrapper.
+    Inherits from HybridAggregator to provide all features + legacy compatibility.
+    """
+    
+    def __init__(self, db: Optional[Any] = None, use_cache: bool = True):
+        super().__init__(use_cache=use_cache)
+        self.db = db
+        
+    async def get_historical_data(
+        self, 
+        symbol: str, 
+        start_date: Optional[str] = None, 
+        end_date: Optional[str] = None,
+        interval: str = '1d'
+    ) -> pd.DataFrame:
+        """
+        Get historical data with date filtering.
+        Compatibility method for strategy endpoints.
+        """
+        try:
+            # Default to 1 year if not specified
+            period = '1y'
+            
+            # If dates provided, fetch enough data
+            if start_date:
+                try:
+                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                    now = datetime.now()
+                    days = (now - start_dt).days
+                    
+                    if days <= 1: period = '1d'
+                    elif days <= 5: period = '5d'
+                    elif days <= 30: period = '1m'
+                    elif days <= 90: period = '3m'
+                    elif days <= 180: period = '6m'
+                    elif days <= 365: period = '1y'
+                    elif days <= 730: period = '2y'
+                    else: period = '5y'
+                except Exception as e:
+                    logger.warning(f"Error parsing start_date: {e}, using default period")
+            
+            # Fetch using UnifiedDataService (via parent)
+            df = self.unified.get_historical_data(
+                symbol=symbol,
+                interval=interval,
+                period=period
+            )
+            
+            if df is None or df.empty:
+                return pd.DataFrame()
+                
+            # Filter by date range
+            if start_date or end_date:
+                if 'date' in df.columns:
+                    # Ensure date is datetime
+                    if not pd.api.types.is_datetime64_any_dtype(df['date']):
+                        df['date'] = pd.to_datetime(df['date'])
+                    
+                    # Remove timezone if present
+                    if df['date'].dt.tz is not None:
+                        df['date'] = df['date'].dt.tz_localize(None)
+                    
+                    mask = pd.Series([True] * len(df), index=df.index)
+                    
+                    if start_date:
+                        start_dt = pd.to_datetime(start_date)
+                        mask &= (df['date'] >= start_dt)
+                        
+                    if end_date:
+                        end_dt = pd.to_datetime(end_date) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+                        mask &= (df['date'] <= end_dt)
+                        
+                    df = df[mask]
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error in DataAggregator.get_historical_data: {e}")
+            return pd.DataFrame()

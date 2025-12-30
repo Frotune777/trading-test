@@ -10,6 +10,8 @@ import websockets
 from app.core.config import settings
 from app.core.redis import redis_client
 from app.services.alert_service import AlertService
+from app.core.database import SessionLocal
+from app.database.models_historical import MarketTick
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,11 @@ class OpenAlgoWSClient:
         self.last_failure_time = 0
         self.CIRCUIT_BREAKER_THRESHOLD = 5
         self.CIRCUIT_BREAKER_RESET_TIME = 300 # 5 minutes
+        
+        # Tick buffering for persistent storage
+        self.tick_buffer: asyncio.Queue = asyncio.Queue()
+        self.MAX_BATCH_SIZE = 500
+        self.FLUSH_INTERVAL = 5 # seconds
 
     async def connect(self):
         """Main loop for connection and subscription management."""
@@ -48,6 +55,9 @@ class OpenAlgoWSClient:
         
         # Start the maturity monitor loop
         asyncio.create_task(self._maturity_monitor())
+        
+        # Start the tick flusher loop
+        asyncio.create_task(self._flush_ticks_loop())
         
         while self.is_running:
             try:
@@ -203,6 +213,8 @@ class OpenAlgoWSClient:
             # Hybrid Storage Pattern
             tick_payload = {
                 "ltp": float(ltp),
+                "volume": data.get("volume"),
+                "oi": data.get("oi"),
                 "ts": ts or int(time.time()),
                 "source": "openalgo_ws",
                 "received_at": time.time()
@@ -219,6 +231,16 @@ class OpenAlgoWSClient:
             # Pub/Sub Notification
             publish_channel = f"market_ticks:{exchange}:{symbol}"
             await redis_client.publish(publish_channel, json.dumps(tick_payload))
+            
+            # Persistent Storage Buffer
+            await self.tick_buffer.put({
+                "symbol": symbol,
+                "exchange": exchange,
+                "ltp": float(ltp),
+                "volume": data.get("volume"),
+                "oi": data.get("oi"),
+                "timestamp": ts or int(time.time())
+            })
             
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -239,6 +261,48 @@ class OpenAlgoWSClient:
         wait_time = min(2 ** self.reconnect_count + random.uniform(0, 1), 60)
         logger.info(f"Reconnecting in {wait_time:.2f}s (Attempt {self.reconnect_count})")
         await asyncio.sleep(wait_time)
+
+    async def _flush_ticks_loop(self):
+        """Periodically flush buffered ticks to PostgreSQL in batches."""
+        while self.is_running:
+            try:
+                ticks_to_save = []
+                # Collect ticks from queue
+                while not self.tick_buffer.empty() and len(ticks_to_save) < self.MAX_BATCH_SIZE:
+                    ticks_to_save.append(await self.tick_buffer.get())
+                
+                if ticks_to_save:
+                    await self._save_ticks_batch(ticks_to_save)
+                    for _ in range(len(ticks_to_save)):
+                        self.tick_buffer.task_done()
+                
+                # Wait for next flush interval or until buffer is large
+                await asyncio.sleep(self.FLUSH_INTERVAL)
+            except Exception as e:
+                logger.error(f"Error in tick flusher loop: {e}")
+                await asyncio.sleep(self.FLUSH_INTERVAL)
+
+    async def _save_ticks_batch(self, ticks: List[Dict[str, Any]]):
+        """Save a batch of ticks to the database."""
+        async with SessionLocal() as db:
+            try:
+                tick_objects = [
+                    MarketTick(
+                        symbol=t["symbol"],
+                        exchange=t["exchange"],
+                        ltp=t["ltp"],
+                        volume=t["volume"],
+                        oi=t["oi"],
+                        timestamp=datetime.fromtimestamp(t["timestamp"], tz=timezone.utc)
+                    )
+                    for t in ticks
+                ]
+                db.add_all(tick_objects)
+                await db.commit()
+                logger.debug(f"Successfully saved {len(ticks)} ticks to database.")
+            except Exception as e:
+                await db.rollback()
+                logger.error(f"Database error saving ticks: {e}")
 
     def stop(self):
         """Stop the client."""

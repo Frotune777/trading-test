@@ -23,7 +23,7 @@ class LatencyMetric(Base):
     latency_ms = Column(Float, nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(IST), index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
-    metadata = Column(JSON, nullable=True)  # Additional context
+    additional_metadata = Column("metadata", JSON, nullable=True)  # Additional context
     
     # Indexes for performance
     __table_args__ = (
@@ -66,7 +66,7 @@ class ErrorLog(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
     severity = Column(String(20), nullable=False, default='ERROR', index=True)  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     timestamp = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(IST), index=True)
-    metadata = Column(JSON, nullable=True)
+    additional_metadata = Column("metadata", JSON, nullable=True)
     
     # Indexes
     __table_args__ = (
@@ -138,7 +138,7 @@ class SystemHealth(Base):
     unit = Column(String(20), nullable=True)  # '%', 'MB', 'count'
     status = Column(String(20), nullable=False, default='HEALTHY')  # 'HEALTHY', 'WARNING', 'CRITICAL'
     timestamp = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(IST), index=True)
-    metadata = Column(JSON, nullable=True)
+    additional_metadata = Column("metadata", JSON, nullable=True)
     
     # Indexes
     __table_args__ = (

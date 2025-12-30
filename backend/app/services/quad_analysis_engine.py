@@ -207,6 +207,12 @@ class QUADAnalysisEngine:
         # Extract reasoning narrative
         reasoning_summary = analysis_result.get('reasoning', 'QUAD analysis completed')
         
+        # Extract pillar explanations
+        pillar_explanations = {
+            p['name']: p.get('explanation')
+            for p in analysis_result.get('pillar_contributions', [])
+        }
+        
         # Create decision object
         decision = QUADDecision(
             symbol=symbol,
@@ -221,6 +227,9 @@ class QUADAnalysisEngine:
             liquidity_score=pillar_scores.get('liquidity_score', 50),
             sentiment_score=pillar_scores.get('sentiment_score', 50),
             regime_score=pillar_scores.get('regime_score', 50),
+            
+            # Pillar explanations
+            pillar_explanations=pillar_explanations,
             
             # Additional context
             reasoning_summary=reasoning_summary[:500],  # Truncate if too long

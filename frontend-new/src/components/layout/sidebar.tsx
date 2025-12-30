@@ -23,7 +23,8 @@ import {
     ChevronRight,
     Database,
     ChevronLeft,
-    Menu
+    Menu,
+    Settings2
 } from "lucide-react"
 import { useState, useEffect } from "react"
 
@@ -113,9 +114,21 @@ const advancedRoutes = [
         href: "/sandbox",
         color: "text-pink-500",
     },
+    {
+        label: "TA Aggregator",
+        icon: Settings2,
+        href: "/ta-aggregator",
+        color: "text-cyan-500",
+    },
 ]
 
 const systemRoutes = [
+    {
+        label: "Data Source",
+        icon: Database,
+        href: "/data-source",
+        color: "text-blue-500",
+    },
     {
         label: "Data Management",
         icon: Database,
@@ -138,7 +151,7 @@ const systemRoutes = [
 
 export function Sidebar() {
     const pathname = usePathname()
-    
+
     // Load initial state from localStorage
     const [collapsed, setCollapsed] = useState(false)
     const [tradingOpen, setTradingOpen] = useState(true)
@@ -151,7 +164,7 @@ export function Sidebar() {
         const savedTradingOpen = localStorage.getItem('sidebar-trading-open')
         const savedAdvancedOpen = localStorage.getItem('sidebar-advanced-open')
         const savedSystemOpen = localStorage.getItem('sidebar-system-open')
-        
+
         if (savedCollapsed !== null) setCollapsed(savedCollapsed === 'true')
         if (savedTradingOpen !== null) setTradingOpen(savedTradingOpen === 'true')
         if (savedAdvancedOpen !== null) setAdvancedOpen(savedAdvancedOpen === 'true')
@@ -184,7 +197,7 @@ export function Sidebar() {
     }
 
     return (
-        <div 
+        <div
             className={cn(
                 "h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 flex flex-col",
                 collapsed ? "w-16" : "w-64"
@@ -235,8 +248,8 @@ export function Sidebar() {
                                 className={cn(
                                     "flex items-center p-3 rounded-lg transition group",
                                     "hover:bg-sidebar-accent",
-                                    pathname === route.href 
-                                        ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                                    pathname === route.href
+                                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                         : "text-muted-foreground"
                                 )}
                                 title={collapsed ? route.label : undefined}
@@ -270,8 +283,8 @@ export function Sidebar() {
                                         className={cn(
                                             "flex items-center p-2 rounded-lg transition",
                                             "hover:bg-sidebar-accent",
-                                            pathname === route.href 
-                                                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                                            pathname === route.href
+                                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                                 : "text-muted-foreground"
                                         )}
                                         title={collapsed ? route.label : undefined}
@@ -314,8 +327,8 @@ export function Sidebar() {
                                         className={cn(
                                             "flex items-center p-2 rounded-lg transition",
                                             "hover:bg-sidebar-accent",
-                                            pathname === route.href 
-                                                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                                            pathname === route.href
+                                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                                 : "text-muted-foreground"
                                         )}
                                         title={collapsed ? route.label : undefined}
@@ -351,8 +364,8 @@ export function Sidebar() {
                                         className={cn(
                                             "flex items-center p-2 rounded-lg transition",
                                             "hover:bg-sidebar-accent",
-                                            pathname === route.href 
-                                                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                                            pathname === route.href
+                                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                                 : "text-muted-foreground"
                                         )}
                                         title={collapsed ? route.label : undefined}
@@ -374,8 +387,8 @@ export function Sidebar() {
                     className={cn(
                         "flex items-center p-3 rounded-lg transition",
                         "hover:bg-sidebar-accent",
-                        pathname === "/dashboard/settings" 
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                        pathname === "/dashboard/settings"
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
                             : "text-muted-foreground"
                     )}
                     title={collapsed ? "Settings" : undefined}

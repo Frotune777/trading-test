@@ -25,6 +25,7 @@ class PillarContribution:
     is_placeholder: bool         # True if returning hardcoded neutral
     weight_applied: float        # Weight used in aggregation (e.g., 0.30)
     metrics: Optional[dict] = None # Key metrics used for calculation (e.g., {"ATR%": 1.2, "VIX": 14})
+    explanation: Optional[str] = None # Detailed explanation of the pillar's reasoning
 
 @dataclass
 class AnalysisQuality:

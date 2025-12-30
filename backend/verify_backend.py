@@ -1,53 +1,35 @@
 import asyncio
-import httpx
-import time
-import sys
+import logging
+from app.core.database import SessionLocal
+from app.services.ta_aggregator import TAggregator
+from app.database.models_quad import QUADUserPreferences
 
-BASE_URL = "http://localhost:8000/api/v1"
-SYMBOL = "RELIANCE"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-async def check_endpoint(client, url, name):
-    start = time.time()
-    try:
-        response = await client.get(url)
-        duration = time.time() - start
+async def verify_ta_aggregator():
+    async with SessionLocal() as db:
+        aggregator = TAggregator(db)
         
-        if response.status_code == 200:
-            print(f"✅ {name}: Success ({duration:.3f}s)")
-            return True, duration
-        else:
-            print(f"❌ {name}: Failed ({response.status_code}) - {response.text}")
-            return False, duration
-    except Exception as e:
-        print(f"❌ {name}: Error - {str(e)}")
-        return False, 0
-
-async def main():
-    print("🚀 Starting Backend Verification...")
-    
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        # 1. Health/Root Check (Assuming /docs or similar works, or we check a known good endpoint)
-        # Verify Market Breadth
-        print("\n--- Market Data ---")
-        await check_endpoint(client, f"{BASE_URL}/market/breadth", "Market Breadth")
+        print("\n--- Verifying TA Weights ---")
+        # Try to update weights
+        weights = {"trend": 0.4, "momentum": 0.3, "volatility": 0.2, "volume": 0.1}
+        success = await aggregator.update_regime_weights("TRENDING_UP", weights)
+        print(f"Update weights: {'✅' if success else '❌'}")
         
-        # 2. Derivatives
-        print("\n--- Derivatives ---")
-        await check_endpoint(client, f"{BASE_URL}/derivatives/option-chain/{SYMBOL}", f"Option Chain ({SYMBOL})")
+        # Try to load weights
+        loaded = await aggregator._load_regime_weights("TRENDING_UP")
+        print(f"Loaded weights: {loaded}")
         
-        # 3. Technicals (Performance Check)
-        print("\n--- Technicals ---")
-        print(f"Testing Intraday Data for {SYMBOL}...")
-        success, duration = await check_endpoint(client, f"{BASE_URL}/technicals/intraday/{SYMBOL}?interval=5m", "Intraday Data")
+        print("\n--- Verifying Accuracy Calculation ---")
+        accuracy = await aggregator.get_historical_accuracy(30)
+        print(f"Accuracy metrics: {accuracy}")
         
-        if success and duration > 1.0:
-            print(f"⚠️  Performance Warning: Intraday data took {duration:.3f}s (Threshold: 1.0s)")
+        print("\n--- Verifying Performance Metrics ---")
+        performance = await aggregator.get_indicator_performance()
+        print(f"Performance metrics: {performance}")
         
-        # Test Indicators
-        await check_endpoint(client, f"{BASE_URL}/technicals/indicators/{SYMBOL}", "Technical Indicators")
+        print("\n✅ Verification complete")
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nAborted.")
+    asyncio.run(verify_ta_aggregator())

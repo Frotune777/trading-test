@@ -4,13 +4,12 @@ Pydantic and SQLAlchemy models for QUAD analytics
 """
 
 from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, Boolean, Text, JSON, ForeignKey, UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-Base = declarative_base()
+from app.core.database import Base
 
 
 # ==================== Enums ====================
@@ -48,6 +47,9 @@ class QUADDecision(Base):
     liquidity_score = Column(Integer)
     sentiment_score = Column(Integer)
     regime_score = Column(Integer)
+    
+    # Pillar explanations
+    pillar_explanations = Column(JSON)
     
     # Additional data
     reasoning_summary = Column(Text)
@@ -128,6 +130,58 @@ class QUADPillarCorrelation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class TASignalRecord(Base):
+    """Historical TA Aggregator signal record for accuracy tracking"""
+    __tablename__ = "ta_signal_records"
+    
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    
+    signal = Column(String(10), nullable=False)
+    confidence = Column(DECIMAL(5, 4))
+    regime = Column(String(20))
+    composite_score = Column(DECIMAL(5, 4))
+    
+    # Indicator scores (JSON)
+    indicator_scores = Column(JSON)
+    # Weights active at time of signal (JSON)
+    weights_used = Column(JSON)
+    
+    # Accuracy evaluation
+    price_at_signal = Column(DECIMAL(10, 2))
+    peak_price_5d = Column(DECIMAL(10, 2))
+    lowest_price_5d = Column(DECIMAL(10, 2))
+    is_accurate = Column(Boolean)
+    final_pnl_pct = Column(DECIMAL(10, 4))
+    
+    # Enhanced persistence
+    resolved_at = Column(DateTime)
+    future_price = Column(DECIMAL(10, 2))
+    is_correct = Column(Boolean)
+    data_quality_score = Column(DECIMAL(5, 4))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class TAIndicatorPerformance(Base):
+    """Aggregated performance metrics for TA indicator categories"""
+    __tablename__ = "ta_indicator_performance"
+    
+    id = Column(Integer, primary_key=True)
+    indicator_category = Column(String(50), nullable=False)  # trend, momentum, etc.
+    regime = Column(String(50), nullable=False)
+    
+    signals_count = Column(Integer, default=0)
+    correct_signals = Column(Integer, default=0)
+    accuracy_rate = Column(DECIMAL(5, 4), default=0)
+    avg_gain = Column(DECIMAL(10, 4), default=0)
+    
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __table_args__ = (
+        UniqueConstraint('indicator_category', 'regime', name='_cat_regime_uc'),
+    )
+
 class QUADSignalAccuracy(Base):
     """Signal accuracy tracking"""
     __tablename__ = "quad_signal_accuracy"
@@ -206,6 +260,7 @@ class QUADDecisionCreate(BaseModel):
     conviction: int = Field(..., ge=0, le=100)
     signal: SignalType
     pillars: PillarScores
+    pillar_explanations: Optional[Dict[str, str]] = None
     reasoning_summary: Optional[str] = None
     current_price: Optional[float] = None
     volume: Optional[int] = None
@@ -220,6 +275,7 @@ class QUADDecisionResponse(BaseModel):
     conviction: int
     signal: str
     pillars: PillarScores
+    pillar_explanations: Optional[Dict[str, str]] = None
     reasoning_summary: Optional[str]
     current_price: Optional[float]
     volume: Optional[int]
@@ -341,9 +397,9 @@ class QUADUserPreferences(Base):
     
     user_id = Column(String(50), primary_key=True, default="default")
     weights = Column(JSON, nullable=False)  # Stores {'trend': 0.3, ...}
+    ta_weights = Column(JSON, nullable=True) # Stores regime-specific TA weights
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class QUADUserPreferencesCreate(BaseModel):
     """Create/Update user preferences"""
     weights: Dict[str, float]
-

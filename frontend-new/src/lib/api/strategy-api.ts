@@ -75,6 +75,80 @@ class StrategyAPI {
       method: 'DELETE',
     });
   }
+
+  // Code Management Methods
+  async validateCode(code: string): Promise<ValidationResult> {
+    return this.request<ValidationResult>('/api/v1/strategy/validate-code', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  }
+
+  async getStrategyCode(id: number): Promise<StrategyCodeResponse> {
+    return this.request<StrategyCodeResponse>(`/api/v1/strategy/${id}/code`);
+  }
+
+  async updateStrategyCode(id: number, code: string): Promise<StrategyCodeUpdateResponse> {
+    return this.request<StrategyCodeUpdateResponse>(`/api/v1/strategy/${id}/code`, {
+      method: 'PUT',
+      body: JSON.stringify({ code }),
+    });
+  }
+
+  async backtestStrategy(id: number, request: BacktestRequest): Promise<BacktestResponse> {
+    return this.request<BacktestResponse>(`/api/v1/strategy/${id}/backtest`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
 }
 
+// Type definitions
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  timestamp: string;
+}
+
+export interface StrategyCodeResponse {
+  strategy_id: number;
+  name: string;
+  code: string;
+  platform: string;
+}
+
+export interface StrategyCodeUpdateResponse {
+  strategy_id: number;
+  name: string;
+  code: string;
+  updated_at: string;
+  validation: ValidationResult;
+}
+
+export interface BacktestRequest {
+  symbol: string;
+  start_date?: string;
+  end_date?: string;
+  initial_capital?: number;
+  slippage_pct?: number;
+  commission_fixed?: number;
+  params?: Record<string, any>;
+}
+
+export interface BacktestResponse {
+  symbol: string;
+  total_trades: number;
+  equity_curve: Array<{ date: string; value: number }>;
+  trades: Array<Record<string, any>>;
+  final_capital: number;
+  sharpe: number;
+  sortino: number;
+  calmar: number;
+  max_drawdown: number;
+  error?: string;
+}
+
+
 export const strategyAPI = new StrategyAPI();
+

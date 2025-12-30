@@ -3,11 +3,9 @@ Database models for historical OHLC data storage.
 """
 
 from sqlalchemy import Column, Integer, String, Numeric, BigInteger, DateTime, Index, UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from datetime import datetime
-
-Base = declarative_base()
+from app.core.database import Base
 
 
 class HistoricalOHLC(Base):
@@ -113,3 +111,33 @@ class PriceHistory(Base):
     
     def __repr__(self):
         return f"<PriceHistory(symbol={self.symbol}, date={self.date}, close={self.close})>"
+
+
+class MarketTick(Base):
+    """
+    Persistent tick-level storage for all subscribed symbols.
+    
+    Compliance:
+        - Rule #14: Every TradeDecision must include decision_id for traceability (ticks are the foundation).
+        - High-performance storage for real-time stream.
+    """
+    __tablename__ = "market_ticks"
+    
+    id = Column(BigInteger, primary_key=True, index=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    exchange = Column(String(10), nullable=False, default="NSE")
+    ltp = Column(Numeric(12, 2), nullable=False)
+    volume = Column(BigInteger, nullable=True)
+    oi = Column(BigInteger, nullable=True)
+    
+    # Time metadata
+    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)  # Broker/Feed TS
+    received_at = Column(DateTime(timezone=True), server_default=func.now(), index=True) # Local TS
+    
+    __table_args__ = (
+        Index('idx_ticks_lookup', 'symbol', 'exchange', 'timestamp'),
+        Index('idx_ticks_time', 'timestamp'),
+    )
+    
+    def __repr__(self):
+        return f"<MarketTick(symbol={self.symbol}, ltp={self.ltp}, ts={self.timestamp})>"

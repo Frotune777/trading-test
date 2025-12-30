@@ -269,17 +269,24 @@ async def get_backtest(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     initial_capital: float = 100000.0,
+    slippage_pct: float = Query(0.001, ge=0, le=0.05),
+    commission_fixed: float = Query(20.0, ge=0, le=1000),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get backtest results and equity curve for a symbol
+    Get backtest results and equity curve for a symbol.
+    
+    - **slippage_pct**: Slippage as a decimal (0.001 = 0.1%)
+    - **commission_fixed**: Fixed commission per side per trade
     """
     service = BacktestService(db)
     results = await service.get_equity_curve(
         symbol=symbol,
         start_date=start_date,
         end_date=end_date,
-        initial_capital=initial_capital
+        initial_capital=initial_capital,
+        slippage_pct=slippage_pct,
+        commission_fixed=commission_fixed
     )
     
     if "error" in results:

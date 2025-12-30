@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
     data, health, recommendations, stocks, market, derivatives, insider, 
-    technicals, reasoning, execution, alerts, analytics, ws_market,
+    technicals, reasoning, execution, alerts, analytics, ws_market, ws_alerts,
     decision_history,  # v1.1 addition
     feed_health, scheduler,  # Data pipeline additions
     quad_analytics,  # QUAD Analytics v1.1 enhancement (READ-ONLY)
@@ -15,6 +15,11 @@ from app.api.v1.endpoints import (
     auth,  # User Authentication (Argon2/Fernet)
     action_center,  # Action Center (Order Approval Workflow)
     monitoring, # Monitoring endpoints
+    reconciliation, # Position Reconciliation
+    market_state, # Unified Market State
+    ta_config, # TA Configuration
+    risk, # Phase 3: Risk Management
+    decisions, # Decision Ledger with Causal Explainability
 )
 
 api_router = APIRouter()
@@ -45,3 +50,11 @@ api_router.include_router(action_center.router, tags=["action-center"])  # Actio
 api_router.include_router(preferences.router, tags=["preferences"])
 api_router.include_router(risk_control.router, prefix="/risk-control", tags=["risk-control"])
 api_router.include_router(monitoring.router, tags=["monitoring"])  # Monitoring endpoints
+api_router.include_router(reconciliation.router, tags=["reconciliation"])
+api_router.include_router(market_state.router, tags=["market-state"])
+api_router.include_router(ta_config.router, tags=["ta-config"])
+api_router.include_router(risk.router, prefix="/risk", tags=["risk"])  # Phase 3: Risk Management
+api_router.include_router(decisions.router, prefix="/decisions", tags=["decisions"])  # Decision Ledger
+api_router.include_router(ws_alerts.router, tags=["websockets"])
+
+

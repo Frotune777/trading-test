@@ -17,8 +17,13 @@ from app.database.models_strategy import (
     SymbolMappingBulkCreate
 )
 from app.services.strategy_service import StrategyService, get_webhook_url
+from app.services.strategy_executor import StrategyExecutor
 from app.core.database import get_db
 from app.core.auth import get_current_user
+from pydantic import BaseModel
+from typing import Dict, Any, Optional
+from datetime import datetime
+import pandas as pd
 
 router = APIRouter(prefix="/strategy", tags=["Strategy Management"])
 logger = logging.getLogger(__name__)
@@ -309,3 +314,204 @@ async def delete_symbol_mapping(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Symbol mapping not found")
     
     return None
+
+
+# Strategy Code Management Endpoints
+
+class CodeValidationRequest(BaseModel):
+    code: str
+
+class CodeValidationResponse(BaseModel):
+    valid: bool
+    errors: List[str]
+    warnings: List[str]
+    timestamp: str
+
+class BacktestRequest(BaseModel):
+    symbol: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    initial_capital: float = 100000.0
+    slippage_pct: float = 0.001
+    commission_fixed: float = 20.0
+    params: Optional[Dict[str, Any]] = None
+
+class BacktestResponse(BaseModel):
+    symbol: str
+    total_trades: int
+    equity_curve: List[Dict[str, Any]]
+    trades: List[Dict[str, Any]]
+    final_capital: float
+    sharpe: float = 0.0
+    sortino: float = 0.0
+    calmar: float = 0.0
+    max_drawdown: float = 0.0
+    error: Optional[str] = None
+
+
+@router.post("/validate-code", response_model=CodeValidationResponse)
+async def validate_strategy_code(
+    request: CodeValidationRequest,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Validate strategy code before saving.
+    
+    Checks for:
+    - Syntax errors
+    - Dangerous imports/functions
+    - Required methods (setup, on_data)
+    - StrategyBase inheritance
+    """
+    executor = StrategyExecutor(db)
+    result = await executor.validate_strategy_code(request.code)
+    
+    return CodeValidationResponse(**result)
+
+
+@router.post("/{strategy_id}/backtest", response_model=BacktestResponse)
+async def backtest_strategy(
+    strategy_id: int,
+    request: BacktestRequest,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Backtest a strategy against historical data.
+    
+    - **symbol**: Stock symbol to backtest
+    - **start_date**: Start date (YYYY-MM-DD, optional)
+    - **end_date**: End date (YYYY-MM-DD, optional)
+    - **initial_capital**: Starting capital (default: 100,000)
+    - **params**: Strategy parameters (optional)
+    
+    Returns backtest results with equity curve and trade history.
+    """
+    try:
+        # Verify ownership
+        service = StrategyService(db)
+        strategy = await service.get_strategy(strategy_id, current_user)
+        
+        if not strategy:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+        
+        # Get historical data (placeholder - integrate with your data service)
+        # For now, we'll return an error if no data service is available
+        from app.services.data_aggregator import DataAggregator
+        
+        data_service = DataAggregator(db)
+        historical_data = await data_service.get_historical_data(
+            symbol=request.symbol,
+            start_date=request.start_date,
+            end_date=request.end_date
+        )
+        
+        if historical_data is None or historical_data.empty:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No historical data found for {request.symbol}"
+            )
+        
+        # Run backtest
+        executor = StrategyExecutor(db)
+        result = await executor.backtest_strategy(
+            strategy_id=strategy_id,
+            symbol=request.symbol,
+            historical_data=historical_data,
+            params=request.params,
+            initial_capital=request.initial_capital,
+            slippage_pct=request.slippage_pct,
+            commission_fixed=request.commission_fixed
+        )
+        
+        if "error" in result:
+            return BacktestResponse(
+                symbol=request.symbol,
+                total_trades=0,
+                equity_curve=[],
+                trades=[],
+                final_capital=request.initial_capital,
+                error=result["error"]
+            )
+        
+        return BacktestResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error backtesting strategy {strategy_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Backtest failed: {str(e)}"
+        )
+
+
+@router.get("/{strategy_id}/code")
+async def get_strategy_code(
+    strategy_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Get strategy code for editing.
+    
+    Returns the Python code for the strategy.
+    """
+    service = StrategyService(db)
+    strategy = await service.get_strategy(strategy_id, current_user)
+    
+    if not strategy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    
+    return {
+        "strategy_id": strategy.id,
+        "name": strategy.name,
+        "code": strategy.strategy_code or "",
+        "platform": strategy.platform
+    }
+
+
+@router.put("/{strategy_id}/code")
+async def update_strategy_code(
+    strategy_id: int,
+    request: CodeValidationRequest,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Update strategy code.
+    
+    Validates code before saving.
+    """
+    # Validate code first
+    executor = StrategyExecutor(db)
+    validation = await executor.validate_strategy_code(request.code)
+    
+    if not validation['valid']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid code: {', '.join(validation['errors'])}"
+        )
+    
+    # Update strategy
+    service = StrategyService(db)
+    strategy = await service.get_strategy(strategy_id, current_user)
+    
+    if not strategy:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found")
+    
+    # Update code
+    strategy.strategy_code = request.code
+    strategy.updated_at = datetime.now()
+    await db.commit()
+    await db.refresh(strategy)
+    
+    return {
+        "strategy_id": strategy.id,
+        "name": strategy.name,
+        "code": strategy.strategy_code,
+        "updated_at": strategy.updated_at.isoformat(),
+        "validation": validation
+    }
+

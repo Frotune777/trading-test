@@ -60,6 +60,10 @@ def main():
         migrations_dir / "006_add_user_tables.sql",
         migrations_dir / "007_add_action_center_tables.sql",
         migrations_dir / "008_add_monitoring_tables.sql",
+        migrations_dir / "011_add_strategy_code_field.sql",
+        migrations_dir / "012_ta_aggregator_enhancements.sql",
+        migrations_dir / "013_ta_signal_enhancements.sql",
+        migrations_dir / "014_risk_management.sql",  # Phase 3: Risk Management
     ]
     
     # Run migrations

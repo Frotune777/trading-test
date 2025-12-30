@@ -15,6 +15,7 @@ from pytz import timezone
 
 from app.core.config import settings
 from app.services.data_pipeline_service import data_pipeline_service
+from app.services.reconciliation_service import reconciliation_service
 from app.services.alert_service import AlertService
 
 logger = logging.getLogger(__name__)
@@ -348,6 +349,58 @@ class SchedulerConfig:
         }
         
         logger.info(f"Scheduled QUAD analysis: {len(symbols)} symbols at 9:30 AM, 12 PM, 3 PM IST")
+        return job_id
+
+    def schedule_position_reconciliation(
+        self,
+        user_id: int,
+        interval_minutes: int = 15,
+        enabled: bool = True
+    ) -> str:
+        """
+        Schedule automated position reconciliation.
+        Runs during market hours to detect drift.
+        """
+        job_id = f"reconciliation_user_{user_id}"
+        
+        trigger = IntervalTrigger(
+            minutes=interval_minutes,
+            timezone=IST
+        )
+        
+        async def job_func():
+            # Only run during market hours (9:15 AM - 3:30 PM IST)
+            now = datetime.now(IST)
+            if now.weekday() >= 5: return
+            market_open = dt_time(9, 15)
+            market_close = dt_time(15, 45) # Extra 15 min after close
+            
+            if not (market_open <= now.time() <= market_close):
+                return
+                
+            logger.info(f"Running scheduled reconciliation for user {user_id}")
+            await reconciliation_service.run_reconciliation(user_id)
+            
+        job = self.scheduler.add_job(
+            job_func,
+            trigger=trigger,
+            id=job_id,
+            name=f"Position Reconciliation (User {user_id})",
+            replace_existing=True
+        )
+        
+        if not enabled:
+            job.pause()
+            
+        self.jobs[job_id] = {
+            "id": job_id,
+            "name": "Position Reconciliation",
+            "schedule": f"Every {interval_minutes} minutes during market hours",
+            "user_id": user_id,
+            "enabled": enabled
+        }
+        
+        logger.info(f"Scheduled reconciliation for user {user_id} every {interval_minutes}m")
         return job_id
     
     def pause_job(self, job_id: str) -> bool:

@@ -1,0 +1,9 @@
+{
+  "model_name": "test_model",
+  "metrics": {
+    "accuracy": 0.85
+  },
+  "promoted_at": "2025-12-30T00:17:13.592285",
+  "model_path": "models/quad/test_model_production.pkl",
+  "shadow_mode": true
+}
