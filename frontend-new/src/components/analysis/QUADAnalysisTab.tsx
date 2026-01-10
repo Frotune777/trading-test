@@ -112,7 +112,7 @@ export function QUADAnalysisTab({ data, isLoading }: QUADAnalysisTabProps) {
                 bias === 'BULLISH' && "bg-success/10 text-success",
                 bias === 'BEARISH' && "bg-destructive/10 text-destructive",
                 bias === 'NEUTRAL' && "bg-muted text-muted-foreground"
-              )} data-testid="directional-bias">
+              )} data-testid="quad-signal">
                 {bias}
               </Badge>
               <div className="flex flex-col items-end">
@@ -139,6 +139,7 @@ export function QUADAnalysisTab({ data, isLoading }: QUADAnalysisTabProps) {
             bias={pillars.trend.bias}
             is_placeholder={pillars.trend.is_placeholder}
             color="blue"
+            id="trend"
           />
         )}
 
@@ -151,6 +152,7 @@ export function QUADAnalysisTab({ data, isLoading }: QUADAnalysisTabProps) {
             bias={pillars.momentum.bias}
             is_placeholder={pillars.momentum.is_placeholder}
             color="purple"
+            id="momentum"
           />
         )}
 
@@ -163,6 +165,7 @@ export function QUADAnalysisTab({ data, isLoading }: QUADAnalysisTabProps) {
             bias={pillars.volatility.bias}
             is_placeholder={pillars.volatility.is_placeholder}
             color="emerald"
+            id="volatility"
           />
         )}
 
@@ -175,6 +178,7 @@ export function QUADAnalysisTab({ data, isLoading }: QUADAnalysisTabProps) {
             bias={pillars.regime.bias}
             is_placeholder={pillars.regime.is_placeholder}
             color="orange"
+            id="regime"
           />
         )}
       </div>
@@ -213,7 +217,7 @@ interface PillarCardProps {
   color: 'emerald' | 'blue' | 'purple' | 'orange'
 }
 
-function PillarCard({ title, icon, score, bias, is_placeholder, color }: PillarCardProps) {
+function PillarCard({ title, icon, score, bias, is_placeholder, color, id }: PillarCardProps & { id: string }) {
   const colorClasses = {
     emerald: {
       bg: 'bg-success',
@@ -247,7 +251,7 @@ function PillarCard({ title, icon, score, bias, is_placeholder, color }: PillarC
             {icon}
             <CardTitle className="text-foreground text-lg">{title}</CardTitle>
           </div>
-          <div className={cn("text-3xl font-bold", classes.text)}>
+          <div className={cn("text-3xl font-bold", classes.text)} data-testid={`pillar-score-${id}`}>
             {score}
           </div>
         </div>

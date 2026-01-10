@@ -15,3 +15,4 @@ export { default as VolumeProfile } from '../charts/VolumeProfile';
 export { default as SignalAccuracy } from './SignalAccuracy';
 export { default as PeerComparison } from './PeerComparison';
 export { default as BacktestResults } from './BacktestResults';
+export { default as CalloutHistoryTimeline } from './CalloutHistoryTimeline';

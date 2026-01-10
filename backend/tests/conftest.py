@@ -12,6 +12,9 @@ if app_path not in sys.path:
     sys.path.insert(0, app_path)
 
 # Avoid network calls during test collection
+import os
+os.environ.setdefault("API_KEY_PEPPER", "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff")
+
 from unittest.mock import patch, AsyncMock, MagicMock
 
 class AsyncMagicMock(MagicMock):

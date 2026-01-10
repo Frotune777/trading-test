@@ -9,6 +9,30 @@ from pydantic import BaseModel
 from app.core.database import Base
 
 
+class Position(Base):
+    """Local position tracking"""
+    __tablename__ = "positions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, nullable=False, index=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default='OPEN') # OPEN, CLOSED
+    
+    quantity = Column(Integer, nullable=False)
+    entry_price = Column(DECIMAL(10, 2), nullable=False)
+    current_price = Column(DECIMAL(10, 2))
+    
+    unrealized_pnl = Column(DECIMAL(12, 2), default=0)
+    realized_pnl = Column(DECIMAL(12, 2), default=0)
+    
+    entry_time = Column(DateTime, default=datetime.utcnow, nullable=False)
+    exit_time = Column(DateTime, nullable=True)
+    
+    strategy_id = Column(String(50), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class PositionSnapshot(Base):
     """Position snapshot from broker"""
     __tablename__ = "position_snapshots"

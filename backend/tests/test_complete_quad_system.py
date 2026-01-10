@@ -167,7 +167,7 @@ def test_complete_quad_system():
     
     assert intent.is_analysis_valid == True
     assert intent.is_execution_ready == True
-    assert intent.contract_version == "1.0.0"
+    assert intent.contract_version == "1.1.0"
     
     print("\n" + "=" * 70)
     print("✅ COMPLETE QUAD SYSTEM VALIDATION PASSED")

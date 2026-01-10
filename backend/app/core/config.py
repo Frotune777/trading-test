@@ -62,7 +62,7 @@ class Settings(BaseSettings):
 
     # OPENALGO
     OPENALGO_WS_URL: str = "ws://127.0.0.1:8765"
-    OPENALGO_API_URL: str = os.getenv("OPENALGO_API_URL", "http://127.0.0.1:8765/api")
+    OPENALGO_API_URL: str = os.getenv("OPENALGO_API_URL", "http://127.0.0.1:5000/api/v1")
     OPENALGO_API_KEY: str = os.getenv("OPENALGO_API_KEY", "default_key")
     OPENALGO_RECONNECT_ATTEMPTS: int = 10
     OPENALGO_HEARTBEAT_INTERVAL: int = 30  # seconds
@@ -107,6 +107,158 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: Optional[str] = os.getenv("TELEGRAM_BOT_TOKEN", None)
     TELEGRAM_CHAT_ID: Optional[str] = os.getenv("TELEGRAM_CHAT_ID", None)
     
+    # PILLAR THRESHOLDS - TREND
+    TREND_SMA_DAILY_SHORT: int = 50
+    TREND_SMA_DAILY_LONG: int = 200
+    TREND_SMA_WEEKLY: int = 20
+    TREND_SCORE_MAX: float = 60.0
+    TREND_BIAS_BULLISH: float = 60.0
+    TREND_BIAS_BEARISH: float = 40.0
+
+    # PILLAR THRESHOLDS - MOMENTUM
+    MOMENTUM_RSI_BULLISH_MIN: float = 50.0
+    MOMENTUM_RSI_BULLISH_MAX: float = 70.0
+    MOMENTUM_RSI_OVERBOUGHT: float = 70.0
+    MOMENTUM_RSI_OVERSOLD: float = 30.0
+    MOMENTUM_RSI_NEUTRAL_MIN: float = 40.0
+    MOMENTUM_RSI_NEUTRAL_MAX: float = 50.0
+    MOMENTUM_RSI_BIAS_BULLISH: float = 55.0
+    MOMENTUM_RSI_BIAS_BEARISH: float = 45.0
+    MOMENTUM_SCORE_MAX: float = 40.0
+
+    # PILLAR THRESHOLDS - VOLATILITY
+    VOLATILITY_ATR_LOW: float = 1.5
+    VOLATILITY_ATR_MODERATE: float = 3.0
+    VOLATILITY_ATR_HIGH: float = 5.0
+    VOLATILITY_ATR_EXTREME: float = 8.0
+    VOLATILITY_BB_WIDTH_VERY_NARROW: float = 4.0
+    VOLATILITY_BB_WIDTH_NARROW: float = 8.0
+    VOLATILITY_BB_WIDTH_WIDE: float = 12.0
+    VOLATILITY_BB_WIDTH_VERY_WIDE: float = 18.0
+    VOLATILITY_VIX_VERY_LOW: float = 12.0
+    VOLATILITY_VIX_LOW: float = 15.0
+    VOLATILITY_VIX_NORMAL: float = 20.0
+    VOLATILITY_VIX_ELEVATED: float = 25.0
+    VOLATILITY_VIX_HIGH: float = 30.0
+    VOLATILITY_WEIGHT_ATR: float = 0.40
+    VOLATILITY_WEIGHT_BB: float = 0.30
+    VOLATILITY_WEIGHT_VIX: float = 0.30
+    VOLATILITY_BIAS_ATR_THRESHOLD: float = 5.0
+    VOLATILITY_BIAS_BB_THRESHOLD: float = 12.0
+    VOLATILITY_BIAS_VIX_THRESHOLD: float = 25.0
+
+    # PILLAR THRESHOLDS - LIQUIDITY
+    LIQUIDITY_SPREAD_EXTREME_TIGHT: float = 0.05
+    LIQUIDITY_SPREAD_VERY_TIGHT: float = 0.10
+    LIQUIDITY_SPREAD_TIGHT: float = 0.20
+    LIQUIDITY_SPREAD_FAIR: float = 0.30
+    LIQUIDITY_SPREAD_WIDE: float = 0.50
+    LIQUIDITY_DEPTH_RATIO_VERY_BEARISH: float = 0.5
+    LIQUIDITY_DEPTH_RATIO_BEARISH: float = 0.7
+    LIQUIDITY_DEPTH_RATIO_NEUTRAL_MAX: float = 1.3
+    LIQUIDITY_DEPTH_RATIO_BULLISH_MAX: float = 2.0
+    LIQUIDITY_ADOSC_VERY_HIGH: float = 2000.0
+    LIQUIDITY_ADOSC_HIGH: float = 1000.0
+    LIQUIDITY_ADOSC_NEUTRAL: float = 0.0
+    LIQUIDITY_ADOSC_LOW: float = -1000.0
+    LIQUIDITY_ADOSC_VERY_LOW: float = -2000.0
+    LIQUIDITY_WEIGHT_SPREAD_ADOSC: float = 0.50
+    LIQUIDITY_WEIGHT_DEPTH_ADOSC: float = 0.30
+    LIQUIDITY_WEIGHT_VOLUME_ADOSC: float = 0.20
+    LIQUIDITY_WEIGHT_SPREAD_BASE: float = 0.60
+    LIQUIDITY_WEIGHT_DEPTH_BASE: float = 0.40
+    LIQUIDITY_DEPTH_CRITICAL_THIN: int = 100
+    LIQUIDITY_DEPTH_THIN: int = 1000
+    LIQUIDITY_BIAS_SPREAD_THRESHOLD: float = 0.30
+    LIQUIDITY_BIAS_DEPTH_THRESHOLD: int = 1000
+    LIQUIDITY_BIAS_RATIO_THRESHOLD: float = 1.5
+    LIQUIDITY_BIAS_ADOSC_THRESHOLD: float = 1000.0
+
+    # PILLAR THRESHOLDS - REGIME
+    REGIME_SCORE_BULLISH: float = 85.0
+    REGIME_SCORE_BEARISH: float = 15.0
+    REGIME_SCORE_NEUTRAL: float = 50.0
+    REGIME_VIX_HIGH_THRESHOLD: float = 25.0
+    REGIME_VIX_HIGH_ADJUSTMENT: float = -10.0
+    REGIME_VIX_LOW_THRESHOLD: float = 15.0
+    REGIME_VIX_LOW_ADJUSTMENT: float = 5.0
+
+    # PILLAR THRESHOLDS - SENTIMENT
+    SENTIMENT_OI_BUILDUP_BONUS: float = 20.0
+    SENTIMENT_OI_COVERING_BONUS: float = 10.0
+    SENTIMENT_DELTA_THRESHOLD: float = 0.5
+    SENTIMENT_DELTA_BONUS: float = 15.0
+    SENTIMENT_GAMMA_RISK_THRESHOLD: float = 0.05
+    SENTIMENT_INSIDER_BUY_COUNT_THRESHOLD: int = 3
+    SENTIMENT_INSIDER_CLUSTER_BONUS: float = 25.0
+    SENTIMENT_INSIDER_NET_VALUE_THRESHOLD: float = 10000000.0
+    SENTIMENT_INSIDER_NET_VALUE_BONUS: float = 15.0
+    SENTIMENT_INSTITUTIONAL_VOL_PCT: float = 0.05
+    SENTIMENT_INSTITUTIONAL_BONUS: float = 20.0
+    SENTIMENT_CONVERGENCE_BONUS: float = 15.0
+    
+    # ========================================================================
+    # WEIGHT SCHEDULER - Dynamic Pillar Weighting by Market Regime
+    # ========================================================================
+    
+    # Enable/disable dynamic weight scheduling
+    WEIGHT_SCHEDULER_ENABLED: bool = True
+    
+    # Default weights (used when scheduler disabled or regime unknown)
+    WEIGHT_MATRIX_DEFAULT: dict = {
+        "trend": 0.30,
+        "momentum": 0.20,
+        "volatility": 0.10,
+        "liquidity": 0.10,
+        "sentiment": 0.10,
+        "regime": 0.20
+    }
+    
+    # BULLISH regime: Emphasize trend and momentum
+    WEIGHT_MATRIX_BULLISH: dict = {
+        "trend": 0.35,
+        "momentum": 0.25,
+        "volatility": 0.05,
+        "liquidity": 0.10,
+        "sentiment": 0.10,
+        "regime": 0.15
+    }
+    
+    # BEARISH regime: Emphasize trend and volatility
+    WEIGHT_MATRIX_BEARISH: dict = {
+        "trend": 0.35,
+        "momentum": 0.15,
+        "volatility": 0.20,
+        "liquidity": 0.10,
+        "sentiment": 0.05,
+        "regime": 0.15
+    }
+    
+    # VOLATILE regime: Emphasize volatility and liquidity
+    WEIGHT_MATRIX_VOLATILE: dict = {
+        "trend": 0.15,
+        "momentum": 0.10,
+        "volatility": 0.30,
+        "liquidity": 0.20,
+        "sentiment": 0.10,
+        "regime": 0.15
+    }
+    
+    # SIDEWAYS regime: Balanced with sentiment boost
+    WEIGHT_MATRIX_SIDEWAYS: dict = {
+        "trend": 0.15,
+        "momentum": 0.15,
+        "volatility": 0.10,
+        "liquidity": 0.15,
+        "sentiment": 0.25,
+        "regime": 0.20
+    }
+    
+    # VIX-based adjustments
+    WEIGHT_VIX_LOW_THRESHOLD: float = 15.0  # Below this, reduce volatility weight
+    WEIGHT_VIX_HIGH_THRESHOLD: float = 25.0  # Above this, increase volatility weight
+    WEIGHT_VIX_ADJUSTMENT_FACTOR: float = 0.05  # How much to adjust
+
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=".env",

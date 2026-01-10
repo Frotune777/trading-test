@@ -5,6 +5,11 @@ from ..core.market_snapshot import LiveDecisionSnapshot, SessionContext
 from ..core.trade_intent import TradeIntent, DirectionalBias, PillarContribution, AnalysisQuality
 from ..core.exceptions import DataIncompleteError
 from .pillars.base_pillar import BasePillar
+from ..services.weight_scheduler import WeightScheduler
+from ..services.anomaly_detector import AnomalyDetector
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .pillar_config import PillarConfig
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +43,12 @@ class ReasoningEngine:
         
         # Pillars will be injected later
         self.pillars: Dict[str, BasePillar] = {}
+        
+        # Weight scheduler for dynamic weighting (v1.1)
+        self.weight_scheduler = WeightScheduler()
+        
+        # Anomaly detector for proactive monitoring (v1.1)
+        self.anomaly_detector = AnomalyDetector()
     
     def register_pillar(self, name: str, pillar: BasePillar):
         """Register a QUAD pillar."""
@@ -50,7 +61,8 @@ class ReasoningEngine:
         self, 
         snapshot: LiveDecisionSnapshot, 
         context: SessionContext,
-        custom_weights: Optional[Dict[str, float]] = None
+        custom_weights: Optional[Dict[str, float]] = None,
+        pillar_config: Optional['PillarConfig'] = None
     ) -> TradeIntent:
         """
         Main reasoning function.
@@ -65,15 +77,22 @@ class ReasoningEngine:
         """
         analysis_timestamp = datetime.now()
         
-        # Determine weights to use
-        active_weights = self.weights.copy()
+        # Determine weights to use (v1.1: Dynamic weight scheduling)
+        weight_schedule_reason = None
         if custom_weights:
-            # Validate and merge
+            # Custom weights override scheduler
             total_custom = sum(custom_weights.values())
             if abs(total_custom - 1.0) < 0.01: # Approximate check
                  active_weights = custom_weights
+                 weight_schedule_reason = "CUSTOM_OVERRIDE"
             else:
                  logger.warning(f"Custom weights sum to {total_custom}, ignoring overrides")
+                 active_weights = self.weight_scheduler.get_weights(context.market_regime, context.vix_level)
+                 weight_schedule_reason = self.weight_scheduler.get_schedule_reason(context.market_regime, context.vix_level)
+        else:
+            # Use weight scheduler for dynamic weighting based on regime
+            active_weights = self.weight_scheduler.get_weights(context.market_regime, context.vix_level)
+            weight_schedule_reason = self.weight_scheduler.get_schedule_reason(context.market_regime, context.vix_level)
                  
         if not self.pillars:
             logger.warning("No pillars registered, returning INVALID analysis")
@@ -91,7 +110,8 @@ class ReasoningEngine:
         
         for pillar_name, pillar in self.pillars.items():
             try:
-                score, bias, metrics, explanation = pillar.analyze(snapshot, context)
+                # Use passed config or None
+                score, bias, metrics, explanation = pillar.analyze(snapshot, context, config=pillar_config)
                 scores[pillar_name] = score
                 biases[pillar_name] = bias
                 
@@ -199,7 +219,8 @@ class ReasoningEngine:
             conviction_score
         )
         
-        return TradeIntent(
+        # Step 8: Detect anomalies (v1.1)
+        intent = TradeIntent(
             symbol=snapshot.symbol,
             analysis_timestamp=analysis_timestamp,
             directional_bias=directional_bias,
@@ -210,8 +231,15 @@ class ReasoningEngine:
             is_analysis_valid=is_valid,
             is_execution_ready=is_execution_ready,
             degradation_warnings=warnings,
+            weight_schedule_applied=active_weights,
+            weight_schedule_reason=weight_schedule_reason,
             contract_version="1.1.0"
         )
+        
+        # Populate anomaly flags
+        intent.anomaly_flags = self.anomaly_detector.detect_anomalies(intent, snapshot.symbol)
+        
+        return intent
     
     def _aggregate_scores(self, scores: Dict[str, float], weights: Dict[str, float]) -> float:
         """Weighted sum of pillar scores."""

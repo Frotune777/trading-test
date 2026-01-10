@@ -3,12 +3,12 @@
 import React from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  AlertCircle, 
-  Clock, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertCircle,
+  Clock,
   ShieldCheck,
   Zap
 } from 'lucide-react';
@@ -39,30 +39,30 @@ export default function CommandCard({
   const getSignalConfig = (s: string) => {
     switch (s) {
       case 'BUY':
-        return { 
-          color: 'text-success', 
-          bg: 'bg-success/10', 
+        return {
+          color: 'text-success',
+          bg: 'bg-success/10',
           border: 'border-success/20',
           icon: <TrendingUp className="w-8 h-8" />
         };
       case 'SELL':
-        return { 
-          color: 'text-destructive', 
-          bg: 'bg-destructive/10', 
+        return {
+          color: 'text-destructive',
+          bg: 'bg-destructive/10',
           border: 'border-destructive/20',
           icon: <TrendingDown className="w-8 h-8" />
         };
       case 'HOLD':
-        return { 
-          color: 'text-warning', 
-          bg: 'bg-warning/10', 
+        return {
+          color: 'text-warning',
+          bg: 'bg-warning/10',
           border: 'border-warning/20',
           icon: <Minus className="w-8 h-8" />
         };
       default:
-        return { 
-          color: 'text-muted-foreground', 
-          bg: 'bg-muted/10', 
+        return {
+          color: 'text-muted-foreground',
+          bg: 'bg-muted/10',
           border: 'border-border',
           icon: <AlertCircle className="w-8 h-8" />
         };
@@ -88,7 +88,7 @@ export default function CommandCard({
                   {symbol}
                 </Badge>
                 {isExecutionReady && (
-                  <Badge className="bg-success hover:bg-success/90 text-white gap-1 flex items-center border-none">
+                  <Badge className="bg-success hover:bg-success/90 text-white gap-1 flex items-center border-none" data-testid="execution-ready-badge">
                     <ShieldCheck className="w-3 h-3" /> READY
                   </Badge>
                 )}
@@ -104,7 +104,7 @@ export default function CommandCard({
               </div>
               <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 font-bold">QUAD Signal</div>
-                <div className={cn("text-5xl font-black tracking-tighter", config.color)}>
+                <div className={cn("text-5xl font-black tracking-tighter", config.color)} data-testid="quad-signal">
                   {signal}
                 </div>
               </div>
@@ -115,8 +115,8 @@ export default function CommandCard({
                 <div className="text-[10px] uppercase text-muted-foreground mb-1 font-bold">Confidence</div>
                 <div className={cn(
                   "text-sm font-bold",
-                  confidence === 'HIGH' ? 'text-success' : 
-                  confidence === 'MEDIUM' ? 'text-warning' : 'text-destructive'
+                  confidence === 'HIGH' ? 'text-success' :
+                    confidence === 'MEDIUM' ? 'text-warning' : 'text-destructive'
                 )}>
                   {confidence}
                 </div>
@@ -136,18 +136,18 @@ export default function CommandCard({
                   <div className="text-xs uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-2">
                     <Zap className="w-3 h-3 text-amber-500" /> Analysis Conviction
                   </div>
-                  <div className="text-4xl font-mono text-foreground font-black leading-none">
+                  <div className="text-4xl font-mono text-foreground font-black leading-none" data-testid="conviction-score">
                     {conviction.toFixed(1)}%
                   </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="h-3 w-full bg-muted rounded-full overflow-hidden mb-8 border border-border">
-                  <div 
+                  <div
                     className={cn(
                       "h-full transition-all duration-1000 ease-out",
-                      conviction >= 70 ? "bg-success" : 
-                      conviction >= 50 ? "bg-warning" : "bg-destructive"
+                      conviction >= 70 ? "bg-success" :
+                        conviction >= 50 ? "bg-warning" : "bg-destructive"
                     )}
                     style={{ width: `${conviction}%` }}
                   />

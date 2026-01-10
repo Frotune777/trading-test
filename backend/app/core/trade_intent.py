@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Dict
 from enum import Enum
 from datetime import datetime
 
@@ -88,6 +88,13 @@ class TradeIntent:
     is_execution_ready: bool     # False if placeholder pillars > threshold
     execution_block_reason: Optional[str] = None # E.g., "FEED_DEGRADED", "STALE_LTP"
     degradation_warnings: List[str] = None       # E.g., ["Volatility pillar is placeholder"]
+    
+    # Weight Scheduler (NEW in v1.1)
+    weight_schedule_applied: Optional[dict] = None  # Actual weights used
+    weight_schedule_reason: Optional[str] = None  # e.g., "BULLISH_REGIME_LOW_VIX"
+    
+    # Anomaly Detection (NEW in v1.1)
+    anomaly_flags: List = None  # List of Anomaly objects detected
     
     # Version & Schema
     contract_version: str = "1.1.0"  # Semantic versioning for frontend

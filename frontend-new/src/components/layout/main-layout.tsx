@@ -18,7 +18,7 @@ export default function MainLayout({
             {/* Main content takes remaining space */}
             <main className="flex-1 h-full overflow-y-auto bg-background">
                 <Header />
-                <div className="p-8">
+                <div className="p-6 md:p-8 lg:p-10 max-w-[1600px] mx-auto">
                     {children}
                 </div>
             </main>

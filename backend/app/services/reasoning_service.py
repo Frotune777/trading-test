@@ -14,6 +14,7 @@ from ..reasoning.pillars.volatility_pillar import VolatilityPillar
 from ..reasoning.pillars.liquidity_pillar import LiquidityPillar
 from ..reasoning.pillars.sentiment_pillar import SentimentPillar
 from ..reasoning.pillars.regime_pillar import RegimePillar
+from .feed_cross_validator import FeedCrossValidator
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,10 @@ class ReasoningService:
         # Snapshot builder
         self.snapshot_builder = SnapshotBuilder()
         
-        logger.info("ReasoningService initialized with 6 QUAD pillars")
+        # Feed Cross-Validator (v1.1)
+        self.validator = FeedCrossValidator()
+        
+        logger.info("ReasoningService initialized with 6 QUAD pillars and FeedCrossValidator")
     
     async def is_execution_safe(self, symbol: str, snapshot: Any) -> tuple[bool, Optional[str]]:
         """
@@ -48,7 +52,6 @@ class ReasoningService:
         Returns (is_safe, block_reason)
         """
         from app.core.config import settings
-        from app.core.openalgo_bridge import openalgo_client, FeedState
         from app.core.redis import redis_client
         
         # 1. Global Kill Switch (Settings + Runtime Override)
@@ -65,29 +68,15 @@ class ReasoningService:
         if not is_enabled:
             return False, "EXECUTION_DISABLED"
 
-        # 2. Feed Health Check
-        status = openalgo_client.get_status()
-        state = status.get("feed_state")
+        # 2. OpenAlgo Master Switch (Analyzer Mode)
+        from app.core.openalgo_bridge import openalgo_bridge
+        oa_mode = await openalgo_bridge.get_execution_mode()
         
-        if state == FeedState.DOWN.value:
-            return False, "FEED_DOWN"
-        if state == FeedState.DEGRADED.value:
-            return False, "FEED_DEGRADED"
-        
-        # 3. Redis LTP Existence & Freshness
-        if snapshot.ltp_source != "redis_ws":
-             return False, "NO_REALTIME_DATA"
-             
-        if snapshot.ltp_age_ms is None or snapshot.ltp_age_ms > 5000:
-            return False, "STALE_LTP"
+        if oa_mode == "DRY_RUN":
+            # If OpenAlgo is in Analyzer/Sandbox mode, we MUST treat as DRY_RUN
+            return True, "DRY_RUN_MODE_OA"
             
-        # 4. Subscription Check
-        active_symbols = status.get("active_symbols", [])
-        target = symbol if ":" in symbol else f"NSE:{symbol}"
-        if target not in active_symbols:
-            return False, "SYMBOL_NOT_SUBSCRIBED"
-            
-        # 5. Mode Check (Returns specific reason if DRY_RUN)
+        # 3. Mode Check (Settings Fallback)
         if settings.EXECUTION_MODE == "DRY_RUN":
             return True, "DRY_RUN_MODE"
 
@@ -110,6 +99,7 @@ class ReasoningService:
         return {
             "is_execution_ready": is_safe,
             "execution_mode": settings.EXECUTION_MODE,
+            "openalgo_mode": await openalgo_bridge.get_execution_mode(),
             "block_reason": block_reason,
             "feed_state": openalgo_client.feed_state.value,
             "ltp_source": snapshot.ltp_source,
@@ -152,14 +142,42 @@ class ReasoningService:
                 except Exception as e:
                     logger.warning(f"Failed to fetch user preferences: {e}")
             
-            # Run reasoning engine
+            # Step 1: Feed Cross-Validation (v1.1)
+            # Fetch OHLCV data for validation if available
+            ohlcv_data = context.ohlcv.get(symbol) if hasattr(context, 'ohlcv') else None
+            validation = await self.validator.validate_indicators(symbol, snapshot, ohlcv_data=ohlcv_data)
+            
+            # Step 1.5: Fetch Feed Health Status (v1.1)
+            from .feed_health_monitor import feed_health_monitor
+            feed_health = await feed_health_monitor.check_health()
+            
+            # Step 2: Run reasoning engine
             logger.info(f"Running reasoning engine for {symbol}")
             intent = self.engine.analyze(snapshot, context, custom_weights=custom_weights)
             
-            # Execution Safety Gate
-            is_safe, block_reason = await self.is_execution_safe(symbol, snapshot)
+            # Add validation warnings to intent
+            if validation.warnings:
+                if intent.degradation_warnings is None:
+                    intent.degradation_warnings = []
+                intent.degradation_warnings.extend(validation.warnings)
+            
+            # Step 3: Baseline Safety Check (Kill Switch & Mode Only)
+            # Data checks invoked in analyze_symbol now delegated to Gate,
+            # but we still check the global kill switch here.
+            is_safe, baseline_block_reason = await self.is_execution_safe(symbol, snapshot)
             intent.is_execution_ready = is_safe and intent.is_execution_ready
-            intent.execution_block_reason = block_reason
+            
+            if not is_safe and not intent.execution_block_reason:
+                intent.execution_block_reason = baseline_block_reason
+
+            # Step 4: Strict Data Integrity Gate (Rule #8, #9, #11, #6)
+            from .data_integrity_gate import StrictDataIntegrityGate
+            intent = StrictDataIntegrityGate.apply_gate(
+                intent, 
+                snapshot, 
+                feed_health=feed_health, 
+                validation_result=validation
+            )
             
             # Convert to API response format (v1.0 contract)
             from app.core.trade_decision import TradeDecision
@@ -234,6 +252,25 @@ class ReasoningService:
                 'execution_block_reason': intent.execution_block_reason,
                 'warnings': intent.degradation_warnings,
                 
+                # Weight scheduling (v1.1)
+                'weight_schedule': {
+                    'applied': intent.weight_schedule_applied,
+                    'reason': intent.weight_schedule_reason
+                },
+                
+                # Anomaly flags (v1.1)
+                'anomaly_flags': [
+                    {
+                        'type': a.type,
+                        'pillar': a.pillar,
+                        'severity': a.severity,
+                        'description': a.description,
+                        'detected_at': a.detected_at.isoformat(),
+                        'metric_value': a.metric_value
+                    }
+                    for a in (intent.anomaly_flags or [])
+                ],
+                
                 # Market context (for UI display)
                 'market_context': {
                     'regime': context.market_regime,
@@ -258,7 +295,8 @@ class ReasoningService:
                 },
                 
                 # v1.1: Include TradeIntent object for history saving
-                'trade_intent': intent
+                'trade_intent': intent,
+                'market_snapshot': snapshot
             }
             
         except Exception as e:

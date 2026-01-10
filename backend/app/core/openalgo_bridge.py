@@ -7,13 +7,145 @@ from typing import Dict, List, Set, Optional, Any
 from enum import Enum
 from datetime import datetime, timezone
 import websockets
+import httpx
+import sys
+import os
+
 from app.core.config import settings
 from app.core.redis import redis_client
 from app.services.alert_service import AlertService
 from app.core.database import SessionLocal
 from app.database.models_historical import MarketTick
 
+# Configure logger
 logger = logging.getLogger(__name__)
+
+class OpenAlgoServiceBridge:
+    """
+    Bridge to interact with OpenAlgo services via HTTP API.
+    Bypasses direct Python imports to avoid Flask/SocketIO context issues.
+    """
+    
+    @staticmethod
+    async def get_execution_mode() -> str:
+        """
+        Determines the execution mode by querying OpenAlgo's Analyzer API.
+        Returns: 'DRY_RUN' or 'LIVE'
+        """
+        try:
+            url = f"{settings.OPENALGO_API_URL}/analyzer/"
+            # Payload matching AnalyzerSchema (apikey required)
+            payload = {"apikey": settings.OPENALGO_API_KEY}
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, timeout=5.0)
+                
+            if response.status_code == 200:
+                data = response.json()
+                # data response from get_analyzer_status usually contains 'data': {'mode': bool}
+                # We need to parse correctly based on standard OpenAlgo response format
+                # Assuming response is: {'status': 'success', 'data': {'mode': True/False, ...}}
+                
+                result_data = data.get('data', {})
+                is_analyzer_on = result_data.get('mode', False)
+                return "DRY_RUN" if is_analyzer_on else "LIVE"
+            else:
+                logger.error(f"Failed to query OpenAlgo Analyzer: {response.text}")
+                return "DRY_RUN" # Fail-safe default
+                
+        except Exception as e:
+            logger.error(f"Error bridging to OpenAlgo Analyzer: {e}")
+            return "DRY_RUN" # Fail-safe default
+
+    @staticmethod
+    async def send_alert(message: str, telegram_id: Optional[str] = None) -> bool:
+        """
+        Sends a Telegram alert via OpenAlgo's Broadcast API.
+        """
+        try:
+            # Use Broadcast to reach subscribed admin
+            # Path: /api/v1/telegram/broadcast
+            url = f"{settings.OPENALGO_API_URL}/telegram/broadcast"
+            payload = {
+                "apikey": settings.OPENALGO_API_KEY,
+                "message": message
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, timeout=5.0)
+                
+            if response.status_code == 200:
+                return True
+            else:
+                logger.error(f"Failed to send OpenAlgo Alert: {response.text}")
+                return False
+        except Exception as e:
+            logger.error(f"Error bridging to OpenAlgo Alerts: {e}")
+            return False
+
+    @staticmethod
+    async def place_smart_order(order_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Places a Smart Order via OpenAlgo API.
+        Handles netting and routing automatically.
+        Endpoint: /api/v1/placesmartorder/
+        """
+        try:
+            url = f"{settings.OPENALGO_API_URL}/placesmartorder/"
+            # Inject API Key if not present
+            if "apikey" not in order_data:
+                order_data["apikey"] = settings.OPENALGO_API_KEY
+                
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=order_data, timeout=10.0)
+                
+            if response.status_code in [200, 201]:
+                return response.json()
+            else:
+                logger.error(f"OpenAlgo Smart Order Failed: {response.text}")
+                try:
+                    return response.json() # Return error details if JSON
+                except:
+                    return {"status": "error", "message": response.text}
+                
+        except Exception as e:
+            logger.error(f"Error placing Smart Order: {e}")
+            return {"status": "error", "message": str(e)}
+
+    @staticmethod
+    async def get_open_position(symbol: str, exchange: str = "NSE", product: str = "MIS", strategy: str = "QUAD_STRAT") -> int:
+        """
+        Get current open position quantity for a symbol.
+        Endpoint: /api/v1/openposition/
+        """
+        try:
+            url = f"{settings.OPENALGO_API_URL}/openposition/"
+            payload = {
+                "apikey": settings.OPENALGO_API_KEY,
+                "symbol": symbol,
+                "exchange": exchange,
+                "product": product,
+                "strategy": strategy
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, timeout=5.0)
+                
+            if response.status_code == 200:
+                data = response.json()
+                # Expected response: {'status': 'success', 'data': {'quantity': 50, ...}}
+                return int(data.get('data', {}).get('quantity', 0))
+            else:
+                logger.error(f"Failed to get Open Position: {response.text}")
+                return 0
+                
+        except Exception as e:
+            logger.error(f"Error getting Open Position: {e}")
+            return 0
+
+# Global instance
+openalgo_bridge = OpenAlgoServiceBridge()
+
 
 class FeedState(Enum):
     HEALTHY = "HEALTHY"   # All symbols active within 15s
@@ -112,8 +244,6 @@ class OpenAlgoWSClient:
         while self.is_running:
             raw_now = time.time()
             
-            current_feed_state = self.feed_state
-
             if not self.ws or not self.ws.open:
                 self.feed_state = FeedState.DOWN
             elif not self.subscribed_symbols:
@@ -136,7 +266,9 @@ class OpenAlgoWSClient:
                 if is_any_stale:
                     await self._update_feed_state(FeedState.DEGRADED, "At least one symbol has stale data (>15s)", level="WARNING")
                 else:
-                    await self._update_feed_state(FeedState.HEALTHY, "All symbols receiving live ticks.")
+                    current_state = self.feed_state
+                    if current_state != FeedState.HEALTHY:
+                         await self._update_feed_state(FeedState.HEALTHY, "All symbols receiving live ticks.")
 
             await asyncio.sleep(5)
 
@@ -222,15 +354,16 @@ class OpenAlgoWSClient:
             
             # KV Authoritative Cache with TTL
             redis_key = f"market:ltp:{exchange}:{symbol}"
-            await redis_client.set(
-                redis_key, 
-                json.dumps(tick_payload), 
-                ex=settings.REDIS_TICK_TTL
-            )
-            
-            # Pub/Sub Notification
-            publish_channel = f"market_ticks:{exchange}:{symbol}"
-            await redis_client.publish(publish_channel, json.dumps(tick_payload))
+            # Redis usage requires async call, assumed working in async context
+            if redis_client:
+                 await redis_client.set(
+                    redis_key, 
+                    json.dumps(tick_payload), 
+                    ex=settings.REDIS_TICK_TTL
+                )
+                 # Pub/Sub Notification
+                 publish_channel = f"market_ticks:{exchange}:{symbol}"
+                 await redis_client.publish(publish_channel, json.dumps(tick_payload))
             
             # Persistent Storage Buffer
             await self.tick_buffer.put({

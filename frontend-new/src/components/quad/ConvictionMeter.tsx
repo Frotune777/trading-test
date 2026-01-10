@@ -14,8 +14,9 @@
  */
 
 import React from 'react';
-import { DirectionalBias } from '@/types/quad';
+import { DirectionalBias, PillarContribution } from '@/types/quad';
 import { cn } from '@/lib/utils';
+import { Tooltip } from '@/components/ui/tooltip';
 
 import {
   CheckCircle,
@@ -24,6 +25,7 @@ import {
   TrendingDown,
   Minus,
   AlertTriangle,
+  Info,
 } from 'lucide-react';
 
 interface ConvictionMeterProps {
@@ -31,6 +33,8 @@ interface ConvictionMeterProps {
   directionalBias: DirectionalBias;
   isExecutionReady: boolean;
   contractVersion?: string;
+  pillarContributions?: PillarContribution[];
+  reasoning?: string;
 }
 
 export function ConvictionMeter({
@@ -38,6 +42,8 @@ export function ConvictionMeter({
   directionalBias,
   isExecutionReady,
   contractVersion = '1.0.0',
+  pillarContributions = [],
+  reasoning,
 }: ConvictionMeterProps) {
   // Helper to get conviction level label
   const getConvictionLabel = (score: number): string => {
@@ -101,9 +107,65 @@ export function ConvictionMeter({
     <div className="w-full bg-card rounded-lg border border-border p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-foreground">
-          Analysis Conviction
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground">
+            Analysis Conviction
+          </h3>
+          {pillarContributions.length > 0 && (
+            <Tooltip
+              content={
+                <div className="space-y-3">
+                  <div className="font-semibold text-sm border-b border-border pb-2">
+                    Pillar Breakdown
+                  </div>
+                  {pillarContributions.map((pillar) => (
+                    <div key={pillar.name} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium capitalize">
+                          {pillar.name}
+                        </span>
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          pillar.score >= 70 ? "text-success" :
+                            pillar.score >= 50 ? "text-warning" :
+                              "text-destructive"
+                        )}>
+                          {pillar.score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          Bias: <span className={cn(
+                            "font-medium",
+                            pillar.bias === 'BULLISH' ? "text-success" :
+                              pillar.bias === 'BEARISH' ? "text-destructive" :
+                                "text-muted-foreground"
+                          )}>{pillar.bias}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          Weight: {(pillar.weight_applied * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      {pillar.explanation && (
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {pillar.explanation}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                  {reasoning && (
+                    <div className="pt-2 border-t border-border">
+                      <div className="text-xs font-medium mb-1">Overall Reasoning</div>
+                      <p className="text-xs text-muted-foreground">{reasoning}</p>
+                    </div>
+                  )}
+                </div>
+              }
+            >
+              <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+            </Tooltip>
+          )}
+        </div>
         <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
           v{contractVersion}
         </span>
@@ -136,9 +198,9 @@ export function ConvictionMeter({
               strokeDashoffset={strokeDashoffset}
               className={cn(
                 "transition-all duration-1000 ease-out",
-                conviction >= 70 ? 'text-success' : 
-                conviction >= 50 ? 'text-warning' : 
-                conviction >= 30 ? 'text-warning/80' : 'text-destructive'
+                conviction >= 70 ? 'text-success' :
+                  conviction >= 50 ? 'text-warning' :
+                    conviction >= 30 ? 'text-warning/80' : 'text-destructive'
               )}
             />
           </svg>
@@ -173,11 +235,10 @@ export function ConvictionMeter({
 
           {/* Execution Readiness */}
           <div
-            className={`flex items-center justify-between p-4 rounded-lg border ${
-              isExecutionReady
-                ? 'border-success/20 bg-success/10'
-                : 'border-warning/20 bg-warning/10'
-            }`}
+            className={`flex items-center justify-between p-4 rounded-lg border ${isExecutionReady
+              ? 'border-success/20 bg-success/10'
+              : 'border-warning/20 bg-warning/10'
+              }`}
           >
             <div className="flex items-center gap-3">
               <div className={isExecutionReady ? 'text-success' : 'text-warning'}>
@@ -190,9 +251,8 @@ export function ConvictionMeter({
               <div>
                 <div className="text-sm text-foreground/60">Execution Status</div>
                 <div
-                  className={`text-lg font-semibold ${
-                    isExecutionReady ? 'text-success' : 'text-warning'
-                  }`}
+                  className={`text-lg font-semibold ${isExecutionReady ? 'text-success' : 'text-warning'
+                    }`}
                   data-testid="execution-ready-status"
                 >
                   {isExecutionReady ? 'Ready' : 'Not Ready'}

@@ -207,8 +207,8 @@ class QUADSignalAccuracy(Base):
 
 class RiskMetrics(Base):
     """Risk metrics (VaR, Beta, Sharpe)"""
-    __tablename__ = "risk_metrics"
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "quad_risk_metrics"
+    # __table_args__ = {'extend_existing': True}  # Not needed if unique table name
     
     id = Column(Integer, primary_key=True)
     symbol = Column(String(20), nullable=False, index=True)
@@ -290,6 +290,8 @@ class ConvictionTimelinePoint(BaseModel):
     timestamp: datetime
     conviction: int
     signal: str
+    regime: Optional[str] = None
+    pillar_scores: Optional[Dict[str, int]] = None
 
 
 class ConvictionTimeline(BaseModel):

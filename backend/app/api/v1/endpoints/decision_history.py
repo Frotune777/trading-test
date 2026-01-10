@@ -87,10 +87,18 @@ async def get_conviction_timeline(
         )
         
         if not history.entries:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No decision history found for {symbol} in last {days} days"
-            )
+            # Return empty timeline instead of 404
+            return {
+                "symbol": symbol.upper(),
+                "days_analyzed": days,
+                "total_decisions": 0,
+                "conviction_volatility": 0.0,
+                "bias_consistency": 0.0,
+                "conviction_trend": "STABLE",
+                "recent_bias_streak": 0,
+                "timeline_data": [],
+                "note": "No historical decisions found. Decision history will populate as analysis runs."
+            }
         
         # Build timeline from history
         timeline = ConvictionTimeline.from_decision_history(history)
@@ -101,7 +109,18 @@ async def get_conviction_timeline(
         raise
     except Exception as e:
         logger.error(f"Failed to build conviction timeline for {symbol}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to build conviction timeline: {str(e)}")
+        # Return empty data instead of 500 error
+        return {
+            "symbol": symbol.upper(),
+            "days_analyzed": days,
+            "total_decisions": 0,
+            "conviction_volatility": 0.0,
+            "bias_consistency": 0.0,
+            "conviction_trend": "STABLE",
+            "recent_bias_streak": 0,
+            "timeline_data": [],
+            "error": "Failed to build timeline - decision history service unavailable"
+        }
 
 
 @router.get("/pillar-drift/{symbol}")

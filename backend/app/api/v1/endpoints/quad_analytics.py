@@ -15,7 +15,7 @@ from app.database.models_quad import (
     SignalAccuracyMetrics, PillarScores
 )
 from app.services.quad_analytics_service import QUADAnalyticsService
-from app.services.quad_ml_service import QUADMLService
+# from app.services.quad_ml_service import QUADMLService  # DISABLED - requires sklearn
 from app.services.quad_alert_service import QUADAlertService
 from app.services.peer_comparison_service import PeerComparisonService
 from app.services.backtest_service import BacktestService

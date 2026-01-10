@@ -78,7 +78,7 @@ services:
     build: 
       context: ./frontend-new
       dockerfile: Dockerfile
-    container_name: quad_frontend_new
+    container_name: quad_frontend
     ports:
       - "3010:3000"
     env_file: .env

@@ -186,7 +186,16 @@ class QUADAnalyticsService:
                 ConvictionTimelinePoint(
                     timestamp=d.timestamp,
                     conviction=d.conviction,
-                    signal=d.signal
+                    signal=d.signal,
+                    regime=d.meta_data.get('market_regime') if d.meta_data else None,
+                    pillar_scores={
+                        'trend': d.trend_score,
+                        'momentum': d.momentum_score,
+                        'volatility': d.volatility_score,
+                        'liquidity': d.liquidity_score,
+                        'sentiment': d.sentiment_score,
+                        'regime': d.regime_score
+                    }
                 )
                 for d in decisions
             ]

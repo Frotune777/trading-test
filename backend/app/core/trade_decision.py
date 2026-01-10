@@ -21,12 +21,26 @@ class TradeDecision:
     decision_time: datetime               # Timezone-aware
     valid_till: datetime                  # Hard expiry time
     
+    
+    # In-memory registry for simple persistence during runtime
+    _registry = {}
+
+    def save(self):
+        """Save this decision to the in-memory registry."""
+        TradeDecision._registry[self.decision_id] = self
+        return self
+
+    @classmethod
+    def get(cls, decision_id: str) -> Optional['TradeDecision']:
+        """Retrieve a decision by ID."""
+        return cls._registry.get(decision_id)
+
     @classmethod
     def create(cls, symbol: str, signal: str, confidence: float, ltp: float, 
                strategy: str = "QUAD_V1", version: str = "1.0.0", tt_seconds: int = 60):
         now = datetime.now()
         from datetime import timedelta
-        return cls(
+        instance = cls(
             decision_id=str(uuid.uuid4()),
             strategy_name=strategy,
             strategy_version=version,
@@ -37,3 +51,4 @@ class TradeDecision:
             decision_time=now,
             valid_till=now + timedelta(seconds=tt_seconds)
         )
+        return instance.save()

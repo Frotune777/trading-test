@@ -25,6 +25,10 @@ class DecisionLedger(Base):
     mode = Column(String(20), nullable=False)  # DRY_RUN, LIVE, BACKTEST
     user_id = Column(String(255), nullable=False, index=True)
     
+    # Rule 14: Validity & Context
+    validity_window_mins = Column(Integer, default=15, nullable=False)
+    strategy_name_snapshot = Column(String(100), nullable=True)
+    
     # Final Decision
     final_decision = Column(String(10), nullable=False)  # BUY, SELL, HOLD
     conviction = Column(Integer, nullable=False)  # 0-100

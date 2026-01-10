@@ -41,4 +41,4 @@ The Fortune Trading Platform is a professional-grade analysis SaaS built on a **
 3.  **Security**: JWT-based authentication is initialized in some controllers but not enforced globally.
 
 ---
-*Created by Antigravity Analysis 🚀*
+*Created by Fortune Analysis 🚀*

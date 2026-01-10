@@ -29,7 +29,7 @@ class DataUpdater:
         self.derivatives = NSEDerivatives()
         self.nse_utils = NseUtils()
     
-    def update_stock(self, symbol: str, force: bool = False) -> Dict[str, any]:
+    async def update_stock(self, symbol: str, force: bool = False) -> Dict[str, any]:
         """
         Update all data for a symbol.
         """
@@ -61,7 +61,7 @@ class DataUpdater:
         try:
             # Get complete data from all sources
             logger.info(f"📥 Fetching complete data for {symbol}...")
-            data = self.aggregator.get_complete_analysis(symbol)
+            data = await self.aggregator.get_complete_analysis(symbol)
             
             if not data:
                 logger.error(f"❌ No data received for {symbol}")

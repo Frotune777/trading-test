@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Minus, 
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
   HelpCircle,
   Activity,
   Zap,
@@ -48,23 +48,23 @@ export default function PillarContribution({ pillars }: PillarContributionProps)
   const getBiasConfig = (bias: string) => {
     switch (bias) {
       case 'BULLISH':
-        return { 
-          color: 'text-success', 
-          bg: 'bg-success/10', 
+        return {
+          color: 'text-success',
+          bg: 'bg-success/10',
           border: 'border-success/20',
           indicator: <ArrowUpRight className="w-4 h-4" />
         };
       case 'BEARISH':
-        return { 
-          color: 'text-destructive', 
-          bg: 'bg-destructive/10', 
+        return {
+          color: 'text-destructive',
+          bg: 'bg-destructive/10',
           border: 'border-destructive/20',
           indicator: <ArrowDownRight className="w-4 h-4" />
         };
       default:
-        return { 
-          color: 'text-warning', 
-          bg: 'bg-warning/10', 
+        return {
+          color: 'text-warning',
+          bg: 'bg-warning/10',
           border: 'border-warning/20',
           indicator: <Minus className="w-4 h-4" />
         };
@@ -87,11 +87,11 @@ export default function PillarContribution({ pillars }: PillarContributionProps)
               pillar.is_placeholder && "opacity-60"
             )}>
               {/* Highlight bar */}
-              <div className={cn("absolute top-0 left-0 bottom-0 w-1", 
-                pillar.bias === 'BULLISH' ? 'bg-success' : 
-                pillar.bias === 'BEARISH' ? 'bg-destructive' : 'bg-warning'
+              <div className={cn("absolute top-0 left-0 bottom-0 w-1",
+                pillar.bias === 'BULLISH' ? 'bg-success' :
+                  pillar.bias === 'BEARISH' ? 'bg-destructive' : 'bg-warning'
               )} />
-              
+
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export default function PillarContribution({ pillars }: PillarContributionProps)
                 </div>
 
                 <div className="flex items-end justify-between mb-3">
-                  <div className="text-3xl font-mono font-black text-foreground leading-none">
+                  <div className="text-3xl font-mono font-black text-foreground leading-none" data-testid={`pillar-score-${pillar.id.toLowerCase()}`}>
                     {pillar.score.toFixed(0)}
                   </div>
                   <div className={cn(

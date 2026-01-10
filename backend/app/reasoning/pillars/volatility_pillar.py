@@ -1,6 +1,9 @@
 from .base_pillar import BasePillar
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
-from typing import Tuple
+from ...core.config import settings
+from typing import Tuple, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..pillar_config import PillarConfig
 
 class VolatilityPillar(BasePillar):
     """
@@ -8,7 +11,12 @@ class VolatilityPillar(BasePillar):
     Implements calibration matrix from pillar_calibration_matrices.md v1.0
     """
     
-    def analyze(self, snapshot: LiveDecisionSnapshot, context: SessionContext) -> Tuple[float, str, dict, str]:
+    def analyze(
+        self, 
+        snapshot: LiveDecisionSnapshot, 
+        context: SessionContext,
+        config: Optional['PillarConfig'] = None
+    ) -> Tuple[float, str, dict, str]:
         """
         Analyze volatility using calibrated thresholds.
         
@@ -39,7 +47,11 @@ class VolatilityPillar(BasePillar):
         vix_score = self._score_vix(context.vix_level, explanation_parts, context.vix_percentile) if has_vix else None
         
         # Composite scoring with dynamic weights
-        weights = {'atr': 0.40, 'bb': 0.30, 'vix': 0.30}
+        weights = {
+            'atr': settings.VOLATILITY_WEIGHT_ATR,
+            'bb': settings.VOLATILITY_WEIGHT_BB,
+            'vix': settings.VOLATILITY_WEIGHT_VIX
+        }
         total_weight = 0.0
         weighted_score = 0.0
         
@@ -78,19 +90,19 @@ class VolatilityPillar(BasePillar):
         """
         Score ATR% using calibration matrix thresholds.
         """
-        if atr_pct < 1.5:
+        if atr_pct < settings.VOLATILITY_ATR_LOW:
             explanation_parts.append(f"ATR is very low ({atr_pct:.2f}%), indicating low volatility.")
             return 85.0
-        elif atr_pct < 3.0:
+        elif atr_pct < settings.VOLATILITY_ATR_MODERATE:
             explanation_parts.append(f"ATR is normal ({atr_pct:.2f}%), indicating moderate volatility.")
             return 60.0
-        elif atr_pct < 5.0:
+        elif atr_pct < settings.VOLATILITY_ATR_HIGH:
             explanation_parts.append(f"ATR is high ({atr_pct:.2f}%), indicating high volatility.")
             return 40.0
-        elif atr_pct < 8.0:
+        elif atr_pct < settings.VOLATILITY_ATR_EXTREME:
             explanation_parts.append(f"ATR is very high ({atr_pct:.2f}%), indicating very high volatility.")
             return 25.0
-        else:  # >= 8.0
+        else:  # >= extreme
             explanation_parts.append(f"ATR is extreme ({atr_pct:.2f}%), indicating extreme volatility.")
             return 10.0
     
@@ -98,19 +110,19 @@ class VolatilityPillar(BasePillar):
         """
         Score Bollinger Band Width % using calibration matrix.
         """
-        if bb_width < 4.0:
+        if bb_width < settings.VOLATILITY_BB_WIDTH_VERY_NARROW:
             explanation_parts.append(f"Bollinger Bands are very narrow ({bb_width:.2f}%), suggesting a volatility squeeze is likely.")
             return 80.0
-        elif bb_width < 8.0:
+        elif bb_width < settings.VOLATILITY_BB_WIDTH_NARROW:
             explanation_parts.append(f"Bollinger Bands have a normal width ({bb_width:.2f}%), suggesting moderate volatility.")
             return 60.0
-        elif bb_width < 12.0:
+        elif bb_width < settings.VOLATILITY_BB_WIDTH_WIDE:
             explanation_parts.append(f"Bollinger Bands are wide ({bb_width:.2f}%), suggesting high volatility.")
             return 40.0
-        elif bb_width < 18.0:
+        elif bb_width < settings.VOLATILITY_BB_WIDTH_VERY_WIDE:
             explanation_parts.append(f"Bollinger Bands are very wide ({bb_width:.2f}%), suggesting very high volatility.")
             return 25.0
-        else:  # >= 18.0
+        else:  # >= very wide
             explanation_parts.append(f"Bollinger Bands are extremely wide ({bb_width:.2f}%), suggesting extreme volatility.")
             return 15.0
     
@@ -119,22 +131,22 @@ class VolatilityPillar(BasePillar):
         Score India VIX using calibration matrix.
         """
         base_score = 0.0
-        if vix_level < 12:
+        if vix_level < settings.VOLATILITY_VIX_VERY_LOW:
             base_score = 90.0
             explanation_parts.append(f"India VIX is very low ({vix_level:.2f}), indicating a calm market environment.")
-        elif vix_level < 15:
+        elif vix_level < settings.VOLATILITY_VIX_LOW:
             base_score = 75.0
             explanation_parts.append(f"India VIX is low ({vix_level:.2f}), indicating a calm market environment.")
-        elif vix_level < 20:
+        elif vix_level < settings.VOLATILITY_VIX_NORMAL:
             base_score = 60.0
             explanation_parts.append(f"India VIX is normal ({vix_level:.2f}), indicating a normal market environment.")
-        elif vix_level < 25:
+        elif vix_level < settings.VOLATILITY_VIX_ELEVATED:
             base_score = 45.0
             explanation_parts.append(f"India VIX is elevated ({vix_level:.2f}), indicating a heightened level of market fear.")
-        elif vix_level < 30:
+        elif vix_level < settings.VOLATILITY_VIX_HIGH:
             base_score = 30.0
             explanation_parts.append(f"India VIX is high ({vix_level:.2f}), indicating a high level of market fear.")
-        else:  # >= 30
+        else:  # >= high
             base_score = 15.0
             explanation_parts.append(f"India VIX is very high ({vix_level:.2f}), indicating extreme market fear.")
 
@@ -150,13 +162,13 @@ class VolatilityPillar(BasePillar):
         Determine directional bias using calibration rules.
         """
         # Check volatility thresholds
-        if atr_pct is not None and atr_pct >= 5.0:
+        if atr_pct is not None and atr_pct >= settings.VOLATILITY_BIAS_ATR_THRESHOLD:
             if explanation_parts: explanation_parts.append("High ATR is contributing to a 'VOLATILE' bias.")
             return "VOLATILE"
-        if bb_width is not None and bb_width >= 12.0:
+        if bb_width is not None and bb_width >= settings.VOLATILITY_BIAS_BB_THRESHOLD:
             if explanation_parts: explanation_parts.append("Wide Bollinger Bands are contributing to a 'VOLATILE' bias.")
             return "VOLATILE"
-        if vix is not None and vix >= 25:
+        if vix is not None and vix >= settings.VOLATILITY_BIAS_VIX_THRESHOLD:
             if explanation_parts: explanation_parts.append("High VIX is contributing to a 'VOLATILE' bias.")
             return "VOLATILE"
         

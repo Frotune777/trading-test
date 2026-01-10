@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional, TYPE_CHECKING
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
+
+if TYPE_CHECKING:
+    from ..pillar_config import PillarConfig
 
 class BasePillar(ABC):
     """
@@ -12,8 +15,9 @@ class BasePillar(ABC):
     def analyze(
         self, 
         snapshot: LiveDecisionSnapshot, 
-        context: SessionContext
-    ) -> Tuple[float, str, dict]:
+        context: SessionContext,
+        config: Optional['PillarConfig'] = None
+    ) -> Tuple[float, str, dict, Optional[str]]:
         """
         Analyze the snapshot and return a score.
         

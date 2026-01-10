@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 /**
  * Unit Tests for ConvictionMeter Component
  * 
@@ -9,6 +10,8 @@
  */
 
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { expect } from '@jest/globals';
 import { ConvictionMeter } from '@/components/quad/ConvictionMeter';
 import { DirectionalBias } from '@/types/quad';
 
@@ -64,7 +67,7 @@ describe('ConvictionMeter', () => {
 
     const biasElement = screen.getByText('BULLISH');
     expect(biasElement).toBeInTheDocument();
-    expect(biasElement.className).toContain('text-green-600');
+    expect(biasElement.className).toContain('text-success');
   });
 
   test('shows BEARISH directional bias with red styling', () => {
@@ -78,7 +81,7 @@ describe('ConvictionMeter', () => {
 
     const biasElement = screen.getByText('BEARISH');
     expect(biasElement).toBeInTheDocument();
-    expect(biasElement.className).toContain('text-red-600');
+    expect(biasElement.className).toContain('text-destructive');
   });
 
   test('shows NEUTRAL directional bias with gray styling', () => {
@@ -92,7 +95,7 @@ describe('ConvictionMeter', () => {
 
     const biasElement = screen.getByText('NEUTRAL');
     expect(biasElement).toBeInTheDocument();
-    expect(biasElement.className).toContain('text-gray-600');
+    expect(biasElement.className).toContain('text-muted-foreground');
   });
 
   test('shows INVALID directional bias', () => {

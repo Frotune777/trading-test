@@ -2,10 +2,13 @@
 
 import json
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 from datetime import datetime, timedelta
 from app.core.redis import redis_client
 from app.database.db_manager import DatabaseManager
+
+if TYPE_CHECKING:
+    from app.core.trade_intent import TradeIntent
 
 logger = logging.getLogger(__name__)
 
@@ -33,30 +36,41 @@ class AlertService:
         level: str = "INFO",
         symbol: Optional[str] = None,
         metadata: Optional[Dict] = None,
-        channels: Optional[List[str]] = None
+        channels: Optional[List[str]] = None,
+        intent: Optional['TradeIntent'] = None
     ):
         """
         Emit a system alert through multiple channels.
         
         Args:
-            alert_type: Type of alert (e.g., "RISK_LIMIT_BREACH", "EXECUTION_BLOCKED")
-            message: Alert message
-            level: Severity level (INFO, WARNING, ERROR, CRITICAL)
-            symbol: Optional stock symbol
-            metadata: Additional metadata
-            channels: List of channels to use (default: all enabled)
+            intent: Optional TradeIntent context (v1.1)
         """
         # Check throttling
         if not self._should_send_alert(alert_type, symbol):
             logger.debug(f"Alert throttled: {alert_type} for {symbol}")
             return
         
+        # Serialize intent if provided
+        intent_data = None
+        if intent:
+            try:
+                # Basic serialization - ideal would be proper dict conversion method
+                intent_data = {
+                    "bias": intent.directional_bias.value,
+                    "score": intent.conviction_score,
+                    "pillars": [p.name for p in intent.pillar_contributions],
+                    "valid": intent.is_analysis_valid
+                }
+            except Exception as e:
+                logger.warning(f"Failed to serialize intent for alert: {e}")
+
         alert_payload = {
             "type": alert_type,
             "level": level,
             "symbol": symbol,
             "message": message,
             "metadata": metadata or {},
+            "intent": intent_data,
             "timestamp": datetime.now().isoformat()
         }
         
@@ -78,19 +92,26 @@ class AlertService:
             except Exception as e:
                 logger.error(f"Failed to publish alert to Redis: {e}")
         
-        # 3. Send via Telegram (if enabled)
+        # 3. Send via Telegram (via OpenAlgo)
         if "telegram" in target_channels:
             try:
-                telegram_bot = self._get_telegram_bot()
-                if telegram_bot and telegram_bot.enabled:
-                    await telegram_bot.send_alert(
-                        message=message,
-                        level=level,
-                        title=alert_type.replace("_", " ").title(),
-                        metadata=metadata
-                    )
+                from app.core.openalgo_bridge import openalgo_bridge
+                
+                # Format message for Telegram
+                tg_message = f"🚨 *{alert_type.replace('_', ' ').title()}* [{level}]\n"
+                tg_message += f"{message}\n"
+                if symbol:
+                    tg_message += f"Symbol: `{symbol}`\n"
+                if metadata:
+                    tg_message += f"Context: {json.dumps(metadata, default=str)}"
+                
+                # Delegate to OpenAlgo
+                # If a specific user ID was passed in metadata (custom convention), use it
+                telegram_id = metadata.get('telegram_id') if metadata else None
+                openalgo_bridge.send_alert(tg_message, telegram_id)
+                
             except Exception as e:
-                logger.error(f"Failed to send Telegram alert: {e}")
+                logger.error(f"Failed to send OpenAlgo Telegram alert: {e}")
         
         # Record alert for throttling
         self._record_alert(alert_type, symbol)

@@ -37,15 +37,16 @@ class DecisionHistoryEntry:
     directional_bias: DirectionalBias
     conviction_score: float  # 0-100
     
-    # Quality metadata (for drift analysis)
+    # Contextual metadata (v1.1)
     calibration_version: Optional[str] = None
+    market_regime: Optional[str] = None  # e.g., "BULLISH", "VOLATILE"
     pillar_count_active: int = 0
     pillar_count_placeholder: int = 0
     pillar_count_failed: int = 0
     
     # Provenance
-    engine_version: str = "1.0.0"  # QUAD engine version
-    contract_version: str = "1.0.0"  # TradeIntent contract version
+    engine_version: str = "1.1.0"  # QUAD engine version
+    contract_version: str = "1.1.0"  # TradeIntent contract version
     
     # Lifecycle
     created_at: Optional[datetime] = None  # When record was stored
@@ -64,6 +65,7 @@ class DecisionHistoryEntry:
             "directional_bias": self.directional_bias.value,
             "conviction_score": self.conviction_score,
             "calibration_version": self.calibration_version,
+            "market_regime": self.market_regime,
             "pillar_count_active": self.pillar_count_active,
             "pillar_count_placeholder": self.pillar_count_placeholder,
             "pillar_count_failed": self.pillar_count_failed,
@@ -92,13 +94,18 @@ class DecisionHistoryEntry:
         pillar_biases = {}
         for contrib in trade_intent.pillar_contributions:
             pillar_scores[contrib.name] = contrib.score
-            pillar_biases[contrib.name] = contrib.bias
+            pillar_biases[contrib.name] = contrib.bias.value if hasattr(contrib.bias, 'value') else str(contrib.bias)
         
         # Extract calibration version (v1.1 field, optional)
         calibration_version = None
         if hasattr(trade_intent.quality, 'calibration_version'):
             calibration_version = trade_intent.quality.calibration_version
         
+        # Extract market context (v1.1 additions)
+        market_regime = None
+        if hasattr(trade_intent, 'market_context') and trade_intent.market_context:
+            market_regime = trade_intent.market_context.get('regime') if isinstance(trade_intent.market_context, dict) else getattr(trade_intent.market_context, 'regime', None)
+            
         return cls(
             decision_id=decision_id,
             symbol=trade_intent.symbol,
@@ -106,6 +113,7 @@ class DecisionHistoryEntry:
             directional_bias=trade_intent.directional_bias,
             conviction_score=trade_intent.conviction_score,
             calibration_version=calibration_version,
+            market_regime=market_regime,
             pillar_count_active=trade_intent.quality.active_pillars,
             pillar_count_placeholder=trade_intent.quality.placeholder_pillars,
             pillar_count_failed=len(trade_intent.quality.failed_pillars),

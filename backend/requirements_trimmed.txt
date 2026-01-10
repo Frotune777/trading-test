@@ -1,0 +1,87 @@
+# Fortune Trading Platform - Trimmed Backend Requirements (ML Disabled)
+# ========================================================================
+# This is a lightweight version with ML/Data Science libraries removed
+# for faster builds and smaller Docker images.
+
+# 🟢 CORE WEB FRAMEWORK
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+
+# 🔵 DATABASE & CACHING
+sqlalchemy[asyncio]>=2.0.28
+asyncpg>=0.29.0
+redis>=5.0.3
+types-redis>=4.6.0
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+
+# 🟡 DATA ANALYSIS (Minimal - pandas/numpy only)
+pandas>=2.2.1
+numpy>=1.26.4
+TA-Lib>=0.4.28  # ENABLED - Essential for technical analysis
+# joblib>=1.3.2  # DISABLED - ML dependency
+# scipy>=1.12.0  # DISABLED - Heavy scientific computing
+# scikit-learn>=1.4.0  # DISABLED - ML library
+# xgboost>=2.0.0  # DISABLED - ML library
+# lightgbm>=4.1.0  # DISABLED - ML library
+# torch>=2.1.0  # DISABLED - Deep learning (1.5GB+)
+# tensorflow>=2.15.0  # DISABLED - Deep learning (500MB+)
+# keras>=3.0.0  # DISABLED - Deep learning wrapper
+# optuna>=3.5.0  # DISABLED - Hyperparameter tuning
+
+# 🟠 DATA SOURCES & SCRAPING
+yfinance>=0.2.37
+nselib>=1.0.8
+beautifulsoup4>=4.12.3
+lxml>=5.1.0
+requests>=2.31.0
+httpx>=0.27.0
+aiohttp>=3.9.3
+
+# 🟣 TASK QUEUE & ASYNC
+celery>=5.3.6
+python-dotenv>=1.0.1
+asyncio-throttle>=1.0.2
+apscheduler>=3.10.4
+
+# 🌐 WEBSOCKET & MESSAGING
+websockets>=12.0
+pyzmq>=25.1.0
+msgpack>=1.0.7
+
+# 🧪 UTILITIES & SECURITY
+python-jose[cryptography]>=3.3.0
+passlib[recommended]>=1.7.4
+bcrypt>=4.1.2
+argon2-cffi>=23.1.0
+cryptography>=42.0.0
+pyotp>=2.9.0  # For Angel One TOTP 2FA
+python-dateutil>=2.9.0
+pytz>=2024.1
+text-unidecode>=1.3
+pandas_market_calendars>=4.4.0
+cachetools>=5.3.3
+ratelimit>=2.2.1
+
+# 📊 VISUALIZATION (Minimal - removed heavy ones)
+# plotly>=5.19.0  # DISABLED - Heavy visualization
+# streamlit>=1.32.0  # DISABLED - Not needed for API
+openpyxl>=3.1.2  # Keep for Excel export
+
+# 🔗 BROKER INTEGRATIONS
+kiteconnect>=4.2.0  # Zerodha
+NorenRestApiPy>=0.0.22  # Finvasia (Shoonya)
+smartapi-python>=1.3.0  # Angel One
+upstox-python-sdk>=2.0.0  # Upstox
+fyers-apiv3>=3.0.0  # Fyers
+dhanhq>=1.3.0  # Dhan
+
+# 🧪 TESTING
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-mock>=3.12.0
+pytest-cov>=4.1.0
+email-validator==2.1.0

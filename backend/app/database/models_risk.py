@@ -111,7 +111,7 @@ class AlertLog(Base):
     # Context
     related_symbol = Column(String, nullable=True)
     related_strategy_id = Column(Integer, nullable=True)
-    metadata = Column(JSON, default={})
+    meta_data = Column(JSON, default={})
     
     # Status
     acknowledged = Column(Boolean, default=False)

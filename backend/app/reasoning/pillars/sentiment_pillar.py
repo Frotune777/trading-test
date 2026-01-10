@@ -1,6 +1,9 @@
 from .base_pillar import BasePillar
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
-from typing import Tuple
+from ...core.config import settings
+from typing import Tuple, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..pillar_config import PillarConfig
 
 class SentimentPillar(BasePillar):
     """
@@ -8,7 +11,12 @@ class SentimentPillar(BasePillar):
     Wired to derivatives data in LiveDecisionSnapshot.
     """
     
-    def analyze(self, snapshot: LiveDecisionSnapshot, context: SessionContext) -> Tuple[float, str, dict, str]:
+    def analyze(
+        self, 
+        snapshot: LiveDecisionSnapshot, 
+        context: SessionContext,
+        config: Optional['PillarConfig'] = None
+    ) -> Tuple[float, str, dict, str]:
         """
         Analyze derivatives sentiment from snapshot.
         
@@ -30,35 +38,35 @@ class SentimentPillar(BasePillar):
         if has_oi and snapshot.oi_change:
             if snapshot.oi_change > 0:
                 if snapshot.ltp > snapshot.prev_close:
-                    score += 20
+                    score += settings.SENTIMENT_OI_BUILDUP_BONUS
                     bias = "BULLISH"
                     explanation_parts.append(f"Open interest increased while price went up, suggesting bullish long buildup.")
                 else:
-                    score -= 20
+                    score -= settings.SENTIMENT_OI_BUILDUP_BONUS
                     bias = "BEARISH"
                     explanation_parts.append(f"Open interest increased while price went down, suggesting bearish short buildup.")
             elif snapshot.oi_change < 0:
                 if snapshot.ltp > snapshot.prev_close:
-                    score += 10
+                    score += settings.SENTIMENT_OI_COVERING_BONUS
                     explanation_parts.append(f"Open interest decreased while price went up, suggesting short covering, which is mildly bullish.")
                 else:
-                    score -= 10
+                    score -= settings.SENTIMENT_OI_COVERING_BONUS
                     explanation_parts.append(f"Open interest decreased while price went down, suggesting long unwinding, which is mildly bearish.")
         
         # 2. Delta Exposure (30 points)
         if has_greeks and snapshot.delta:
-            if snapshot.delta > 0.5:
-                score += 15
+            if snapshot.delta > settings.SENTIMENT_DELTA_THRESHOLD:
+                score += settings.SENTIMENT_DELTA_BONUS
                 bias = "BULLISH" if bias == "NEUTRAL" else bias
                 explanation_parts.append(f"The option chain has a high positive delta ({snapshot.delta:.2f}), indicating a bullish bias from options traders.")
-            elif snapshot.delta < -0.5:
-                score -= 15
+            elif snapshot.delta < -settings.SENTIMENT_DELTA_THRESHOLD:
+                score -= settings.SENTIMENT_DELTA_BONUS
                 bias = "BEARISH" if bias == "NEUTRAL" else bias
                 explanation_parts.append(f"The option chain has a high negative delta ({snapshot.delta:.2f}), indicating a bearish bias from options traders.")
         
         # 3. Gamma Risk (10 points)
         if has_greeks and snapshot.gamma:
-            if abs(snapshot.gamma) > 0.05:
+            if abs(snapshot.gamma) > settings.SENTIMENT_GAMMA_RISK_THRESHOLD:
                 score = score * 0.9 + 50 * 0.1
                 explanation_parts.append(f"Gamma is high ({snapshot.gamma:.4f}), which increases uncertainty and pulls the score towards neutral.")
         
@@ -66,26 +74,26 @@ class SentimentPillar(BasePillar):
         sentinel_signals = []
         
         # A. Promoter Buyback Cluster (Aggressive Bullish)
-        if snapshot.insider_buy_count and snapshot.insider_buy_count >= 3:
-            score += 25
+        if snapshot.insider_buy_count and snapshot.insider_buy_count >= settings.SENTIMENT_INSIDER_BUY_COUNT_THRESHOLD:
+            score += settings.SENTIMENT_INSIDER_CLUSTER_BONUS
             sentinel_signals.append("Promoter Buyback Cluster")
             bias = "BULLISH"
             explanation_parts.append(f"A cluster of {snapshot.insider_buy_count} insider buys detected, a strong bullish signal.")
-        elif snapshot.insider_net_value and snapshot.insider_net_value > 10000000: # > 1 Cr
-            score += 15
+        elif snapshot.insider_net_value and snapshot.insider_net_value > settings.SENTIMENT_INSIDER_NET_VALUE_THRESHOLD: # > 1 Cr
+            score += settings.SENTIMENT_INSIDER_NET_VALUE_BONUS
             sentinel_signals.append("Significant Insider Buying")
             bias = "BULLISH" if bias == "NEUTRAL" else bias
             explanation_parts.append(f"Significant insider buying of ₹{snapshot.insider_net_value/1e7:.2f} Cr detected.")
             
         # B. Institutional Reverse (Bulk/Block Deals)
         total_deals = (snapshot.bulk_deal_net_qty or 0) + (snapshot.block_deal_net_qty or 0)
-        if snapshot.volume and snapshot.volume > 0 and total_deals > (snapshot.volume * 0.05): # Deals > 5% of day's volume
-            score += 20
+        if snapshot.volume and snapshot.volume > 0 and total_deals > (snapshot.volume * settings.SENTIMENT_INSTITUTIONAL_VOL_PCT): # Deals > 5% of day's volume
+            score += settings.SENTIMENT_INSTITUTIONAL_BONUS
             sentinel_signals.append("Institutional Accumulation")
             bias = "BULLISH"
             explanation_parts.append("Significant institutional buying detected through bulk/block deals.")
-        elif snapshot.volume and snapshot.volume > 0 and total_deals < -(snapshot.volume * 0.05):
-            score -= 20
+        elif snapshot.volume and snapshot.volume > 0 and total_deals < -(snapshot.volume * settings.SENTIMENT_INSTITUTIONAL_VOL_PCT):
+            score -= settings.SENTIMENT_INSTITUTIONAL_BONUS
             sentinel_signals.append("Institutional Distribution")
             bias = "BEARISH"
             explanation_parts.append("Significant institutional selling detected through bulk/block deals.")
@@ -94,7 +102,7 @@ class SentimentPillar(BasePillar):
         # High OI activity + Price holding + Sentinel buying
         if (snapshot.oi_change or 0) > 0 and snapshot.ltp >= snapshot.prev_close:
             if "Promoter Buyback Cluster" in sentinel_signals or "Institutional Accumulation" in sentinel_signals:
-                score += 15 # Stacked conviction
+                score += settings.SENTIMENT_CONVERGENCE_BONUS # Stacked conviction
                 sentinel_signals.append("SENTINEL-OI CONVERGENCE")
                 explanation_parts.append("SENTINEL-OI CONVERGENCE detected: a powerful bullish signal combining OI buildup with institutional/insider buying.")
 

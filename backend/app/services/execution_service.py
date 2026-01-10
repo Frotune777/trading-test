@@ -11,12 +11,13 @@ from app.database.db_manager import DatabaseManager
 from app.services.reasoning_service import ReasoningService
 from app.services.alert_service import AlertService
 from app.services.risk_manager import RiskManager
+from app.core.openalgo_bridge import openalgo_bridge
 
 logger = logging.getLogger(__name__)
 
 class ExecutionService:
     """
-    Service responsible for routing orders to execution venues
+    Service responsible for routing orders to execution venues (OpenAlgo)
     while enforcing safety gates and audit trials.
     """
     def __init__(self, db_path: str = "stock_data.db"):
@@ -36,6 +37,7 @@ class ExecutionService:
     ) -> Dict[str, Any]:
         """
         Main entry point for order execution.
+        Unifies DRY_RUN and LIVE logic by delegating to OpenAlgo Smart Orders.
         
         Args:
             symbol: Target symbol
@@ -67,17 +69,7 @@ class ExecutionService:
         
         if not risk_result["allowed"]:
             block_reason = ", ".join(risk_result["blocked_reasons"])
-            execution_record = {
-                "symbol": symbol,
-                "order_type": order_payload.get("action"),
-                "quantity": order_payload.get("quantity"),
-                "price": snapshot.ltp,
-                "execution_mode": settings.EXECUTION_MODE,
-                "execution_status": "BLOCKED",
-                "execution_block_reason": block_reason,
-                "decision_id": decision.decision_id if decision else None,
-            }
-            self.db.save_execution(execution_record)
+            self._log_execution(symbol, order_payload, snapshot.ltp, "BLOCKED", block_reason, decision)
             
             await self.alerts.emit(
                 alert_type="ACCOUNT_RISK_BLOCKED",
@@ -95,30 +87,14 @@ class ExecutionService:
         try:
             cached = await redis_client.get(f"market:ltp:NSE:{symbol}")
             if cached:
-                current_ltp = json.loads(cached).get("ltp", snapshot.ltp)
+                current_ltp = float(json.loads(cached).get("ltp", snapshot.ltp))
         except: pass
-
-        execution_record = {
-            "symbol": symbol,
-            "order_type": order_payload.get("action"), # BUY/SELL
-            "quantity": order_payload.get("quantity"),
-            "price": current_ltp,
-            "execution_mode": gate_decision["execution_mode"],
-            "feed_state": gate_decision["feed_state"],
-            "ltp_source": gate_decision["ltp_source"],
-            "ltp_age_ms": gate_decision["ltp_age_ms"],
-            "raw_payload": order_payload,
-            "decision_id": decision.decision_id if decision else None,
-        }
 
         # DRIFT & EXPIRY CHECKS (only if we have a decision)
         if decision:
             # 1. Expiry Check
             if datetime.now() > decision.valid_till:
-                execution_record["execution_status"] = "BLOCKED"
-                execution_record["execution_block_reason"] = "DECISION_EXPIRED"
-                self.db.save_execution(execution_record)
-                
+                self._log_execution(symbol, order_payload, current_ltp, "BLOCKED", "DECISION_EXPIRED", decision)
                 await self.alerts.emit(
                     alert_type="DECISION_EXPIRED",
                     message=f"Trade aborted: Decision {decision.decision_id[:8]} expired for {symbol}",
@@ -126,20 +102,15 @@ class ExecutionService:
                     symbol=symbol,
                     metadata={"decision_id": decision.decision_id}
                 )
-                
                 return {"status": "BLOCKED", "block_reason": "DECISION_EXPIRED", "decision": gate_decision}
 
             # 2. Price Drift Check (Default: 10 bps for stocks)
             drift_bps = abs(current_ltp - decision.decision_ltp) / decision.decision_ltp * 10000
-            execution_record["drift_bps"] = drift_bps
             
             # Use 5bps for indices, 10bps for stocks (simple heuristic)
             threshold = 5.0 if "INDEX" in symbol else 10.0
             if drift_bps > threshold:
-                execution_record["execution_status"] = "BLOCKED"
-                execution_record["execution_block_reason"] = "EXCESSIVE_DRIFT"
-                self.db.save_execution(execution_record)
-                
+                self._log_execution(symbol, order_payload, current_ltp, "BLOCKED", "EXCESSIVE_DRIFT", decision, drift_bps=drift_bps)
                 await self.alerts.emit(
                     alert_type="EXCESSIVE_DRIFT",
                     message=f"Trade aborted: Drift {drift_bps:.1f} bps > {threshold} bps for {symbol}",
@@ -147,137 +118,115 @@ class ExecutionService:
                     symbol=symbol,
                     metadata={"drift_bps": drift_bps, "threshold": threshold, "decision_price": decision.decision_ltp, "execution_price": current_ltp}
                 )
-                
                 return {"status": "BLOCKED", "block_reason": "EXCESSIVE_DRIFT", "drift_bps": drift_bps, "decision": gate_decision}
 
         if not gate_decision["is_execution_ready"]:
             # EXECUTION BLOCKED
-            execution_record["execution_status"] = "BLOCKED"
-            execution_record["execution_block_reason"] = gate_decision["block_reason"]
-            self.db.save_execution(execution_record)
-            
+            self._log_execution(symbol, order_payload, current_ltp, "BLOCKED", gate_decision["block_reason"], decision)
             await self.alerts.emit(
                 alert_type="EXECUTION_GATE_BLOCKED",
                 message=f"Trade blocked for {symbol}: {gate_decision['block_reason']}",
                 level="WARNING",
                 symbol=symbol
             )
-            
             logger.warning(f"EXECUTION_BLOCKED: {symbol} Reason: {gate_decision['block_reason']}")
-            
             return {
                 "status": "BLOCKED",
                 "block_reason": gate_decision["block_reason"],
                 "decision": gate_decision
             }
 
-        # 2. Branch: DRY_RUN vs LIVE
-        if decision and gate_decision["execution_mode"] == "LIVE":
-            # LIVE GUARDRAILS
-            from app.core.guardrails import LiveGuardrails
-            is_allowed, reason = await LiveGuardrails.validate_execution(symbol, order_payload, decision, self.db)
-            if not is_allowed:
-                execution_record["execution_status"] = "BLOCKED"
-                execution_record["execution_block_reason"] = reason
-                self.db.save_execution(execution_record)
-                
-                await self.alerts.emit(
-                    alert_type="LIVE_GUARDRAIL_VIOLATION",
-                    message=f"LIVE Trade blocked for {symbol}: {reason}",
-                    level="CRITICAL",
-                    symbol=symbol
-                )
-                
-                logger.warning(f"LIVE_GUARDRAIL_BLOCKED: {symbol} Reason: {reason}")
-                return {"status": "BLOCKED", "block_reason": reason, "decision": gate_decision}
+        # 2. EXECUTION HANDOFF
+        # Use simple try/catch for the API interaction
+        try:
+            action = order_payload.get("action", "BUY").upper()
+            quantity = int(order_payload.get("quantity", 1))
+            product = order_payload.get("product", "MIS")
+            exchange = order_payload.get("exchange", "NSE")
+            strategy = "QUAD_STRAT"
 
-        if gate_decision["execution_mode"] == "DRY_RUN":
-             # SIMULATED EXECUTION
-            execution_record["execution_status"] = "DRY_RUN"
-            execution_record["execution_block_reason"] = "DRY_RUN_MODE"
-            execution_record["order_id"] = f"DRY_{int(datetime.now().timestamp())}"
-            self.db.save_execution(execution_record)
+            # 2.1 Calculate Target Position for Smart Netting
+            current_qty = await openalgo_bridge.get_open_position(symbol, exchange, product, strategy)
             
-            await self.alerts.emit(
-                alert_type="DRY_RUN_SUCCESS",
-                message=f"Simulated {order_payload.get('action')} executed for {symbol} at {snapshot.ltp}",
-                level="INFO",
-                symbol=symbol
-            )
+            target_position_size = 0
+            if action == "BUY":
+                target_position_size = current_qty + quantity
+            elif action == "SELL":
+                target_position_size = current_qty - quantity
             
-            return {
-                "status": "DRY_RUN_EXECUTION",
-                "order_id": execution_record["order_id"],
-                "price": snapshot.ltp,
-                "decision": gate_decision
+            # 2.2 Construct Smart Order Payload
+            smart_payload = {
+                "symbol": symbol,
+                "exchange": exchange,
+                "action": action,
+                "quantity": quantity, # Transaction quantity
+                "position_size": target_position_size, # Net target
+                "product": product,
+                "order_type": order_payload.get("order_type", "MARKET"),
+                "price": order_payload.get("price", 0),
+                "strategy": strategy,
+                "apikey": settings.OPENALGO_API_KEY
             }
-        
-        elif gate_decision["execution_mode"] == "LIVE":
-            # LIVE EXECUTION
-            try:
-                # Place order via OpenAlgo API
-                order_id = await self._place_openalgo_order(symbol, order_payload)
+
+            # 2.3 Call OpenAlgo Bridge
+            # Note: This handles both LIVE (Broker) and ANALYZE (Sandbox) modes transparently.
+            logger.info(f"Placing Smart Order for {symbol}: {action} {quantity} (Target: {target_position_size})")
+            response = await openalgo_bridge.place_smart_order(smart_payload)
+            
+            if response.get("status") == "success":
+                order_id = response.get("orderid", f"OA_{int(datetime.now().timestamp())}")
                 
-                execution_record["execution_status"] = "LIVE"
-                execution_record["order_id"] = order_id
-                self.db.save_execution(execution_record)
+                # Determine final status for our DB
+                # If OpenAlgo is in Analyze Mode, it's a Simulated Exec.
+                # If OpenAlgo is Live, it's Live.
+                # ExecutionService relies on ReasoningService's detected mode for labelling.
+                oa_mode = gate_decision.get("openalgo_mode", "UNKNOWN")
+                final_status = "LIVE" if oa_mode == "LIVE" else "DRY_RUN"
+                
+                self._log_execution(symbol, order_payload, current_ltp, final_status, None, decision, order_id=order_id)
                 
                 await self.alerts.emit(
-                    alert_type="LIVE_EXECUTION_SUCCESS",
-                    message=f"LIVE {order_payload.get('action')} executed for {symbol} at {snapshot.ltp} (Order: {order_id})",
+                    alert_type=f"{final_status}_EXECUTION_SUCCESS",
+                    message=f"{final_status} {action} executed for {symbol} (Target: {target_position_size})",
                     level="INFO",
                     symbol=symbol,
-                    metadata={"order_id": order_id}
+                    metadata={"order_id": order_id, "mode": final_status}
                 )
                 
-                logger.info(f"LIVE_EXECUTION_SUCCESS: {symbol} OrderID: {order_id}")
-                
                 return {
-                    "status": "LIVE_SUCCESS",
+                    "status": "SUCCESS",
+                    "mode": final_status,
                     "order_id": order_id,
-                    "price": snapshot.ltp,
+                    "price": current_ltp,
                     "decision": gate_decision
                 }
-            except Exception as e:
-                logger.error(f"LIVE_EXECUTION_FAILED: {symbol} Error: {e}")
-                execution_record["execution_status"] = "FAILED"
-                execution_record["execution_block_reason"] = f"LIVE_ERROR: {str(e)}"
-                self.db.save_execution(execution_record)
+            else:
+                # API Failure
+                error_msg = response.get("message", "Unknown OpenAlgo Error")
+                self._log_execution(symbol, order_payload, current_ltp, "FAILED", f"API_ERROR: {error_msg}", decision)
+                logger.error(f"OpenAlgo Order Failed: {error_msg}")
+                return {"status": "FAILED", "error": error_msg, "decision": gate_decision}
                 
-                return {
-                    "status": "FAILED",
-                    "error": str(e),
-                    "decision": decision
-                }
-        
-        return {"status": "UNKNOWN_MODE", "decision": decision}
+        except Exception as e:
+            logger.error(f"Execution Exception: {e}", exc_info=True)
+            self._log_execution(symbol, order_payload, current_ltp, "FAILED", f"EXCEPTION: {str(e)}", decision)
+            return {"status": "FAILED", "error": str(e), "decision": decision}
 
-    async def _place_openalgo_order(self, symbol: str, payload: Dict[str, Any]) -> str:
-        """Internal helper to call OpenAlgo REST API."""
-        url = f"{settings.OPENALGO_API_URL}/order"
-        headers = {"api-key": settings.OPENALGO_API_KEY}
-        
-        # Standardize payload for OpenAlgo (assumed based on common patterns)
-        # symbol, action, quantity, order_type, product, price, etc.
-        data = {
-            "symbol": symbol,
-            "action": payload.get("action", "BUY"),
-            "quantity": payload.get("quantity", 1),
-            "order_type": payload.get("order_type", "MARKET"),
-            "product": payload.get("product", "MIS"),
-            "smart_order": True
-        }
-        
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(url, json=data, headers=headers, timeout=5.0)
-                response.raise_for_status()
-                res_data = response.json()
-                
-                if res_data.get("status") == "error":
-                    raise Exception(res_data.get("message", "OpenAlgo refused order"))
-                    
-                return res_data.get("order_id", f"ORD_{int(datetime.now().timestamp())}")
-            except httpx.HTTPError as e:
-                 logger.error(f"OpenAlgo API Connection Error: {e}")
-                 raise Exception(f"API_CONNECTION_ERROR: {str(e)}")
+    def _log_execution(self, symbol, payload, price, status, reason, decision, drift_bps=0.0, order_id=None):
+        """Helper to save execution record to DB."""
+        try:
+            record = {
+                "symbol": symbol,
+                "order_type": payload.get("action"),
+                "quantity": payload.get("quantity"),
+                "price": price,
+                "execution_mode": settings.EXECUTION_MODE, # Logging logic reflects App settings
+                "execution_status": status,
+                "execution_block_reason": reason,
+                "decision_id": decision.decision_id if decision else None,
+                "drift_bps": drift_bps,
+                "order_id": order_id
+            }
+            self.db.save_execution(record)
+        except Exception as e:
+            logger.error(f"Failed to save execution log: {e}")

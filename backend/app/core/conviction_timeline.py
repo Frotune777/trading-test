@@ -30,8 +30,10 @@ class ConvictionDataPoint:
     directional_bias: str  # BULLISH/BEARISH/NEUTRAL/INVALID
     active_pillars: int  # How many pillars contributed
     
-    # Context
+    # Context (v1.1)
     calibration_version: Optional[str] = None
+    regime: Optional[str] = None
+    pillar_scores: Optional[dict] = None
     data_age_seconds: Optional[int] = None
     
     def to_dict(self) -> dict:
@@ -42,6 +44,8 @@ class ConvictionDataPoint:
             "directional_bias": self.directional_bias,
             "active_pillars": self.active_pillars,
             "calibration_version": self.calibration_version,
+            "regime": self.regime,
+            "pillar_scores": self.pillar_scores,
             "data_age_seconds": self.data_age_seconds,
         }
 
@@ -269,6 +273,8 @@ class ConvictionTimeline:
                 directional_bias=entry.directional_bias.value,
                 active_pillars=entry.pillar_count_active,
                 calibration_version=entry.calibration_version,
+                regime=entry.market_regime,
+                pillar_scores=entry.pillar_scores,
                 data_age_seconds=None,  # Not stored in history
             )
             timeline.add_data_point(data_point)

@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 /**
  * Unit Tests for PillarDashboard Component
  * 
@@ -9,6 +10,8 @@
  */
 
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { expect } from '@jest/globals';
 import { PillarDashboard } from '@/components/quad/PillarDashboard';
 import { PillarContribution } from '@/types/quad';
 
@@ -149,7 +152,7 @@ describe('PillarDashboard', () => {
 
     // Check for green color classes (text-green-600, bg-green-50)
     const bullishElement = screen.getAllByText('BULLISH')[0];
-    expect(bullishElement.className).toContain('text-green-600');
+    expect(bullishElement.className).toContain('text-success');
   });
 
   test('applies correct CSS classes for BEARISH bias', () => {
@@ -167,7 +170,7 @@ describe('PillarDashboard', () => {
 
     // Check for red color classes
     const bearishElement = screen.getAllByText('BEARISH')[0];
-    expect(bearishElement.className).toContain('text-red-600');
+    expect(bearishElement.className).toContain('text-destructive');
   });
 
   test('applies correct CSS classes for NEUTRAL bias', () => {
@@ -185,6 +188,6 @@ describe('PillarDashboard', () => {
 
     // Check for gray color classes
     const neutralElement = screen.getAllByText('NEUTRAL')[0];
-    expect(neutralElement.className).toContain('text-gray-600');
+    expect(neutralElement.className).toContain('text-muted-foreground');
   });
 });

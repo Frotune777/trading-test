@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 /**
  * Integration Tests for QUAD Components
  * 
@@ -6,6 +7,8 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { expect } from '@jest/globals';
 import { PillarDashboard } from '@/components/quad/PillarDashboard';
 import { ConvictionMeter } from '@/components/quad/ConvictionMeter';
 import { WarningsPanel } from '@/components/quad/WarningsPanel';

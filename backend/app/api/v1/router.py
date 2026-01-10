@@ -20,6 +20,8 @@ from app.api.v1.endpoints import (
     ta_config, # TA Configuration
     risk, # Phase 3: Risk Management
     decisions, # Decision Ledger with Causal Explainability
+    # ml,  # Phase 1: ML Pipeline (XGBoost, LSTM, SHAP) - DISABLED (no ML libs installed)
+    pkscreener, # Phase 2: PKScreener Integration
 )
 
 api_router = APIRouter()
@@ -55,6 +57,8 @@ api_router.include_router(market_state.router, tags=["market-state"])
 api_router.include_router(ta_config.router, tags=["ta-config"])
 api_router.include_router(risk.router, prefix="/risk", tags=["risk"])  # Phase 3: Risk Management
 api_router.include_router(decisions.router, prefix="/decisions", tags=["decisions"])  # Decision Ledger
+# api_router.include_router(ml.router, tags=["ml"])  # Phase 1: ML Pipeline - DISABLED
+api_router.include_router(pkscreener.router, tags=["screener"]) # Phase 2: PKScreener
 api_router.include_router(ws_alerts.router, tags=["websockets"])
 
 

@@ -25,35 +25,35 @@ class HybridAggregator:
         
         logger.info("HybridAggregator initialized with UnifiedDataService")
 
-    def get_stock_data(self, symbol: str, include_historical: bool = True) -> Dict[str, Any]:
+    async def get_stock_data(self, symbol: str, include_historical: bool = True) -> Dict[str, Any]:
         """Get stock data using UnifiedDataService."""
-        data = self.unified.get_comprehensive_data(symbol)
+        data = await self.unified.get_comprehensive_data(symbol)
         
         results = {
             'symbol': symbol,
             'company_info': data.get('company_info'),
             'price': data.get('price_data'),
-            'historical_daily': self.unified.get_historical_data(symbol) if include_historical else None,
+            'historical_daily': await self.unified.get_historical_data(symbol) if include_historical else None,
             'source': 'unified'
         }
         return results
 
-    def get_fundamental_data(self, symbol: str) -> Dict[str, Any]:
+    async def get_fundamental_data(self, symbol: str) -> Dict[str, Any]:
         """Get fundamental data."""
-        data = self.unified.get_comprehensive_data(symbol)
+        data = await self.unified.get_comprehensive_data(symbol)
         return {
             'key_metrics': data.get('key_metrics'),
             **data.get('financials', {})
         }
 
-    def get_complete_analysis(self, symbol: str) -> Dict[str, Any]:
+    async def get_complete_analysis(self, symbol: str) -> Dict[str, Any]:
         """
         Get EVERYTHING using UnifiedDataService.
         """
         logger.info(f"Fetching complete analysis for {symbol}")
         
-        data = self.unified.get_comprehensive_data(symbol)
-        hist_data = self.unified.get_historical_data(symbol)
+        data = await self.unified.get_comprehensive_data(symbol)
+        hist_data = await self.unified.get_historical_data(symbol)
         
         results = {
             'symbol': symbol,
@@ -140,7 +140,7 @@ class DataAggregator(HybridAggregator):
                     logger.warning(f"Error parsing start_date: {e}, using default period")
             
             # Fetch using UnifiedDataService (via parent)
-            df = self.unified.get_historical_data(
+            df = await self.unified.get_historical_data(
                 symbol=symbol,
                 interval=interval,
                 period=period

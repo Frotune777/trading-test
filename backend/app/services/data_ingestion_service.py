@@ -54,38 +54,67 @@ class DataIngestionService:
             
         rows_fetched = len(df)
         
-        # 2. Persist Data (Idempotent Upsert)
+        # 2. Persist Data using SQLAlchemy (PostgreSQL)
         try:
-            # Ensure company exists in master table to satisfy Foreign Key constraint
-            company = self.db.get_company(symbol)
-            if not company:
-                logger.info(f"Company {symbol} not found in master list. Adding it...")
-                try:
-                    # Try to fetch details from Yahoo
-                    info = self.yahoo.get_company_info(symbol)
-                    if info:
-                        self.db.add_company(
-                            symbol=symbol,
-                            company_name=info.get('company_name', symbol),
-                            sector=info.get('sector'),
-                            industry=info.get('industry')
-                        )
+            from app.core.database import SessionLocal
+            from app.database.models_historical import HistoricalOHLC
+            from sqlalchemy import select
+            
+            async with SessionLocal() as db:
+                inserted = 0
+                updated = 0
+                
+                for _, row in df.iterrows():
+                    # Convert date to datetime with UTC timezone
+                    if isinstance(row['date'], str):
+                        from datetime import datetime
+                        dt = datetime.strptime(row['date'], '%Y-%m-%d')
                     else:
-                        # Fallback to basic entry
-                        self.db.add_company(symbol=symbol, company_name=symbol)
-                except Exception as e:
-                    logger.warning(f"Failed to fetch company info for {symbol}, using basic entry: {e}")
-                    self.db.add_company(symbol=symbol, company_name=symbol)
-
-            # save_price_history handles the upsert logic (ON CONFLICT DO UPDATE)
-            # It expects a DataFrame with columns: date, open, high, low, close, volume
-            self.db.save_price_history(symbol, df)
+                        dt = row['date']
+                    
+                    if not dt.tzinfo:
+                        from datetime import timezone
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    
+                    # Check if record exists
+                    stmt = select(HistoricalOHLC).where(
+                        HistoricalOHLC.symbol == symbol,
+                        HistoricalOHLC.exchange == "NSE",
+                        HistoricalOHLC.interval == "1d",
+                        HistoricalOHLC.timestamp == dt
+                    )
+                    result = await db.execute(stmt)
+                    existing = result.scalar_one_or_none()
+                    
+                    if existing:
+                        # Update existing record
+                        existing.open = float(row['open'])
+                        existing.high = float(row['high'])
+                        existing.low = float(row['low'])
+                        existing.close = float(row['close'])
+                        existing.volume = int(row['volume'])
+                        updated += 1
+                    else:
+                        # Insert new record
+                        ohlc = HistoricalOHLC(
+                            symbol=symbol,
+                            exchange="NSE",
+                            interval="1d",
+                            timestamp=dt,
+                            open=float(row['open']),
+                            high=float(row['high']),
+                            low=float(row['low']),
+                            close=float(row['close']),
+                            volume=int(row['volume']),
+                            source=source
+                        )
+                        db.add(ohlc)
+                        inserted += 1
+                
+                await db.commit()
+                logger.info(f"✅ {symbol}: Inserted {inserted}, Updated {updated}")
             
-            # Since save_price_history handles everything in a batch and upserts,
-            # we can assume all valid rows were processed.
-            # SQLite upsert doesn't easily return counts of inserted vs updated without separate logic,
-            # but for this summary, we can assume fetched rows were processed.
-            
+            # Get date range from dataframe
             start_dt = df['date'].min()
             end_dt = df['date'].max()
             if isinstance(start_dt, pd.Timestamp):
@@ -99,7 +128,8 @@ class DataIngestionService:
                 "source": source,
                 "timeframe": timeframe,
                 "rows_fetched": rows_fetched,
-                "rows_inserted": rows_fetched, # Upserted/Inserted
+                "rows_inserted": inserted,
+                "rows_updated": updated,
                 "date_range": [start_dt, end_dt]
             }
             

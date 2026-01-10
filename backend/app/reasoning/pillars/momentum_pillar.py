@@ -1,6 +1,9 @@
 from .base_pillar import BasePillar
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
-from typing import Tuple
+from ...core.config import settings
+from typing import Tuple, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..pillar_config import PillarConfig
 
 class MomentumPillar(BasePillar):
     """
@@ -8,22 +11,21 @@ class MomentumPillar(BasePillar):
     Migrated from RecommendationService._calculate_technical_score.
     """
     
-    def analyze(self, snapshot: LiveDecisionSnapshot, context: SessionContext) -> Tuple[float, str, dict, str]:
+    def analyze(
+        self, 
+        snapshot: LiveDecisionSnapshot, 
+        context: SessionContext,
+        config: Optional['PillarConfig'] = None
+    ) -> Tuple[float, str, dict, str]:
         """
         Analyze momentum using RSI and MACD.
-        
-        Scoring (40 points max, normalized to 100):
-        - RSI 50-70: +20 (Bullish momentum)
-        - RSI >=70: +10 (Overbought caution)
-        - RSI <=30: +10 (Oversold bounce potential)
-        - RSI 40-50: +5 (Neutral-weak)
-        - MACD Histogram > 0: +10
-        - MACD > Signal: +10
-        
-        Returns score 0-100, bias, metrics, and explanation.
         """
         score = 0.0
         explanation_parts = []
+        
+        # Resolve thresholds
+        rsi_overbought = config.rsi_overbought if config and config.rsi_overbought else settings.MOMENTUM_RSI_OVERBOUGHT
+        rsi_oversold = config.rsi_oversold if config and config.rsi_oversold else settings.MOMENTUM_RSI_OVERSOLD
         
         # Check if momentum indicators are available
         if snapshot.rsi is None:
@@ -34,16 +36,17 @@ class MomentumPillar(BasePillar):
         rsi_score = 0
         rsi = snapshot.rsi
         
-        if 50 < rsi < 70:
-            rsi_score = 20  # Bullish momentum
-            explanation_parts.append(f"RSI is {rsi:.2f}, indicating strong bullish momentum.")
-        elif rsi >= 70:
-            rsi_score = 10  # Overbought (caution)
-            explanation_parts.append(f"RSI is {rsi:.2f}, which is in the overbought territory. This suggests a potential for a pullback, but also confirms strong buying pressure.")
-        elif rsi <= 30:
-            rsi_score = 10  # Oversold (bounce potential)
-            explanation_parts.append(f"RSI is {rsi:.2f}, which is in the oversold territory. This suggests a potential for a bullish reversal.")
-        elif 40 <= rsi <= 50:
+        # Note: logic simplification for readability could act as bounds check
+        if settings.MOMENTUM_RSI_BULLISH_MIN < rsi < settings.MOMENTUM_RSI_BULLISH_MAX:
+             rsi_score = 20  # Bullish momentum
+             explanation_parts.append(f"RSI is {rsi:.2f}, indicating strong bullish momentum.")
+        elif rsi >= rsi_overbought:
+             rsi_score = 10  # Overbought (caution)
+             explanation_parts.append(f"RSI is {rsi:.2f}, which is in the overbought territory. This suggests a potential for a pullback, but also confirms strong buying pressure.")
+        elif rsi <= rsi_oversold:
+             rsi_score = 10  # Oversold (bounce potential)
+             explanation_parts.append(f"RSI is {rsi:.2f}, which is in the oversold territory. This suggests a potential for a bullish reversal.")
+        elif settings.MOMENTUM_RSI_NEUTRAL_MIN <= rsi <= settings.MOMENTUM_RSI_NEUTRAL_MAX:
             rsi_score = 5   # Neutral-weak
             explanation_parts.append(f"RSI is {rsi:.2f}, indicating weak or neutral momentum.")
         else:
@@ -65,17 +68,17 @@ class MomentumPillar(BasePillar):
         else:
             explanation_parts.append("MACD data is not available.")
 
-        # Total momentum score (max 40)
+        # Total momentum score (max settings.MOMENTUM_SCORE_MAX)
         total_score = rsi_score + macd_score
         
         # Normalize to 0-100 scale
         # 40 points possible -> scale to 100
-        normalized_score = (total_score / 40.0) * 100.0
+        normalized_score = (total_score / settings.MOMENTUM_SCORE_MAX) * 100.0
         
         # Determine bias based on RSI and MACD
-        if rsi > 55 and snapshot.macd_hist and snapshot.macd_hist > 0:
+        if rsi > settings.MOMENTUM_RSI_BIAS_BULLISH and snapshot.macd_hist and snapshot.macd_hist > 0:
             bias = "BULLISH"
-        elif rsi < 45 and snapshot.macd_hist and snapshot.macd_hist < 0:
+        elif rsi < settings.MOMENTUM_RSI_BIAS_BEARISH and snapshot.macd_hist and snapshot.macd_hist < 0:
             bias = "BEARISH"
         else:
             bias = "NEUTRAL"

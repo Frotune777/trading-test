@@ -1,21 +1,13 @@
 "use client"
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useState } from "react"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { MarketProvider } from "@/context/market-context"
 import { AuthProvider } from "@/context/auth-context"
 import { ThemeProvider } from "./theme-provider"
+import { queryClient } from "@/lib/query-client"
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    const [queryClient] = useState(() => new QueryClient({
-        defaultOptions: {
-            queries: {
-                staleTime: 60 * 1000,
-                refetchOnWindowFocus: false,
-            },
-        },
-    }))
-
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
@@ -25,6 +17,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     </MarketProvider>
                 </ThemeProvider>
             </AuthProvider>
+            {process.env.NODE_ENV === 'development' && (
+                <ReactQueryDevtools initialIsOpen={false} />
+            )}
         </QueryClientProvider>
     )
 }

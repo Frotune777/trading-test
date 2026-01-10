@@ -1,6 +1,9 @@
 from .base_pillar import BasePillar
 from ...core.market_snapshot import LiveDecisionSnapshot, SessionContext
-from typing import Tuple
+from ...core.config import settings
+from typing import Tuple, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..pillar_config import PillarConfig
 
 class RegimePillar(BasePillar):
     """
@@ -8,7 +11,12 @@ class RegimePillar(BasePillar):
     Wired to MarketRegime service output.
     """
     
-    def analyze(self, snapshot: LiveDecisionSnapshot, context: SessionContext) -> Tuple[float, str, dict, str]:
+    def analyze(
+        self, 
+        snapshot: LiveDecisionSnapshot, 
+        context: SessionContext,
+        config: Optional['PillarConfig'] = None
+    ) -> Tuple[float, str, dict, str]:
         """
         Read market regime from context and map to score.
         
@@ -22,32 +30,32 @@ class RegimePillar(BasePillar):
         
         # Map regime string to score
         if regime == "BULLISH":
-            score = 85.0
+            score = settings.REGIME_SCORE_BULLISH
             bias = "BULLISH"
             explanation_parts.append(f"The market is in a '{regime}' regime, which is favorable for long positions.")
         elif regime == "BEARISH":
-            score = 15.0
+            score = settings.REGIME_SCORE_BEARISH
             bias = "BEARISH"
             explanation_parts.append(f"The market is in a '{regime}' regime, which is favorable for short positions.")
         elif regime in ["VOLATILE", "SIDEWAYS"]:
-            score = 50.0
+            score = settings.REGIME_SCORE_NEUTRAL
             bias = "NEUTRAL"
             explanation_parts.append(f"The market is in a '{regime}' regime, suggesting a lack of a clear trend.")
         else:  # UNKNOWN or other
-            score = 50.0
+            score = settings.REGIME_SCORE_NEUTRAL
             bias = "NEUTRAL"
             explanation_parts.append(f"The market regime is '{regime}', which is treated as neutral.")
         
         # Adjust based on VIX if available
         if context.vix_level:
             # High VIX reduces confidence in bullish regime
-            if context.vix_level > 25 and regime == "BULLISH":
-                score -= 10  # Reduce bullish confidence
+            if context.vix_level > settings.REGIME_VIX_HIGH_THRESHOLD and regime == "BULLISH":
+                score += settings.REGIME_VIX_HIGH_ADJUSTMENT  # Reduce bullish confidence
                 explanation_parts.append(f"However, the high VIX level ({context.vix_level:.2f}) suggests increased fear and reduces confidence in the bullish regime.")
             # Low VIX supports trending regimes
-            elif context.vix_level < 15:
+            elif context.vix_level < settings.REGIME_VIX_LOW_THRESHOLD:
                 if regime in ["BULLISH", "BEARISH"]:
-                    score += 5  # Increase trend confidence
+                    score += settings.REGIME_VIX_LOW_ADJUSTMENT  # Increase trend confidence
                     explanation_parts.append(f"The low VIX level ({context.vix_level:.2f}) indicates low market fear, which supports the current '{regime}' trend.")
         
         metrics = {

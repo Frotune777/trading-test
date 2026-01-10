@@ -71,4 +71,7 @@ trigger: always_on
 45. Any future autonomy must be opt-in and reversible.
 46. The current data source requires manual refresh. Broker account integration for automated data fetching will be implemented in a later stage.
 47. Analyse the project at code level before making any plan.
-48. Update the documents when required. 
+48. Update the documents when required.
+49. Always use uv to install python libs
+50. Always use virtual env
+51. Any test should have 100 % Total coverage and 100 % pass result before declaring it pass

@@ -10,6 +10,7 @@ export interface PillarContribution {
   is_placeholder: boolean;      // True if returning hardcoded neutral
   weight_applied: number;       // Weight used in aggregation (e.g., 0.30)
   metrics?: Record<string, any>; // Key metrics used for calculation
+  explanation?: string;         // Human-readable reasoning for this pillar's score
 }
 
 export interface AnalysisQuality {
@@ -24,23 +25,23 @@ export interface TradeIntent {
   // Identity
   symbol: string;
   analysis_timestamp: string;   // ISO datetime
-  
+
   // Core Reasoning Output
   directional_bias: DirectionalBias;
   conviction_score: number;      // 0-100 (how confident the logic is)
-  
+
   // Explainability
   pillar_contributions: PillarContribution[];
   reasoning_narrative: string;   // Human-readable explanation
-  
+
   // Quality Metadata (NEW in v1.0)
   quality: AnalysisQuality;
-  
+
   // Validity Flags (NEW in v1.0)
   is_analysis_valid: boolean;     // False if critical data missing
   is_execution_ready: boolean;    // False if placeholder pillars > threshold
   degradation_warnings: string[]; // E.g., "Volatility pillar is placeholder"
-  
+
   // Version & Schema
   contract_version: string;       // "1.0.0"
 }
@@ -50,11 +51,11 @@ export interface ReasoningAPIResponse {
   symbol: string;
   analysis_timestamp: string;
   contract_version: string;
-  
+
   // Core reasoning
   directional_bias: DirectionalBias;
   conviction_score: number;
-  
+
   // Explainability
   reasoning: string;
   pillar_scores: {
@@ -66,21 +67,21 @@ export interface ReasoningAPIResponse {
       metrics?: Record<string, any>;
     };
   };
-  
+
   // Quality metadata
   quality: AnalysisQuality;
-  
+
   // Validity flags
   is_valid: boolean;
   is_execution_ready: boolean;
   warnings: string[];
-  
+
   // Market context (optional)
   market_context?: {
     regime: string;
     vix_level: number;
   };
-  
+
   // Technical state (optional)
   technical_state?: {
     ltp: number;

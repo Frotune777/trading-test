@@ -2,7 +2,8 @@
 Database models for historical OHLC data storage.
 """
 
-from sqlalchemy import Column, Integer, String, Numeric, BigInteger, DateTime, Index, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Numeric, BigInteger, DateTime, Index, UniqueConstraint, JSON, ForeignKey, Date
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from app.core.database import Base
@@ -34,6 +35,9 @@ class HistoricalOHLC(Base):
     source = Column(String(20), nullable=False)  # 'openalgo', 'nse', 'yahoo'
     quality_score = Column(Numeric(3, 2), nullable=True)  # 0.00-1.00
     
+    # Relationships
+    indicators = relationship("IndicatorHistory", back_populates="ohlc", cascade="all, delete-orphan")
+    
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -47,6 +51,109 @@ class HistoricalOHLC(Base):
     
     def __repr__(self):
         return f"<HistoricalOHLC(symbol={self.symbol}, interval={self.interval}, timestamp={self.timestamp}, close={self.close})>"
+
+
+class IndicatorHistory(Base):
+    """
+    Consolidated technical indicator storage using JSONB.
+    Linked to price records for contextual analysis.
+    """
+    __tablename__ = "indicator_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ohlc_id = Column(Integer, ForeignKey('historical_ohlc.id', ondelete='CASCADE'), nullable=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    interval = Column(String(5), nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
+    
+    # The payload
+    indicators = Column(JSON, nullable=False)  # Stores SMA, RSI, etc. as keys
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship
+    ohlc = relationship("HistoricalOHLC", back_populates="indicators")
+    
+    __table_args__ = (
+        UniqueConstraint('symbol', 'interval', 'timestamp', name='uix_indicator_lookup'),
+        Index('idx_indicator_history_lookup', 'symbol', 'interval', 'timestamp'),
+    )
+    
+    def __repr__(self):
+        return f"<IndicatorHistory(symbol={self.symbol}, ts={self.timestamp})>"
+
+
+class MarketBulkDeal(Base):
+    """Storage for market bulk/block deals data fetched from NSE"""
+    __tablename__ = "market_bulk_deals"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False, index=True)
+    order_type = Column(String(20)) # Bulk, Block
+    symbol = Column(String(20), nullable=False, index=True)
+    scrip_name = Column(String(255))
+    client_name = Column(String(255))
+    buy_sell = Column(String(10))
+    quantity = Column(BigInteger)
+    price = Column(Numeric(15, 2))
+    remarks = Column(String(1000))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class MarketInsiderTrading(Base):
+    """Storage for insider trading data fetched from NSE"""
+    __tablename__ = "market_insider_trading"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    company = Column(String(255))
+    person_name = Column(String(255))
+    person_category = Column(String(100))
+    transaction_type = Column(String(100))
+    securities_type = Column(String(100))
+    number_of_securities = Column(BigInteger)
+    value = Column(Numeric(15, 2))
+    acquisition_date = Column(Date, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class OHLCVMetadata(Base):
+    """Sync status metadata for OHLCV data per symbol/interval."""
+    __tablename__ = "ohlcv_metadata"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    exchange = Column(String(10), nullable=False, default="NSE")
+    interval = Column(String(5), nullable=False)
+    
+    last_sync = Column(DateTime(timezone=True), nullable=True)
+    earliest_available = Column(DateTime(timezone=True), nullable=True)
+    latest_available = Column(DateTime(timezone=True), nullable=True)
+    total_records = Column(Integer, default=0)
+    
+    # Tracking
+    is_actively_trading = Column(Integer, default=1)
+    last_source = Column(String(20))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    __table_args__ = (
+        UniqueConstraint('symbol', 'exchange', 'interval', name='uix_metadata_lookup'),
+    )
+
+
+class MarketFIIDII(Base):
+    """Storage for FII/DII daily net activity"""
+    __tablename__ = "market_fii_dii"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False, index=True)
+    category = Column(String(20)) # FII, DII
+    buy_value = Column(Numeric(15, 2))
+    sell_value = Column(Numeric(15, 2))
+    net_value = Column(Numeric(15, 2))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class DataFetchLog(Base):

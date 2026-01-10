@@ -26,27 +26,18 @@ class SnapshotBuilder:
         # Initialize derivatives source for real-time data
         from ..data_sources.nse_derivatives import NSEDerivatives
         self.nse_derivatives = NSEDerivatives()
+        from ..services.unified_data_service import UnifiedDataService
+        self.unified = UnifiedDataService()
+        from ..services.historical_data_service import historical_data_service
+        self.historical = historical_data_service
     
-    async def fetch_price_data(self, symbol: str, interval: str = "1d", retries: int = 3) -> pd.DataFrame:
-        """Helper to fetch price data as a task with retries"""
-        for attempt in range(retries):
-            try:
-                # Current implementation of get_history is sync
-                df = await asyncio.to_thread(
-                    self.nse_master.get_history,
-                    symbol=symbol,
-                    exchange="NSE",
-                    interval=interval
-                )
-                if df is not None and not df.empty:
-                    return df
-            except Exception as e:
-                logger.warning(f"Attempt {attempt+1}/{retries} failed for {symbol} ({interval}): {e}")
-                if attempt < retries - 1:
-                    await asyncio.sleep(1) # Wait before retry
-                else:
-                    logger.error(f"Final attempt failed for {symbol} ({interval})")
-        return pd.DataFrame()
+    async def fetch_price_data(self, symbol: str, interval: str = "1d", limit: int = 250) -> pd.DataFrame:
+        """Fetch price data from UnifiedDataService (PostgreSQL first)"""
+        try:
+            return await self.unified.get_historical_data(symbol=symbol, interval=interval, limit=limit)
+        except Exception as e:
+            logger.error(f"Error fetching price data for {symbol} ({interval}): {e}")
+            return pd.DataFrame()
 
     async def fetch_equity_info(self, symbol: str) -> Dict[str, Any]:
         """Helper to fetch equity quote/depth as a task"""
@@ -82,7 +73,6 @@ class SnapshotBuilder:
         if price_df is None or price_df.empty:
             tasks.append(self.fetch_price_data(symbol, "1d"))
         else:
-            # Wrap existing df in a future
             f = asyncio.Future()
             f.set_result(price_df)
             tasks.append(f)
@@ -101,13 +91,13 @@ class SnapshotBuilder:
             f.set_result(pd.DataFrame())
             tasks.append(f)
             
-        # 5. Sentinel Data (Insider/Bulk/Block)
-        tasks.append(asyncio.to_thread(self._fetch_sentinel_data, symbol))
+        # 5. Sentinel Data (Insider/Bulk/Block Deals from PostgreSQL)
+        tasks.append(self._fetch_async_sentinel(symbol))
 
         # Execute all tasks in parallel
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # Process results with index-based safety
+        # Process results
         price_df = results[0] if not isinstance(results[0], Exception) else pd.DataFrame()
         weekly_df = results[1] if not isinstance(results[1], Exception) else pd.DataFrame()
         quote_data = results[2] if not isinstance(results[2], Exception) else {}
@@ -115,9 +105,9 @@ class SnapshotBuilder:
         sentinel_data = results[4] if not isinstance(results[4], Exception) else {}
 
         if price_df is None or price_df.empty:
-            raise ValueError(f"No price data available for {symbol} from NSE sources.")
+            raise ValueError(f"No price data available for {symbol}. Ensure migration/ingestion is complete.")
         
-        # Calculate technical indicators using TA-Lib
+        # Calculate technical indicators
         ta = TechnicalAnalysisService(price_df)
         ta.calculate_all()
         df = ta.df
@@ -132,7 +122,7 @@ class SnapshotBuilder:
         prev_close = float(df.iloc[-2]['close']) if len(df) > 1 else ltp
         vwap = (high + low + ltp) / 3.0
         
-        # Basic indicators
+        # Indicators
         sma_50 = float(current.get('sma_50', ltp))
         sma_200 = float(current.get('sma_200', ltp))
         rsi = float(current.get('rsi', 50.0))
@@ -146,7 +136,6 @@ class SnapshotBuilder:
         bb_middle = current.get('bb_middle')
         bb_lower = current.get('bb_lower')
         bb_width = ((bb_upper - bb_lower) / bb_middle * 100.0) if bb_middle and bb_middle > 0 else None
-        
         adosc = current.get('adosc')
 
         # Weekly SMA calculation
@@ -155,44 +144,25 @@ class SnapshotBuilder:
             try:
                 ta_weekly = TechnicalAnalysisService(weekly_df)
                 ta_weekly.add_trend_indicators()
-                # STRICT mode: Raise error if SMA cannot be calculated
                 sma_20_weekly = float(ta_weekly.df.iloc[-1]['sma_20'])
-            except KeyError:
-                logger.warning(f"Weekly SMA-20 data missing for {symbol}")
-                # We do NOT proxy anymore. 
-                # If weekly trend is critical, this should raise DataIncompleteError or 
-                # the consumer (TrendPillar) must handle None explicitly without proxying.
+            except:
                 pass 
-            except Exception as e:
-                logger.warning(f"Failed to calculate Weekly SMA for {symbol}: {e}")
-        else:
-             # If weekly data fetch failed but daily succeeded, we currently just warn.
-             # TrendPillar will receive None and should handle it strictly.
-             logger.warning(f"Weekly data fetch failed for {symbol}")
 
         # Depth Data Processing
-        bid_price = None
-        ask_price = None
-        bid_qty = None
-        ask_qty = None
-        spread_pct = None
-        
+        bid_price = None; ask_price = None; bid_qty = None; ask_qty = None; spread_pct = None
         if quote_data and 'tradeData' in quote_data:
             ob = quote_data.get('tradeData', {}).get('marketDeptOrderBook', {})
-            bids = ob.get('bid', [])
-            asks = ob.get('ask', [])
-            
+            bids = ob.get('bid', []); asks = ob.get('ask', [])
             if bids:
                 bid_price = float(bids[0].get('price', 0)) or None
                 bid_qty = int(bids[0].get('quantity', 0)) or None
             if asks:
                 ask_price = float(asks[0].get('price', 0)) or None
                 ask_qty = int(asks[0].get('quantity', 0)) or None
-            
             if bid_price and ask_price and bid_price > 0:
                 spread_pct = (ask_price - bid_price) / bid_price * 100.0
 
-        # Derivatives Data Processing
+        # Derivatives Data
         oi_change = None
         if option_data:
             oi_change = option_data.get('oi_change')
@@ -201,42 +171,30 @@ class SnapshotBuilder:
             pe_oi_chg = oc_df['PUTS_Chng_in_OI'].sum() if 'PUTS_Chng_in_OI' in oc_df else 0
             oi_change = (pe_oi_chg + ce_oi_chg)
 
-        duration = (datetime.now() - start_time).total_seconds()
-        logger.info(f"Built async snapshot for {symbol} in {duration:.2f}s")
-
-        # --- REFRESHNESS CONTRACT START ---
-        # Authoritative LTP Source Selection
-        final_ltp = ltp
-        ltp_source = "snapshot"
-        ltp_age_ms = None
-        
+        # REDIS Freshness LTP
+        final_ltp = ltp; ltp_source = "snapshot"; ltp_age_ms = None
         try:
-            exchange = "NSE" # Default, could be derived from symbol
+            exchange = "NSE"
             redis_key = f"market:ltp:{exchange}:{symbol}"
             cached_tick_raw = await redis_client.get(redis_key)
-            
             if cached_tick_raw:
                 cached_tick = json.loads(cached_tick_raw)
                 received_at = cached_tick.get("received_at", 0)
-                now = time.time()
-                age_ms = int((now - received_at) * 1000)
-                
-                # Enforce 5s Freshness Contract
+                age_ms = int((time.time() - received_at) * 1000)
                 if age_ms < (settings.REDIS_TICK_TTL * 1000):
                     final_ltp = float(cached_tick.get("ltp", ltp))
                     ltp_source = "redis_ws"
                     ltp_age_ms = age_ms
-                    logger.debug(f"Using fresh Redis LTP for {symbol} (age: {age_ms}ms)")
-                else:
-                    logger.debug(f"Redis LTP for {symbol} STALE (age: {age_ms}ms), using snapshot.")
-        except Exception as e:
-            logger.warning(f"Error checking Redis LTP for {symbol}: {e}")
-        # --- REFRESHNESS CONTRACT END ---
+        except:
+            pass
+
+        duration = (datetime.now() - start_time).total_seconds()
+        logger.info(f"Built async snapshot for {symbol} in {duration:.2f}s using PostgreSQL")
 
         return LiveDecisionSnapshot(
             symbol=symbol,
             timestamp=datetime.now(),
-            ltp=final_ltp, # Use authoritative LTP
+            ltp=final_ltp,
             vwap=vwap,
             open=open_price,
             high=high,
@@ -268,10 +226,8 @@ class SnapshotBuilder:
             **sentinel_data
         )
 
-    def _fetch_sentinel_data(self, symbol: str) -> dict:
-        """
-        Original logic kept but wrapped for use in run_in_executor.
-        """
+    async def _fetch_async_sentinel(self, symbol: str) -> dict:
+        """Fetch Sentinel data (Insider/Bulk/Block) from PostgreSQL via UnifiedDataService."""
         sentinel = {
             "insider_net_value": 0.0,
             "insider_buy_count": 0,
@@ -279,99 +235,49 @@ class SnapshotBuilder:
             "block_deal_net_qty": 0,
             "short_selling_pct": None
         }
-        
         try:
-            # 1. Insider Trades
-            insider_df = self.nse_derivatives.nse_utils.get_insider_trading()
-            if insider_df is not None and not insider_df.empty:
-                if 'symbol' in insider_df.columns:
-                    symbol_trades = insider_df[insider_df['symbol'].str.strip() == symbol]
-                elif 'Symbol' in insider_df.columns:
-                    symbol_trades = insider_df[insider_df['Symbol'].str.strip() == symbol]
-                else:
-                    symbol_trades = pd.DataFrame()
-
-                if not symbol_trades.empty:
-                    for _, trade in symbol_trades.iterrows():
-                        val = float(trade.get('secVal', trade.get('valueInRs', 0)))
-                        mode = str(trade.get('acqMode', '')).upper()
-                        t_type = str(trade.get('tdpTransactionType', '')).upper()
-                        if any(x in mode or x in t_type for x in ["ACQUISITION", "BUY", "PURCHASE"]):
-                            sentinel["insider_net_value"] += val
-                            sentinel["insider_buy_count"] += 1
-                        elif any(x in mode or x in t_type for x in ["DISPOSAL", "SELL", "SALE"]):
-                            sentinel["insider_net_value"] -= val
+            # Fetch from PostgreSQL
+            insider_trades = await self.unified.get_insider_trading(symbol=symbol, limit=50)
+            for trade in insider_trades:
+                val = float(trade.get('value', 0))
+                t_type = str(trade.get('transaction_type', '')).upper()
+                if "BUY" in t_type or "PURCHASE" in t_type or "ACQUISITION" in t_type:
+                    sentinel["insider_net_value"] += val
+                    sentinel["insider_buy_count"] += 1
+                elif "SELL" in t_type or "SALE" in t_type or "DISPOSAL" in t_type:
+                    sentinel["insider_net_value"] -= val
             
-            # 2. Bulk Deals
-            bulk_df = self.nse_derivatives.nse_utils.get_bulk_deals()
-            if bulk_df is not None and not bulk_df.empty:
-                bulk_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in bulk_df.columns]
-                if 'Symbol' in bulk_df.columns:
-                    symbol_bulk = bulk_df[bulk_df['Symbol'].str.strip() == symbol]
-                    if not symbol_bulk.empty:
-                        for _, deal in symbol_bulk.iterrows():
-                            qty_str = str(deal.get('Quantity Traded', '0')).replace(',', '')
-                            qty = int(qty_str) if qty_str.isdigit() else 0
-                            d_type = str(deal.get('Buy / Sell', '')).strip().upper()
-                            if d_type == "BUY":
-                                sentinel["bulk_deal_net_qty"] += qty
-                            else:
-                                sentinel["bulk_deal_net_qty"] -= qty
-                                
-            # 3. Block Deals
-            block_df = self.nse_derivatives.nse_utils.get_block_deals()
-            if block_df is not None and not block_df.empty:
-                block_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in block_df.columns]
-                if 'Symbol' in block_df.columns:
-                    symbol_block = block_df[block_df['Symbol'].str.strip() == symbol]
-                    if not symbol_block.empty:
-                        for _, deal in symbol_block.iterrows():
-                            qty_str = str(deal.get('Quantity Traded', '0')).replace(',', '')
-                            qty = int(qty_str) if qty_str.isdigit() else 0
-                            d_type = str(deal.get('Buy / Sell', '')).strip().upper()
-                            if d_type == "BUY":
-                                sentinel["block_deal_net_qty"] += qty
-                            else:
-                                sentinel["block_deal_net_qty"] -= qty
-                                
-            # 4. Short Selling
-            short_df = self.nse_derivatives.nse_utils.get_short_selling()
-            if short_df is not None and not short_df.empty:
-                short_df.columns = [c.strip().replace('ï»¿"', '').replace('"', '') for c in short_df.columns]
-                if 'Symbol' in short_df.columns:
-                    symbol_short = short_df[short_df['Symbol'].str.strip() == symbol]
-                    if not symbol_short.empty:
-                        sentinel["short_selling_pct"] = float(str(symbol_short.iloc[-1].get('Percentage of Short Quantity', 0)).replace(',', ''))
+            bulk = await self.historical.get_market_bulk_deals(symbol=symbol, limit=20)
+            if not bulk.empty:
+                for _, deal in bulk.iterrows():
+                    qty = float(deal.get('quantity', 0))
+                    side = str(deal.get('buy_sell', '')).upper()
+                    if side == "BUY":
+                        sentinel["bulk_deal_net_qty"] += qty
+                    else:
+                        sentinel["bulk_deal_net_qty"] -= qty
         except Exception as e:
-            logger.warning(f"Error fetching sentinel data for {symbol}: {e}")
+            logger.warning(f"Error fetching async sentinel for {symbol}: {e}")
             
         return sentinel
     
-    async def build_session_context(
-        self,
-        nifty_df: Optional[pd.DataFrame] = None
-    ) -> SessionContext:
-        """
-        Build SessionContext from market-wide data. ASYNC.
-        """
+    async def build_session_context(self, nifty_df: Optional[pd.DataFrame] = None) -> SessionContext:
+        """Build SessionContext using UnifiedDataService."""
         if nifty_df is None or nifty_df.empty:
             nifty_df = await self.fetch_price_data("NIFTY 50", "1d")
         
-        # Determine market regime
         regime = "NEUTRAL"
         if nifty_df is not None and not nifty_df.empty:
             market_regime_analyzer = MarketRegime(nifty_df)
             regime_data = market_regime_analyzer.determine_regime()
             regime = regime_data.get('direction', 'NEUTRAL')
         
-        # VIX fetch
-        vix_level = 15.0
-        vix_percentile = 50.0
+        vix_level = 15.0; vix_percentile = 50.0
         try:
             vix_df = await self.fetch_price_data("INDIA VIX", "1d")
             if not vix_df.empty:
-                vix_level = float(vix_df.iloc[-1]['Close'])
-                vix_percentile = (vix_df['Close'].rank(pct=True).iloc[-1]) * 100.0
+                vix_level = float(vix_df.iloc[-1]['close'])
+                vix_percentile = (vix_df['close'].rank(pct=True).iloc[-1]) * 100.0
         except Exception as e:
             logger.warning(f"Failed to fetch VIX: {e}")
         

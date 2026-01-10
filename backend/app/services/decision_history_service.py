@@ -14,10 +14,11 @@ CRITICAL CONSTRAINTS:
 
 import logging
 import uuid
+import json
 from typing import List, Optional
 from datetime import datetime, timedelta
 from ..core.decision_history import DecisionHistory, DecisionHistoryEntry
-from ..core.trade_intent import TradeIntent
+from ..core.trade_intent import TradeIntent, DirectionalBias
 from ..database.db_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
@@ -42,39 +43,46 @@ class DecisionHistoryService:
     
     def _ensure_table_exists(self):
         """Create decision_history table if it doesn't exist."""
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS decision_history (
-            decision_id TEXT PRIMARY KEY,
-            symbol TEXT NOT NULL,
-            analysis_timestamp TEXT NOT NULL,
-            directional_bias TEXT NOT NULL,
-            conviction_score REAL NOT NULL,
-            calibration_version TEXT,
-            pillar_count_active INTEGER NOT NULL,
-            pillar_count_placeholder INTEGER NOT NULL,
-            pillar_count_failed INTEGER NOT NULL,
-            engine_version TEXT NOT NULL,
-            contract_version TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            is_superseded INTEGER DEFAULT 0,
-            pillar_scores TEXT,  -- JSON
-            pillar_biases TEXT   -- JSON
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_decision_history_symbol 
-        ON decision_history(symbol, analysis_timestamp DESC);
-        
-        CREATE INDEX IF NOT EXISTS idx_decision_history_created 
-        ON decision_history(created_at DESC);
-        """
+        create_table_sqls = [
+            """
+            CREATE TABLE IF NOT EXISTS decision_history (
+                decision_id TEXT PRIMARY KEY,
+                symbol TEXT NOT NULL,
+                analysis_timestamp TEXT NOT NULL,
+                directional_bias TEXT NOT NULL,
+                conviction_score REAL NOT NULL,
+                calibration_version TEXT,
+                market_regime TEXT,    -- v1.1 Addition
+                pillar_count_active INTEGER NOT NULL,
+                pillar_count_placeholder INTEGER NOT NULL,
+                pillar_count_failed INTEGER NOT NULL,
+                engine_version TEXT NOT NULL,
+                contract_version TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                is_superseded INTEGER DEFAULT 0,
+                pillar_scores TEXT,  -- JSON
+                pillar_biases TEXT   -- JSON
+            )
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_history_symbol 
+            ON decision_history(symbol, analysis_timestamp DESC)
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_decision_history_created 
+            ON decision_history(created_at DESC)
+            """
+        ]
         
         try:
-            self.db.conn.executescript(create_table_sql)
-            self.db.conn.commit()
+            for sql in create_table_sqls:
+                self.db.execute(sql)
             logger.info("✅ Decision history table verified")
         except Exception as e:
             logger.error(f"Failed to create decision_history table: {e}")
-            raise
+            # Do not raise here to prevent startup crash if DB is locked/read-only,
+            # but log critical error.
+            # raise e
     
     def save_decision(self, trade_intent: TradeIntent) -> str:
         """
@@ -86,7 +94,6 @@ class DecisionHistoryService:
         Returns:
             decision_id: Unique identifier for this decision
         """
-        import json
         
         # Generate decision ID
         decision_id = f"dec_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{trade_intent.symbol}_{uuid.uuid4().hex[:8]}"
@@ -102,20 +109,21 @@ class DecisionHistoryService:
         insert_sql = """
         INSERT INTO decision_history (
             decision_id, symbol, analysis_timestamp, directional_bias, conviction_score,
-            calibration_version, pillar_count_active, pillar_count_placeholder, pillar_count_failed,
+            calibration_version, market_regime, pillar_count_active, pillar_count_placeholder, pillar_count_failed,
             engine_version, contract_version, created_at, is_superseded,
             pillar_scores, pillar_biases
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
         try:
-            self.db.conn.execute(insert_sql, (
+            self.db.execute(insert_sql, (
                 entry.decision_id,
                 entry.symbol,
                 entry.analysis_timestamp.isoformat(),
                 entry.directional_bias.value,
                 entry.conviction_score,
                 entry.calibration_version,
+                entry.market_regime,
                 entry.pillar_count_active,
                 entry.pillar_count_placeholder,
                 entry.pillar_count_failed,
@@ -126,7 +134,6 @@ class DecisionHistoryService:
                 pillar_scores_json,
                 pillar_biases_json
             ))
-            self.db.conn.commit()
             logger.info(f"✅ Saved decision {decision_id} for {trade_intent.symbol}")
         except Exception as e:
             logger.error(f"Failed to save decision {decision_id}: {e}")
@@ -153,8 +160,6 @@ class DecisionHistoryService:
         Returns:
             DecisionHistory object
         """
-        import json
-        from ..core.trade_intent import DirectionalBias
         
         # Build query
         query = "SELECT * FROM decision_history WHERE symbol = ?"
@@ -174,15 +179,19 @@ class DecisionHistoryService:
             query += f" LIMIT {limit}"
         
         try:
-            cursor = self.db.conn.execute(query, params)
-            rows = cursor.fetchall()
+            # Execute query and get rows directly (DatabaseManager handles fetchall)
+            rows = self.db.execute(query, tuple(params))
+            if not rows:
+                logger.warning(f"No decision history found for {symbol}")
+                return DecisionHistory(symbol=symbol, entries=[])
         except Exception as e:
-            logger.error(f"Failed to retrieve history for {symbol}: {e}")
+            logger.warning(f"Failed to retrieve history for {symbol} (database unavailable): {e}")
             return DecisionHistory(symbol=symbol, entries=[])
         
         # Convert rows to DecisionHistoryEntry objects
         entries = []
         for row in rows:
+            # Row index based access (SQLAlchemy returns tuples/Row objects)
             pillar_scores = json.loads(row[13]) if row[13] else None
             pillar_biases = json.loads(row[14]) if row[14] else None
             
@@ -193,15 +202,16 @@ class DecisionHistoryService:
                 directional_bias=DirectionalBias(row[3]),
                 conviction_score=row[4],
                 calibration_version=row[5],
-                pillar_count_active=row[6],
-                pillar_count_placeholder=row[7],
-                pillar_count_failed=row[8],
-                engine_version=row[9],
-                contract_version=row[10],
-                created_at=datetime.fromisoformat(row[11]) if row[11] else None,
-                is_superseded=bool(row[12]),
-                pillar_scores=pillar_scores,
-                pillar_biases=pillar_biases
+                market_regime=row[6],
+                pillar_count_active=row[7],
+                pillar_count_placeholder=row[8],
+                pillar_count_failed=row[9],
+                engine_version=row[10],
+                contract_version=row[11],
+                created_at=datetime.fromisoformat(row[12]) if row[12] else None,
+                is_superseded=bool(row[13]),
+                pillar_scores=json.loads(row[14]) if row[14] else None,
+                pillar_biases=json.loads(row[15]) if row[15] else None
             )
             entries.append(entry)
         
@@ -267,8 +277,7 @@ class DecisionHistoryService:
         update_sql = "UPDATE decision_history SET is_superseded = 1 WHERE decision_id = ?"
         
         try:
-            self.db.conn.execute(update_sql, (decision_id,))
-            self.db.conn.commit()
+            self.db.execute(update_sql, (decision_id,))
             logger.info(f"Marked decision {decision_id} as superseded")
         except Exception as e:
             logger.error(f"Failed to mark decision {decision_id} as superseded: {e}")
@@ -285,29 +294,43 @@ class DecisionHistoryService:
         Returns:
             Dictionary with statistics
         """
-        start_date = datetime.now() - timedelta(days=days)
-        history = self.get_history(symbol, start_date=start_date)
-        
-        if not history.entries:
+        try:
+            start_date = datetime.now() - timedelta(days=days)
+            history = self.get_history(symbol, start_date=start_date)
+            
+            if not history.entries:
+                logger.info(f"No decision history for {symbol} in last {days} days")
+                return {
+                    "symbol": symbol,
+                    "total_decisions": 0,
+                    "days_analyzed": days,
+                    "average_conviction": 0.0,
+                    "bias_distribution": {},
+                    "conviction_range": (0.0, 0.0),
+                    "note": "No historical decisions found. Decision history will populate as analysis runs."
+                }
+            
+            return {
+                "symbol": symbol,
+                "total_decisions": history.total_decisions,
+                "days_analyzed": days,
+                "average_conviction": history.get_average_conviction(),
+                "bias_distribution": history.get_bias_distribution(),
+                "conviction_range": history.get_conviction_range(),
+                "earliest_decision": history.earliest_decision.isoformat() if history.earliest_decision else None,
+                "latest_decision": history.latest_decision.isoformat() if history.latest_decision else None
+            }
+        except Exception as e:
+            logger.error(f"Error getting statistics for {symbol}: {e}")
             return {
                 "symbol": symbol,
                 "total_decisions": 0,
                 "days_analyzed": days,
                 "average_conviction": 0.0,
                 "bias_distribution": {},
-                "conviction_range": (0.0, 0.0)
+                "conviction_range": (0.0, 0.0),
+                "error": "Decision history service unavailable"
             }
-        
-        return {
-            "symbol": symbol,
-            "total_decisions": history.total_decisions,
-            "days_analyzed": days,
-            "average_conviction": history.get_average_conviction(),
-            "bias_distribution": history.get_bias_distribution(),
-            "conviction_range": history.get_conviction_range(),
-            "earliest_decision": history.earliest_decision.isoformat() if history.earliest_decision else None,
-            "latest_decision": history.latest_decision.isoformat() if history.latest_decision else None
-        }
 
 
 # Singleton instance

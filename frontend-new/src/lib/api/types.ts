@@ -34,30 +34,30 @@ export interface TradeIntentResponse {
   analysis_timestamp: string;
   contract_version: string;
   decision_id?: string; // v1.1 addition
-  
+
   // Core reasoning
   directional_bias: string;
   conviction_score: number;
-  
+
   // Explainability
   reasoning: string;
   pillar_scores: Record<string, PillarScore>;
-  
+
   // Quality metadata
   quality: AnalysisQuality;
-  
+
   // Validity flags
   is_valid: boolean;
   is_execution_ready: boolean;
   execution_block_reason?: string;
   warnings?: string[];
-  
+
   // Market context
   market_context?: {
     regime: string;
     vix_level?: number;
   };
-  
+
   // Technical state
   technical_state?: {
     ltp: number;
@@ -78,6 +78,8 @@ export interface ConvictionDataPoint {
   conviction_score: number;
   directional_bias: string;
   active_pillars: number;
+  regime?: string;
+  pillar_scores?: Record<string, number>;
   calibration_version?: string;
   data_age_seconds?: number;
 }
@@ -88,7 +90,7 @@ export interface ConvictionTimeline {
   start_time?: string;
   end_time?: string;
   sample_count: number;
-  
+
   // Computed metrics
   conviction_volatility: number;
   bias_consistency: number;
@@ -135,7 +137,7 @@ export interface PillarDriftMeasurement {
   total_drift_score: number;
   time_delta_seconds: number;
   calibration_changed: boolean;
-  
+
   // Computed helpers
   drift_classification: string; // STABLE/MODERATE/HIGH
   top_movers: TopMover[];
