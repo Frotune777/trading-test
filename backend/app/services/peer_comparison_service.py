@@ -16,7 +16,7 @@ class PeerComparisonService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_peer_comparison(self, symbol: str) -> Dict[str, Any]:
+    async def get_peer_comparison(self, symbol: str, min_peers_required: int = 1) -> Dict[str, Any]:
         """
         Get peer comparison for a symbol.
         
@@ -92,13 +92,12 @@ class PeerComparisonService:
                 peers_data.append({
                     "symbol": peer.symbol,
                     "name": peer.name,
-                    "similarity_score": similarity_score,
+                    "similarity_score": float(similarity_score),
                     "market_cap": float(peer.market_cap) if peer.market_cap else 0.0,
-                    "return_30d": peer_metrics.get("return_30d", 0.0),
-                    "volatility": peer_metrics.get("volatility", 0.0),
-                    "beta": peer_metrics.get("beta", 1.0),
-                    # Correlation is annotation only
-                    "price_correlation": None  # Can be calculated separately if needed
+                    "return_30d": float(peer_metrics["return_30d"]),
+                    "volatility": float(peer_metrics["volatility"]),
+                    "beta": float(peer_metrics["beta"]),
+                    "price_correlation": None  # Placeholder for future implementation
                 })
             
             if not peers_data:
@@ -113,9 +112,17 @@ class PeerComparisonService:
             # 4. Rank by structural similarity (ascending - lower score = more similar)
             peers_data.sort(key=lambda x: x["similarity_score"])
             
-            # Return top 5 peers
-            top_peers = peers_data[:5]
+            # Check min_peers_required guardrail
+            if len(peers_data) < min_peers_required:
+                return {
+                    "symbol": symbol,
+                    "sector": target_company.sector,
+                    "error": "NO_PEERS",
+                    "reason": f"Only {len(peers_data)} peers found, minimum {min_peers_required} required",
+                    "peers": []
+                }
             
+            # Build response with all floats
             return {
                 "symbol": symbol,
                 "name": target_company.name,
@@ -124,11 +131,11 @@ class PeerComparisonService:
                 "peers_with_complete_data": len(peers_data),
                 "target_metrics": {
                     "market_cap": float(target_company.market_cap) if target_company.market_cap else 0.0,
-                    "return_30d": target_metrics.get("return_30d", 0.0),
-                    "volatility": target_metrics.get("volatility", 0.0),
-                    "beta": target_metrics.get("beta", 1.0)
+                    "return_30d": float(target_metrics["return_30d"]),
+                    "volatility": float(target_metrics["volatility"]),
+                    "beta": float(target_metrics["beta"])
                 },
-                "peers": top_peers
+                "peers": peers_data[:5]  # Top 5 most similar
             }
             
         except Exception as e:
@@ -152,18 +159,20 @@ class PeerComparisonService:
         - Market cap (from companies)
         """
         try:
-            # Get 30-day return from historical data
-            thirty_days_ago = datetime.now() - timedelta(days=30)
+            # Get last 30 trading days of data (not calendar days)
+            # This works even if data is old
             stmt = select(HistoricalOHLC).where(
                 HistoricalOHLC.symbol == symbol,
-                HistoricalOHLC.timestamp >= thirty_days_ago
-            ).order_by(HistoricalOHLC.timestamp.asc())
+                HistoricalOHLC.interval == '1d'
+            ).order_by(HistoricalOHLC.timestamp.desc()).limit(30)
             result = await self.db.execute(stmt)
             ohlc_data = result.scalars().all()
             
             if len(ohlc_data) < 2:
                 return {"complete": False}
             
+            # Reverse to get chronological order (oldest first)
+            ohlc_data = list(reversed(ohlc_data))
             return_30d = ((ohlc_data[-1].close - ohlc_data[0].close) / ohlc_data[0].close) * 100
             
             # Get risk metrics
@@ -173,7 +182,11 @@ class PeerComparisonService:
             result = await self.db.execute(stmt)
             risk = result.scalar_one_or_none()
             
-            if not risk or risk.volatility_30d is None or risk.beta_30d is None:
+            # Use 252d (1 year) metrics as primary, fallback to 60d, then 30d
+            volatility = risk.volatility_252d or risk.volatility_60d or risk.volatility_30d
+            beta = risk.beta_252d or risk.beta_60d or risk.beta_30d
+            
+            if volatility is None or beta is None:
                 return {"complete": False}
             
             # Get market cap
@@ -186,9 +199,9 @@ class PeerComparisonService:
             
             return {
                 "complete": True,
-                "return_30d": round(return_30d, 2),
-                "volatility": round(float(risk.volatility_30d), 2),
-                "beta": round(float(risk.beta_30d), 2),
+                "return_30d": float(round(return_30d, 2)),
+                "volatility": float(volatility),
+                "beta": float(beta),
                 "market_cap": float(company.market_cap)
             }
             
@@ -234,12 +247,25 @@ class PeerComparisonService:
         beta_diff = abs(target_beta - peer_beta)
         
         # Weighted Euclidean distance
-        # Weights: market_cap=0.3, return=0.2, volatility=0.25, beta=0.25
+        # Rebalanced weights to reduce market cap dominance:
+        # market_cap=0.2 (down from 0.3), return=0.25, volatility=0.3, beta=0.25
+        mc_component = 0.2 * mc_diff ** 2
+        return_component = 0.25 * return_diff ** 2
+        vol_component = 0.3 * vol_diff ** 2
+        beta_component = 0.25 * beta_diff ** 2
+        
         similarity = math.sqrt(
-            (0.3 * mc_diff ** 2) +
-            (0.2 * return_diff ** 2) +
-            (0.25 * vol_diff ** 2) +
-            (0.25 * beta_diff ** 2)
+            mc_component + return_component + vol_component + beta_component
         )
         
-        return round(similarity, 4)
+        # Log detailed breakdown
+        logger.debug(
+            f"Similarity calculation for {peer.get('symbol', 'unknown')}:\n"
+            f"  Market Cap diff: {mc_diff:.4f} (contribution: {math.sqrt(mc_component):.4f})\n"
+            f"  Return diff: {return_diff:.4f} (contribution: {math.sqrt(return_component):.4f})\n"
+            f"  Volatility diff: {vol_diff:.4f} (contribution: {math.sqrt(vol_component):.4f})\n"
+            f"  Beta diff: {beta_diff:.4f} (contribution: {math.sqrt(beta_component):.4f})\n"
+            f"  Total similarity: {similarity:.4f}"
+        )
+        
+        return float(round(similarity, 4))
