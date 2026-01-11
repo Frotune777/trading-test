@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import api from '@/lib/api/client';
 
 import { Activity, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
 import { format } from 'date-fns';
@@ -27,10 +28,8 @@ const CalloutHistoryTimeline: React.FC<TimelineProps> = ({ symbol, days }) => {
 
     const fetchAlerts = async () => {
         try {
-            const response = await fetch('/api/v1/alerts/recent?limit=50');
-            if (!response.ok) return;
-
-            const data: Alert[] = await response.json();
+            const response = await api.get('/api/v1/alerts/recent?limit=50');
+            const data: Alert[] = response.data;
 
             // Filter for Callouts AND Symbol if provided
             const callouts = data.filter(a => {
