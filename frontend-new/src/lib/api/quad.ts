@@ -20,7 +20,7 @@ export const QuadService = {
    * Returns TradeIntent with calibration versioning
    */
   getAnalysis: async (symbol: string): Promise<TradeIntentResponse> => {
-    const response = await api.get(`/reasoning/${symbol}/reasoning`);
+    const response = await api.get(`/api/v1/reasoning/${symbol}/reasoning`);
     return response.data;
   },
 
@@ -35,7 +35,7 @@ export const QuadService = {
     symbol: string,
     days: number = 30
   ): Promise<ConvictionTimeline> => {
-    const response = await api.get(`/decisions/conviction-timeline/${symbol}`, {
+    const response = await api.get(`/api/v1/decisions/conviction-timeline/${symbol}`, {
       params: { days },
     });
     return response.data;
@@ -60,7 +60,7 @@ export const QuadService = {
     if (fromTimestamp) params.from_timestamp = fromTimestamp;
     if (toTimestamp) params.to_timestamp = toTimestamp;
 
-    const response = await api.get(`/decisions/pillar-drift/${symbol}`, { params });
+    const response = await api.get(`/api/v1/decisions/pillar-drift/${symbol}`, { params });
     return response.data;
   },
 
@@ -81,7 +81,7 @@ export const QuadService = {
     if (limit) params.limit = limit;
     if (days) params.days = days;
 
-    const response = await api.get(`/decisions/history/${symbol}`, { params });
+    const response = await api.get(`/api/v1/decisions/history/${symbol}`, { params });
     return response.data;
   },
 
@@ -92,7 +92,7 @@ export const QuadService = {
    * @param symbol - Stock symbol
    */
   getLatestDecision: async (symbol: string): Promise<DecisionHistoryEntry> => {
-    const response = await api.get(`/decisions/latest/${symbol}`);
+    const response = await api.get(`/api/v1/decisions/latest/${symbol}`);
     return response.data;
   },
 
@@ -107,7 +107,7 @@ export const QuadService = {
     symbol: string,
     days: number = 30
   ): Promise<DecisionStatistics> => {
-    const response = await api.get(`/decisions/statistics/${symbol}`, {
+    const response = await api.get(`/api/v1/decisions/statistics/${symbol}`, {
       params: { days },
     });
     return response.data;
@@ -123,7 +123,7 @@ export const QuadService = {
     symbol: string,
     initialCapital: number = 100000
   ): Promise<any> => {
-    const response = await api.get(`/quad/${symbol}/backtest`, {
+    const response = await api.get(`/api/v1/quad/${symbol}/backtest`, {
       params: { initial_capital: initialCapital },
     });
     return response.data;
@@ -142,7 +142,7 @@ export const isQuadV11Available = (analysis: TradeIntentResponse): boolean => {
  */
 export const formatCalibrationVersion = (version?: string): string => {
   if (!version) return "Unknown";
-  
+
   // Convert "matrix_2024_q4" to "Matrix 2024 Q4"
   return version
     .split("_")

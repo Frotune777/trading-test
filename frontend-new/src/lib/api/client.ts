@@ -8,11 +8,11 @@ const api = axios.create({
 });
 
 export const StockService = {
-    getStocks: () => api.get('/data/stocks'),
+    getStocks: () => api.get('/api/v1/data/stocks'),
     getOHLCV: (symbol: string, timeframe: string) =>
-        api.get(`/data/ohlcv/${symbol}`, { params: { timeframe } }),
-    getAnalysis: (symbol: string) => api.get(`/analysis/indicators/${symbol}`),
-    getPrediction: (symbol: string) => api.get(`/predictions/${symbol}`),
+        api.get(`/api/v1/data/ohlcv/${symbol}`, { params: { timeframe } }),
+    getAnalysis: (symbol: string) => api.get(`/api/v1/analysis/indicators/${symbol}`),
+    getPrediction: (symbol: string) => api.get(`/api/v1/predictions/${symbol}`),
 };
 
 export default api;
