@@ -171,3 +171,19 @@ async def get_risk_dashboard(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error fetching risk dashboard: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{symbol}/latest")
+async def get_latest_risk_metrics(symbol: str, db: AsyncSession = Depends(get_db)):
+    """
+    Alias for /{symbol} endpoint - returns latest risk metrics
+    """
+    return await get_risk_metrics(symbol, db)
+
+@router.get("/{symbol}/all")
+async def get_all_risk_metrics(symbol: str, db: AsyncSession = Depends(get_db)):
+    """
+    Returns all available risk metrics for a symbol
+    Same as /latest - returns most recent calculated metrics
+    """
+    return await get_risk_metrics(symbol, db)
+

@@ -241,6 +241,30 @@ class RiskMetrics(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Company(Base):
+    """Company master data from NSE"""
+    __tablename__ = "companies"
+    
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(20), nullable=False, unique=True, index=True)
+    name = Column(String(200), nullable=False)
+    sector = Column(String(100), index=True)
+    industry = Column(String(100))
+    market_cap = Column(DECIMAL(15, 2))  # In crores
+    
+    # NSE metadata
+    isin = Column(String(20))
+    series = Column(String(10))  # EQ, BE, etc.
+    listing_date = Column(DateTime)
+    
+    # Update tracking
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    data_source = Column(String(50), default="NSE")  # NSE, Screener, etc.
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+
 # ==================== Pydantic Models ====================
 
 class PillarScores(BaseModel):
