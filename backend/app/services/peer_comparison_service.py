@@ -209,19 +209,29 @@ class PeerComparisonService:
         """
         import math
         
+        # Convert Decimal to float for calculations
+        target_mc = float(target["market_cap"])
+        peer_mc = float(peer["market_cap"])
+        target_return = float(target["return_30d"])
+        peer_return = float(peer["return_30d"])
+        target_vol = float(target["volatility"])
+        peer_vol = float(peer["volatility"])
+        target_beta = float(target["beta"])
+        peer_beta = float(peer["beta"])
+        
         # Normalize market cap using log scale
-        target_mc_log = math.log10(max(target["market_cap"], 1))
-        peer_mc_log = math.log10(max(peer["market_cap"], 1))
+        target_mc_log = math.log10(max(target_mc, 1))
+        peer_mc_log = math.log10(max(peer_mc, 1))
         mc_diff = abs(target_mc_log - peer_mc_log)
         
         # Normalize returns (already in %)
-        return_diff = abs(target["return_30d"] - peer["return_30d"]) / 100.0
+        return_diff = abs(target_return - peer_return) / 100.0
         
         # Normalize volatility
-        vol_diff = abs(target["volatility"] - peer["volatility"]) / 100.0
+        vol_diff = abs(target_vol - peer_vol) / 100.0
         
         # Normalize beta
-        beta_diff = abs(target["beta"] - peer["beta"])
+        beta_diff = abs(target_beta - peer_beta)
         
         # Weighted Euclidean distance
         # Weights: market_cap=0.3, return=0.2, volatility=0.25, beta=0.25
