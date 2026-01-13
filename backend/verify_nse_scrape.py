@@ -22,9 +22,25 @@ except Exception as e:
 print("\n--- Testing Equity Info (TCS) ---")
 try:
     data = nse.equity_info("TCS")
+    if data:
+        print(f"Top Level Keys: {list(data.keys())}")
+        if 'metaData' in data:
+            print(f"metaData keys: {list(data['metaData'].keys())}")
+            print(f"metaData sample: {str(data['metaData'])[:300]}")
+        if 'tradeInfo' in data:
+            print(f"tradeInfo keys: {list(data['tradeInfo'].keys())}")
+            print(f"tradeInfo sample: {str(data['tradeInfo'])[:300]}")
+
+        
     if data and 'priceInfo' in data:
-        print(f"Success! Price: {data['priceInfo']['lastPrice']}")
+
+        if 'metadata' in data:
+            print(f"Timestamp: {data['metadata'].get('lastUpdateTime')}")
+        elif 'metaData' in data:
+             print(f"Timestamp: {data['metaData'].get('lastUpdateTime') or data.get('timestamp')}")
+
     else:
+
         print(f"Failed: Data is {type(data)}")
         if data: print(data.keys())
 except Exception as e:
