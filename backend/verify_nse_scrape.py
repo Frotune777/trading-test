@@ -24,12 +24,21 @@ try:
     data = nse.equity_info("TCS")
     if data:
         print(f"Top Level Keys: {list(data.keys())}")
-        if 'metaData' in data:
-            print(f"metaData keys: {list(data['metaData'].keys())}")
-            print(f"metaData sample: {str(data['metaData'])[:300]}")
-        if 'tradeInfo' in data:
-            print(f"tradeInfo keys: {list(data['tradeInfo'].keys())}")
-            print(f"tradeInfo sample: {str(data['tradeInfo'])[:300]}")
+        # Recursive key print to find hidden data
+        def print_keys(d, prefix=""):
+            if isinstance(d, dict):
+                for k, v in d.items():
+                    print(f"{prefix}{k}")
+                    if isinstance(v, (dict, list)) and len(prefix) < 10: # limit depth
+                         print_keys(v, prefix + "  ")
+            elif isinstance(d, list) and len(d) > 0:
+                print(f"{prefix}List[{len(d)}]")
+                if isinstance(d[0], dict):
+                     print_keys(d[0], prefix + "  ")
+
+        print("--- Deep Key Inspection ---")
+        print_keys(data)
+
 
         
     if data and 'priceInfo' in data:

@@ -74,7 +74,56 @@ class NseUtils:
         else:
              ref_url = f"{base_url}/get-quote/equity?symbol={symbol}"
 
-        return self.session.get(ref_url, headers=self.headers, timeout=10)
+    def get_historical_data(self, symbol, from_date=None, to_date=None):
+        """
+        Fetches historical data using the Chart API as a fallback since the
+        standard historical API is restricted.
+        Returns a DataFrame with 'timestamp' and 'price' (and others if available).
+        """
+        symbol = symbol.upper().replace(' ', '%20').replace('&', '%26')
+        
+        # This endpoint typically returns data for the active trading session or available history
+        # For full 52-week or custom ranges, NSE often uses pre-computed JSONs or restricted APIs.
+        # This chart API is the most reliable public endpoint for history.
+        url = f"https://www.nseindia.com/api/chart-databyindex?index={symbol}"
+        
+        try:
+            # 1. Establish session/cookies if needed (referer is generic)
+            if not self.cookies:
+                self._establish_session()
+            
+            headers_with_ref = self.headers.copy()
+            headers_with_ref['Referer'] = f"https://www.nseindia.com/get-quote/equity?symbol={symbol}"
+            
+            response = self.session.get(url, headers=headers_with_ref, cookies=self.session.cookies.get_dict(), timeout=10)
+            
+            if response.status_code == 401:
+                self._establish_session()
+                response = self.session.get(url, headers=headers_with_ref, cookies=self.session.cookies.get_dict(), timeout=10)
+            
+            if response.status_code != 200:
+                print(f"Error fetching historical chart data: {response.status_code}")
+                return pd.DataFrame()
+            
+            data = response.json()
+            if "grapthData" not in data:
+                return pd.DataFrame()
+                
+            # grapthData is usually a list of [timestamp (ms), value]
+            df = pd.DataFrame(data["grapthData"], columns=["timestamp", "price"])
+            df["timestamp"] = pd.to_datetime(df["timestamp"], unit='ms')
+            
+            # Filter by date if provided (naive filtering since API doesn't support params strictly here)
+            if from_date:
+                df = df[df['timestamp'] >= pd.to_datetime(from_date)]
+            if to_date:
+                df = df[df['timestamp'] <= pd.to_datetime(to_date)]
+                
+            return df
+
+        except Exception as e:
+            print(f"Exception in get_historical_data: {e}")
+            return pd.DataFrame()
 
 
     def pre_market_info(self, category='All'):
