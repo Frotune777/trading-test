@@ -18,7 +18,7 @@ class PreferencesAPI {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${API_BASE_URL}/api/v1/preferences`;
+    this.baseUrl = `${API_BASE_URL}/preferences`;
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {

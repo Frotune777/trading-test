@@ -3,7 +3,7 @@
  * Indices, Breadth, Sentiment
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = '/api/v1';
 
 export interface MarketIndex {
   name: string;
@@ -48,36 +48,36 @@ class MarketAPI {
   }
 
   async getIndices(): Promise<{ data: MarketIndex[] }> {
-    return this.request<{ data: MarketIndex[] }>('/api/v1/market/indices');
+    return this.request<{ data: MarketIndex[] }>('/market/indices');
   }
 
   async getMarketBreadth(): Promise<MarketBreadth> {
-    return this.request<MarketBreadth>('/api/v1/market/breadth');
+    return this.request<MarketBreadth>('/market/breadth');
   }
 
   async getMarketMood(): Promise<MarketMood> {
     // This will be a new endpoint in the backend
     try {
-        return await this.request<MarketMood>('/api/v1/market/mood');
+      return await this.request<MarketMood>('/market/mood');
     } catch (e) {
-        // Fallback for demo if backend isn't updated yet
-        console.warn('Market mood API failed, using fallback', e);
-        return {
-            score: 65,
-            status: 'Greed',
-            current_val: 'Greed',
-            previous_val: 'Greed',
-            previous_status: 'Greed'
-        };
+      // Fallback for demo if backend isn't updated yet
+      console.warn('Market mood API failed, using fallback', e);
+      return {
+        score: 65,
+        status: 'Greed',
+        current_val: 'Greed',
+        previous_val: 'Greed',
+        previous_status: 'Greed'
+      };
     }
   }
 
   async getHistory(symbol: string, days: number = 30): Promise<{ symbol: string; data: any[] }> {
-    return this.request<{ symbol: string; data: any[] }>(`/api/v1/market/history/${symbol}?days=${days}`);
+    return this.request<{ symbol: string; data: any[] }>(`/market/history/${symbol}?days=${days}`);
   }
 
   async getVolumeProfile(symbol: string, days: number = 30, bins: number = 40): Promise<any> {
-    return this.request<any>(`/api/v1/market/volume-profile/${symbol}?days=${days}&bins=${bins}`);
+    return this.request<any>(`/market/volume-profile/${symbol}?days=${days}&bins=${bins}`);
   }
 }
 

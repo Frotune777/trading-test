@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
-from app.core.database import get_db
+from app.core.database import get_db, get_db_sync
 from app.services.decision_service import DecisionService
 from app.api.v1.endpoints.auth import get_current_user
 
@@ -57,7 +57,7 @@ class UpdateOutcomeRequest(BaseModel):
 async def record_decision(
     request: RecordDecisionRequest,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """
     Record a trading decision with full causal explainability
@@ -97,7 +97,7 @@ async def record_decision(
 async def get_decision(
     decision_id: str,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """Get a single decision by ID"""
     decision_service = DecisionService(db)
@@ -118,7 +118,7 @@ async def get_decisions_by_symbol(
     mode: Optional[str] = None,
     limit: int = 50,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """Get decision history for a symbol"""
     decision_service = DecisionService(db)
@@ -141,7 +141,7 @@ async def get_decisions_by_strategy(
     strategy_id: int,
     limit: int = 50,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """Get decisions made by a specific strategy"""
     decision_service = DecisionService(db)
@@ -163,7 +163,7 @@ async def get_decision_timeline(
     symbol: str,
     days: int = 30,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """
     Get decision timeline for visualization
@@ -188,7 +188,7 @@ async def update_execution(
     decision_id: str,
     request: UpdateExecutionRequest,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """Update decision with execution results"""
     decision_service = DecisionService(db)
@@ -212,7 +212,7 @@ async def update_outcome(
     decision_id: str,
     request: UpdateOutcomeRequest,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """Update decision with final outcome"""
     decision_service = DecisionService(db)
@@ -236,7 +236,7 @@ async def update_outcome(
 async def analyze_causal_accuracy(
     decision_id: str,
     current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_sync)
 ):
     """
     Analyze which causal factors were actually important

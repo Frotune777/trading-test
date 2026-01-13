@@ -13,6 +13,7 @@ from sqlalchemy import select, and_, desc, text
 
 from app.database.models_quad import QUADDecision, QUADSignalAccuracy
 from app.services.quad_analytics_service import QUADAnalyticsService
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +44,14 @@ class BacktestService:
         if end_date:
             stmt = stmt.where(QUADDecision.timestamp <= end_date)
             
-        result = await self.db.execute(stmt)
-        decisions = result.scalars().all()
+        try:
+            result = await self.db.execute(stmt)
+            decisions = result.scalars().all()
+        except Exception as e:
+            with open("/home/fortune/Desktop/Python_Projects/quad_trading/trading-test/backend/error_log.txt", "a") as f:
+                f.write(f"Error in get_equity_curve (decisions): {str(e)}\n")
+                f.write(traceback.format_exc())
+            raise e
         
         if not decisions:
             return {
@@ -61,9 +68,9 @@ class BacktestService:
             
         # 2. Get price history for benchmarking and trade evaluation
         price_stmt = text("""
-            SELECT date, close FROM price_history 
+            SELECT timestamp as date, close FROM historical_ohlc 
             WHERE symbol = :symbol 
-            ORDER BY date ASC
+            ORDER BY timestamp ASC
         """)
         price_result = await self.db.execute(price_stmt, {"symbol": symbol.upper()})
         price_data = price_result.fetchall()
@@ -72,7 +79,7 @@ class BacktestService:
             return {"error": "No price history found for benchmarking"}
             
         prices_df = pd.DataFrame(price_data, columns=['date', 'close'])
-        prices_df['date'] = pd.to_datetime(prices_df['date'])
+        prices_df['date'] = pd.to_datetime(prices_df['date'], utc=True)
         prices_df.set_index('date', inplace=True)
         
         # 3. Simulate trades
@@ -97,8 +104,18 @@ class BacktestService:
             
             # Find exit price (5 days later)
             exit_date = entry_date + timedelta(days=5)
+            
+            # Ensure exit_date is timezone-aware UTC to match prices_df.index
+            # decision.timestamp from DB is timezone-naive, so we localize it to UTC
+            if not hasattr(exit_date, 'tzinfo') or exit_date.tzinfo is None:
+                # Timezone-naive, assume UTC and localize
+                exit_date_ts = pd.Timestamp(exit_date).tz_localize('UTC')
+            else:
+                # Already timezone-aware, convert to UTC if needed
+                exit_date_ts = pd.Timestamp(exit_date).tz_convert('UTC')
+            
             # Find the closest price record >= exit_date
-            future_prices = prices_df[prices_df.index >= pd.Timestamp(exit_date)]
+            future_prices = prices_df[prices_df.index >= exit_date_ts]
             
             if future_prices.empty:
                 continue

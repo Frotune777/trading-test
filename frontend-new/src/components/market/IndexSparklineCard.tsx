@@ -20,7 +20,7 @@ export function IndexSparklineCard({ index, isLoading }: IndexSparklineCardProps
     const max = Math.max(...points);
     const min = Math.min(...points);
     const range = max - min || 1;
-    
+
     return points.map((p, i) => {
       const x = i * step;
       const y = height - ((p - min) / range) * height;
@@ -36,7 +36,7 @@ export function IndexSparklineCard({ index, isLoading }: IndexSparklineCardProps
         </h4>
         <div className="flex items-baseline gap-2">
           <span className="text-lg font-black text-foreground tabular-nums">
-             {index.value?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {index.value?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
         </div>
         <div className={cn(
@@ -50,21 +50,21 @@ export function IndexSparklineCard({ index, isLoading }: IndexSparklineCardProps
 
       <div className="h-10 w-24 self-center mt-2">
         <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none">
-           <path 
-             d={generatePath()} 
-             fill="none" 
-             stroke="currentColor" 
-             strokeWidth="2" 
-             className={cn(index.is_up ? "text-success" : "text-destructive")}
-             strokeLinecap="round"
-             strokeLinejoin="round"
-           />
+          <path
+            d={generatePath()}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className={cn(index.is_up ? "text-success" : "text-destructive")}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </div>
 
       {isLoading && (
         <div className="absolute inset-0 bg-card/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-           <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
         </div>
       )}
     </div>

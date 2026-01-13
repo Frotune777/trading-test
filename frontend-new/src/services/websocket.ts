@@ -39,7 +39,7 @@ export class WebSocketService {
   private subscriptions: Set<string> = new Set();
   private currentMode: 'ltp' | 'quote' | 'full' = 'ltp';
 
-  constructor(url: string = 'ws://localhost:8765', apiKey: string = '') {
+  constructor(url: string = process.env.NEXT_PUBLIC_WS_URL || 'ws://127.0.0.1:8000', apiKey: string = '') {
     this.url = url;
     this.apiKey = apiKey;
   }
@@ -300,7 +300,7 @@ let wsInstance: WebSocketService | null = null;
 export function getWebSocketService(apiKey?: string): WebSocketService {
   if (!wsInstance) {
     // Get WebSocket URL from environment or use default
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://127.0.0.1:8000/ws';
     // Remove any trailing slashes
     const url = wsUrl.replace(/\/$/, '');
     wsInstance = new WebSocketService(url, apiKey || '');

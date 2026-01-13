@@ -77,6 +77,63 @@ export default function TradeSetup({ symbol }: TradeSetupProps) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+        {/* MARKET CONTEXT ANALYSIS (New Section) */}
+        {setup.analysis && (
+          <div className="xl:col-span-12">
+            <Card className="bg-card border-border overflow-hidden">
+              <div className="bg-muted/30 border-b border-border px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Market Context & Reasoning</span>
+                  <div className={cn(
+                    "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
+                    setup.analysis.signal === 'BUY' ? "bg-success/20 text-success" :
+                      setup.analysis.signal === 'SELL' ? "bg-destructive/20 text-destructive" :
+                        "bg-muted text-muted-foreground"
+                  )}>
+                    {setup.analysis.signal}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-muted-foreground">CONVICTION</span>
+                  <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all duration-500",
+                        setup.analysis.conviction > 70 ? "bg-success" :
+                          setup.analysis.conviction > 40 ? "bg-amber-500" : "bg-destructive"
+                      )}
+                      style={{ width: `${setup.analysis.conviction}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono font-black">{setup.analysis.conviction}%</span>
+                </div>
+              </div>
+              <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-2">
+                  <div className="text-xs uppercase font-bold text-muted-foreground tracking-wider">The Why</div>
+                  <p className="text-sm font-medium leading-relaxed text-foreground/90">
+                    {setup.analysis.reasoning_summary || "No detailed reasoning available for this setup."}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-xs uppercase font-bold text-muted-foreground tracking-wider">The How (Pillars)</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(setup.analysis.pillars).map(([key, value]) => (
+                      <div key={key} className="flex justify-between items-center text-[10px] bg-muted/20 p-1.5 rounded">
+                        <span className="uppercase text-muted-foreground font-semibold">{key.slice(0, 4)}</span>
+                        <span className={cn(
+                          "font-mono font-black",
+                          value > 60 ? "text-success" : value < 40 ? "text-destructive" : "text-amber-500"
+                        )}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* SL/TP Targets */}
         <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* STOP LOSS */}

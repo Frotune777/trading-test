@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MarketBreadthWidget } from "@/components/dashboard/market-breadth-widget"
+import DataSourceHealthMonitor from "@/components/dashboard/DataSourceHealthMonitor"
 import { useMarketWebSocket } from "@/hooks/useMarketWebSocket"
 
 // Types based on API responses
@@ -88,6 +89,13 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
                 ))}
+            </div>
+
+            {/* Data Source Health Monitor */}
+            <div className="grid gap-4 md:grid-cols-4">
+                <div className="col-span-1">
+                    <DataSourceHealthMonitor />
+                </div>
             </div>
 
             {/* Market Movers Section */}

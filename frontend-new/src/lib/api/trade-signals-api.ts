@@ -26,6 +26,19 @@ export interface Zone {
 export interface TradeSetup {
   symbol: string;
   current_price: number;
+  analysis?: {
+    signal: 'BUY' | 'SELL' | 'HOLD';
+    conviction: number;
+    reasoning_summary: string | null;
+    pillars: {
+      trend: number;
+      momentum: number;
+      volatility: number;
+      liquidity: number;
+      sentiment: number;
+      regime: number;
+    };
+  };
   pivots: {
     standard: PivotSet;
     fibonacci: PivotSet;
@@ -57,7 +70,7 @@ class TradeSignalsAPI {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${API_BASE_URL}/api/v1/trade-signals`;
+    this.baseUrl = `${API_BASE_URL}/trade-signals`;
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {

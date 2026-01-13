@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 
 from app.database.models_decision import DecisionLedger, CausalContribution, DecisionOutcome
+import traceback
+import os
 
 
 class DecisionService:
@@ -189,9 +191,14 @@ class DecisionService:
         if mode:
             query = query.filter(DecisionLedger.mode == mode)
         
-        decisions = query.order_by(desc(DecisionLedger.timestamp)).limit(limit).all()
-        
-        return [self._decision_to_dict(d) for d in decisions]
+        try:
+            decisions = query.order_by(desc(DecisionLedger.timestamp)).limit(limit).all()
+            return [self._decision_to_dict(d) for d in decisions]
+        except Exception as e:
+            with open("/home/fortune/Desktop/Python_Projects/quad_trading/trading-test/backend/error_log.txt", "a") as f:
+                f.write(f"Error in get_decisions_by_symbol: {str(e)}\n")
+                f.write(traceback.format_exc())
+            raise e
     
     async def get_decisions_by_strategy(
         self,

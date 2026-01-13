@@ -275,7 +275,7 @@ class FeedHealthMonitor:
         try:
             # Use scan_iter for non-blocking iteration
             active_count = 0
-            async for key in redis_client.scan_iter("ltp:*"):
+            async for key in redis_client.scan_iter("market:ltp:*"):
                  ttl = await redis_client.ttl(key)
                  if ttl > 0:
                      active_count += 1

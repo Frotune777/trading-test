@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 import pytz
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, case
 
 from app.database.models_monitoring import APITraffic, ErrorLog
 
@@ -120,7 +120,7 @@ class TrafficMonitor:
             APITraffic.method,
             func.count(APITraffic.id).label('count'),
             func.avg(APITraffic.response_time_ms).label('avg_response_time'),
-            func.sum(func.case((APITraffic.status_code >= 400, 1), else_=0)).label('errors')
+            func.sum(case((APITraffic.status_code >= 400, 1), else_=0)).label('errors')
         ).filter(
             APITraffic.timestamp >= since
         ).group_by(

@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '../ui/card';
-import { 
-  ShieldAlert, 
-  TrendingUp, 
-  Award, 
+import {
+  ShieldAlert,
+  TrendingUp,
+  Award,
   Activity,
   Info,
   ChevronRight,
@@ -68,7 +68,7 @@ export default function RiskMetrics({ symbol }: RiskMetricsProps) {
         <AlertTriangle className="w-8 h-8 text-destructive mb-2" />
         <h4 className="text-sm font-bold text-destructive uppercase tracking-wider">Risk Data Unavailable</h4>
         <p className="text-xs text-muted-foreground mt-1 max-w-md">
-          Historical price data for {symbol} is currently being synchronized. 
+          Historical price data for {symbol} is currently being synchronized.
           Please try again in a few minutes.
         </p>
       </Card>
@@ -76,10 +76,10 @@ export default function RiskMetrics({ symbol }: RiskMetricsProps) {
   }
 
   // Formatters with null checks
-  const getVaR = () => metrics.var['95_30d'] ?? 0;
-  const getBeta = () => metrics.beta['252d'] ?? 0;
-  const getSharpe = () => metrics.sharpe['252d'] ?? 0;
-  const getVol = () => metrics.volatility['252d'] ?? 0;
+  const getVaR = () => metrics?.var?.['95_30d'] ?? 0;
+  const getBeta = () => metrics?.beta?.['252d'] ?? 0;
+  const getSharpe = () => metrics?.sharpe?.['252d'] ?? 0;
+  const getVol = () => metrics?.volatility?.['252d'] ?? 0;
 
   const vaRValue = getVaR();
   const betaValue = getBeta();
@@ -130,7 +130,7 @@ export default function RiskMetrics({ symbol }: RiskMetricsProps) {
       label: betaInfo.label,
       labelColor: betaInfo.color,
       icon: <Activity className="w-4 h-4" />,
-      description: betaValue > 1 
+      description: betaValue > 1
         ? `Stock is ${((betaValue - 1) * 100).toFixed(0)}% more volatile than the market.`
         : `Stock is ${((1 - betaValue) * 100).toFixed(0)}% less volatile than the market.`
     },
@@ -197,7 +197,7 @@ export default function RiskMetrics({ symbol }: RiskMetricsProps) {
               </div>
 
               <div className="h-px bg-border/50 mb-3" />
-              
+
               <div className="text-[10px] text-muted-foreground h-8 leading-tight italic group-hover:text-foreground transition-colors">
                 {card.description}
               </div>

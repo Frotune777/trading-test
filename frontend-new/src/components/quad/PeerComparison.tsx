@@ -20,7 +20,7 @@ export default function PeerComparison({ symbol }: PeerComparisonProps) {
       if (!symbol) return;
       try {
         setLoading(true);
-        const response = await api.get(`/api/v1/quad/${symbol}/peers`);
+        const response = await api.get(`/quad/${symbol}/peers`);
         setData(response.data);
       } catch (err) {
         console.error('Failed to load peer comparison', err);
@@ -72,16 +72,16 @@ export default function PeerComparison({ symbol }: PeerComparisonProps) {
           <div className="flex items-center justify-between mb-2">
             <div className="space-y-0.5">
               <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Sector Avg</div>
-              <div className="text-lg font-black tabular-nums">{data.avg_sector_conviction.toFixed(0)}%</div>
+              <div className="text-lg font-black tabular-nums">{data.avg_sector_conviction?.toFixed(0) || '--'}%</div>
             </div>
             <div className="text-right space-y-0.5">
               <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Alpha</div>
               <div className={cn(
                 "text-lg font-black tabular-nums",
-                (data.peers.find((p: any) => p.is_self)?.conviction || 0) > data.avg_sector_conviction ? "text-success" : "text-destructive"
+                (data.peers.find((p: any) => p.is_self)?.conviction || 0) > (data.avg_sector_conviction || 0) ? "text-success" : "text-destructive"
               )}>
-                {(data.peers.find((p: any) => p.is_self)?.conviction || 0) - data.avg_sector_conviction > 0 ? '+' : ''}
-                {((data.peers.find((p: any) => p.is_self)?.conviction || 0) - data.avg_sector_conviction).toFixed(0)}%
+                {(data.peers.find((p: any) => p.is_self)?.conviction || 0) - (data.avg_sector_conviction || 0) > 0 ? '+' : ''}
+                {(((data.peers.find((p: any) => p.is_self)?.conviction || 0) - (data.avg_sector_conviction || 0)).toFixed(0))}%
               </div>
             </div>
           </div>

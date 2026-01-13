@@ -834,7 +834,7 @@ class DatabaseManager:
     def get_recent_alerts(self, limit: int = 50) -> List[Dict]:
         """Fetch latest alerts from the database."""
         try:
-            rows = self.execute("SELECT * FROM alerts ORDER BY created_at DESC LIMIT :limit", (limit,), fetch_all=True)
+            rows = self.execute("SELECT * FROM alerts ORDER BY created_at DESC LIMIT :limit", {"limit": limit}, fetch_all=True)
             # Fetchall returns list of Row objects, which act like named tuples.
             # We need to dict them.
             return [dict(row._mapping) for row in rows]

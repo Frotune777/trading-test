@@ -90,7 +90,7 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                 <div className="bg-card border border-border p-3 rounded shadow-lg">
                     <div className="text-xs text-muted-foreground mb-1">{data.label}</div>
                     <div className="text-sm font-mono text-foreground font-black">
-                        Conviction: {data.conviction.toFixed(1)}%
+                        Conviction: {data.conviction?.toFixed(1) || '--'}%
                     </div>
                     <div className={cn("text-sm font-bold", getBiasColorClass(data.bias))}>
                         {data.bias}
@@ -120,19 +120,19 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
             </CardHeader>
             <CardContent className="pt-4 p-4 space-y-4">
                 {/* Chart */}
-                <div className="h-48 min-w-0">
+                <div className="h-48 min-w-0 min-h-[192px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                            <XAxis 
-                                dataKey="label" 
+                            <XAxis
+                                dataKey="label"
                                 stroke="var(--muted-foreground)"
                                 tick={{ fill: 'var(--muted-foreground)', fontSize: 8 }}
                                 angle={-45}
                                 textAnchor="end"
                                 height={40}
                             />
-                            <YAxis 
+                            <YAxis
                                 domain={[0, 100]}
                                 stroke="var(--muted-foreground)"
                                 tick={{ fill: 'var(--muted-foreground)', fontSize: 8 }}
@@ -140,9 +140,9 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                             />
                             <Tooltip content={<CustomTooltip />} />
                             <ReferenceLine y={50} stroke="var(--border)" strokeDasharray="3 3" />
-                            <Line 
-                                type="monotone" 
-                                dataKey="conviction" 
+                            <Line
+                                type="monotone"
+                                dataKey="conviction"
                                 stroke={getLineColor() || 'var(--primary)'}
                                 strokeWidth={2}
                                 dot={false}
@@ -159,7 +159,7 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                     <div>
                         <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Avg</div>
                         <div className="text-base font-black text-foreground tabular-nums">
-                            {timeline.average_conviction.toFixed(0)}%
+                            {timeline.average_conviction?.toFixed(0) || '--'}%
                         </div>
                     </div>
 
@@ -168,10 +168,10 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                         <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Vol</div>
                         <div className={cn("text-base font-black tabular-nums",
                             timeline.conviction_volatility < 10 ? 'text-success' :
-                            timeline.conviction_volatility < 20 ? 'text-warning' :
-                            'text-destructive'
+                                timeline.conviction_volatility < 20 ? 'text-warning' :
+                                    'text-destructive'
                         )}>
-                            {timeline.conviction_volatility.toFixed(1)}
+                            {timeline.conviction_volatility?.toFixed(1) || '--'}
                         </div>
                     </div>
 
@@ -180,10 +180,10 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                         <div className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mb-0.5">Cons</div>
                         <div className={cn("text-base font-black tabular-nums",
                             timeline.bias_consistency >= 80 ? 'text-success' :
-                            timeline.bias_consistency >= 60 ? 'text-warning' :
-                            'text-destructive'
+                                timeline.bias_consistency >= 60 ? 'text-warning' :
+                                    'text-destructive'
                         )}>
-                            {timeline.bias_consistency.toFixed(0)}%
+                            {timeline.bias_consistency?.toFixed(0) || '--'}%
                         </div>
                     </div>
 
@@ -201,8 +201,8 @@ export default function ConvictionTimeline({ symbol, days = 30 }: Props) {
                     <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Trend</span>
                     <span className={cn("flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full border",
                         timeline.conviction_trend === 'INCREASING' ? 'text-success bg-success/10 border-success/20' :
-                        timeline.conviction_trend === 'DECREASING' ? 'text-destructive bg-destructive/10 border-destructive/20' :
-                        'text-muted-foreground bg-muted border-border'
+                            timeline.conviction_trend === 'DECREASING' ? 'text-destructive bg-destructive/10 border-destructive/20' :
+                                'text-muted-foreground bg-muted border-border'
                     )}>
                         {timeline.conviction_trend === 'INCREASING' && <TrendingUp className="w-2.5 h-2.5" />}
                         {timeline.conviction_trend}

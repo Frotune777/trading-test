@@ -161,8 +161,16 @@ class DecisionHistoryService:
             DecisionHistory object
         """
         
-        # Build query
-        query = "SELECT * FROM decision_history WHERE symbol = ?"
+        # Build query - Explicit columns for safety
+        query = """
+            SELECT 
+                decision_id, symbol, analysis_timestamp, directional_bias, conviction_score,
+                calibration_version, market_regime, pillar_count_active, pillar_count_placeholder,
+                pillar_count_failed, engine_version, contract_version, created_at,
+                is_superseded, pillar_scores, pillar_biases
+            FROM decision_history 
+            WHERE symbol = ?
+        """
         params = [symbol]
         
         if start_date:
@@ -191,29 +199,30 @@ class DecisionHistoryService:
         # Convert rows to DecisionHistoryEntry objects
         entries = []
         for row in rows:
-            # Row index based access (SQLAlchemy returns tuples/Row objects)
-            pillar_scores = json.loads(row[13]) if row[13] else None
-            pillar_biases = json.loads(row[14]) if row[14] else None
-            
-            entry = DecisionHistoryEntry(
-                decision_id=row[0],
-                symbol=row[1],
-                analysis_timestamp=datetime.fromisoformat(row[2]),
-                directional_bias=DirectionalBias(row[3]),
-                conviction_score=row[4],
-                calibration_version=row[5],
-                market_regime=row[6],
-                pillar_count_active=row[7],
-                pillar_count_placeholder=row[8],
-                pillar_count_failed=row[9],
-                engine_version=row[10],
-                contract_version=row[11],
-                created_at=datetime.fromisoformat(row[12]) if row[12] else None,
-                is_superseded=bool(row[13]),
-                pillar_scores=json.loads(row[14]) if row[14] else None,
-                pillar_biases=json.loads(row[15]) if row[15] else None
-            )
-            entries.append(entry)
+            # Safe index access mapping
+            try:
+                entry = DecisionHistoryEntry(
+                    decision_id=row[0],
+                    symbol=row[1],
+                    analysis_timestamp=datetime.fromisoformat(row[2]),
+                    directional_bias=DirectionalBias(row[3]),
+                    conviction_score=row[4],
+                    calibration_version=row[5],
+                    market_regime=row[6],
+                    pillar_count_active=row[7],
+                    pillar_count_placeholder=row[8],
+                    pillar_count_failed=row[9],
+                    engine_version=row[10],
+                    contract_version=row[11],
+                    created_at=datetime.fromisoformat(row[12]) if row[12] else None,
+                    is_superseded=bool(row[13]),
+                    pillar_scores=json.loads(row[14]) if row[14] else None,
+                    pillar_biases=json.loads(row[15]) if row[15] else None
+                )
+                entries.append(entry)
+            except Exception as parse_error:
+                logger.error(f"Error parsing decision history row: {parse_error}")
+                continue
         
         history = DecisionHistory(symbol=symbol, entries=entries)
         logger.info(f"Retrieved {len(entries)} decisions for {symbol}")

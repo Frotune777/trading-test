@@ -37,6 +37,7 @@ export const navigation = [
         title: 'Monitoring',
         icon: Activity,
         children: [
+            { title: 'Dashboard', href: '/monitoring/dashboard' },
             { title: 'System', href: '/monitoring/system' },
             { title: 'Broker Health', href: '/monitoring/broker-health' },
             { title: 'Audit', href: '/monitoring/audit' },

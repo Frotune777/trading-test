@@ -64,6 +64,7 @@ def main():
         migrations_dir / "012_ta_aggregator_enhancements.sql",
         migrations_dir / "013_ta_signal_enhancements.sql",
         migrations_dir / "014_risk_management.sql",  # Phase 3: Risk Management
+        migrations_dir / "019_db_hardening_and_cleanup.sql", # Phase 4: Data Quality
     ]
     
     # Run migrations

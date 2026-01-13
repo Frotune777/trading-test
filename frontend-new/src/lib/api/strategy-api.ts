@@ -5,7 +5,7 @@
 
 import { Strategy, StrategyCreate, StrategyUpdate, SymbolMapping, SymbolMappingCreate } from '@/types/strategy';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = '/api/v1';
 
 class StrategyAPI {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -26,77 +26,77 @@ class StrategyAPI {
   }
 
   async createStrategy(data: StrategyCreate): Promise<Strategy> {
-    return this.request<Strategy>('/api/v1/strategy', {
+    return this.request<Strategy>('/strategy', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async listStrategies(): Promise<Strategy[]> {
-    return this.request<Strategy[]>('/api/v1/strategy');
+    return this.request<Strategy[]>('/strategy');
   }
 
   async getStrategy(id: number): Promise<Strategy> {
-    return this.request<Strategy>(`/api/v1/strategy/${id}`);
+    return this.request<Strategy>(`/strategy/${id}`);
   }
 
   async updateStrategy(id: number, data: StrategyUpdate): Promise<Strategy> {
-    return this.request<Strategy>(`/api/v1/strategy/${id}`, {
+    return this.request<Strategy>(`/strategy/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async toggleStrategy(id: number): Promise<Strategy> {
-    return this.request<Strategy>(`/api/v1/strategy/${id}/toggle`, {
+    return this.request<Strategy>(`/strategy/${id}/toggle`, {
       method: 'POST',
     });
   }
 
   async deleteStrategy(id: number): Promise<void> {
-    await this.request<void>(`/api/v1/strategy/${id}`, {
+    await this.request<void>(`/strategy/${id}`, {
       method: 'DELETE',
     });
   }
 
   async addSymbol(strategyId: number, data: SymbolMappingCreate): Promise<SymbolMapping> {
-    return this.request<SymbolMapping>(`/api/v1/strategy/${strategyId}/symbols`, {
+    return this.request<SymbolMapping>(`/strategy/${strategyId}/symbols`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getSymbols(strategyId: number): Promise<SymbolMapping[]> {
-    return this.request<SymbolMapping[]>(`/api/v1/strategy/${strategyId}/symbols`);
+    return this.request<SymbolMapping[]>(`/strategy/${strategyId}/symbols`);
   }
 
   async deleteSymbol(strategyId: number, symbolId: number): Promise<void> {
-    await this.request<void>(`/api/v1/strategy/${strategyId}/symbols/${symbolId}`, {
+    await this.request<void>(`/strategy/${strategyId}/symbols/${symbolId}`, {
       method: 'DELETE',
     });
   }
 
   // Code Management Methods
   async validateCode(code: string): Promise<ValidationResult> {
-    return this.request<ValidationResult>('/api/v1/strategy/validate-code', {
+    return this.request<ValidationResult>('/strategy/validate-code', {
       method: 'POST',
       body: JSON.stringify({ code }),
     });
   }
 
   async getStrategyCode(id: number): Promise<StrategyCodeResponse> {
-    return this.request<StrategyCodeResponse>(`/api/v1/strategy/${id}/code`);
+    return this.request<StrategyCodeResponse>(`/strategy/${id}/code`);
   }
 
   async updateStrategyCode(id: number, code: string): Promise<StrategyCodeUpdateResponse> {
-    return this.request<StrategyCodeUpdateResponse>(`/api/v1/strategy/${id}/code`, {
+    return this.request<StrategyCodeUpdateResponse>(`/strategy/${id}/code`, {
       method: 'PUT',
       body: JSON.stringify({ code }),
     });
   }
 
   async backtestStrategy(id: number, request: BacktestRequest): Promise<BacktestResponse> {
-    return this.request<BacktestResponse>(`/api/v1/strategy/${id}/backtest`, {
+    return this.request<BacktestResponse>(`/strategy/${id}/backtest`, {
       method: 'POST',
       body: JSON.stringify(request),
     });

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LatencyChart } from './LatencyChart';
 import { TrafficChart } from './TrafficChart';
 import { PnLChart } from './PnLChart';
+import { cn } from '@/lib/utils';
 
 interface MonitoringStats {
   latency: {
@@ -32,8 +33,22 @@ interface MonitoringStats {
   };
 }
 
+interface EndpointStat {
+  endpoint: string;
+  method: string;
+  count: number;
+  avg_response_time_ms: number;
+  errors: number;
+  error_rate: number;
+}
+
 export function MonitoringDashboard() {
-  const [stats, setStats] = useState<MonitoringStats | null>(null);
+  const [stats, setStats] = useState<MonitoringStats>({
+    latency: { avg: 0, p50: 0, p95: 0, p99: 0 },
+    traffic: { total_requests: 0, error_rate: 0, avg_response_time_ms: 0 },
+    pnl: { total_pnl: 0, day_pnl: 0, realized_pnl: 0, unrealized_pnl: 0 }
+  });
+  const [endpointStats, setEndpointStats] = useState<EndpointStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,20 +59,37 @@ export function MonitoringDashboard() {
 
   const fetchStats = async () => {
     try {
-      const [latencyRes, trafficRes, pnlRes] = await Promise.all([
+      const [latencyRes, trafficRes, pnlRes, endpointsRes] = await Promise.all([
         fetch('/api/v1/monitoring/latency/stats'),
         fetch('/api/v1/monitoring/traffic'),
         fetch('/api/v1/monitoring/pnl/1'), // TODO: Get user ID from auth
+        fetch('/api/v1/monitoring/traffic/endpoints'),
       ]);
 
-      const latency = await latencyRes.json();
-      const traffic = await trafficRes.json();
-      const pnl = await pnlRes.json();
+      const newStats = { ...stats };
 
-      setStats({ latency, traffic, pnl });
+      if (latencyRes.ok) {
+        newStats.latency = await latencyRes.json();
+      }
+      if (trafficRes.ok) {
+        newStats.traffic = await trafficRes.json();
+      }
+
+      if (pnlRes.ok) {
+        const pnl = await pnlRes.json();
+        newStats.pnl = pnl;
+      }
+
+      if (endpointsRes.ok) {
+        const endpointsData = await endpointsRes.json();
+        setEndpointStats(endpointsData.endpoints || []);
+      }
+
+      setStats(prev => ({ ...prev, ...newStats }));
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch monitoring stats:', error);
+      // Keep existing stats or safe defaults on error
       setLoading(false);
     }
   };
@@ -112,11 +144,10 @@ export function MonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-bold ${
-                (stats?.pnl.total_pnl || 0) >= 0
-                  ? 'text-green-600'
-                  : 'text-red-600'
-              }`}
+              className={`text-2xl font-bold ${(stats?.pnl.total_pnl || 0) >= 0
+                ? 'text-green-600'
+                : 'text-red-600'
+                }`}
             >
               ₹{stats?.pnl.total_pnl.toLocaleString()}
             </div>
@@ -132,11 +163,10 @@ export function MonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-bold ${
-                (stats?.pnl.unrealized_pnl || 0) >= 0
-                  ? 'text-green-600'
-                  : 'text-red-600'
-              }`}
+              className={`text-2xl font-bold ${(stats?.pnl.unrealized_pnl || 0) >= 0
+                ? 'text-green-600'
+                : 'text-red-600'
+                }`}
             >
               ₹{stats?.pnl.unrealized_pnl.toLocaleString()}
             </div>
@@ -146,6 +176,47 @@ export function MonitoringDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Endpoint Health Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Endpoint Health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-muted/50">
+                <tr>
+                  <th className="px-4 py-2">Endpoint</th>
+                  <th className="px-4 py-2">Method</th>
+                  <th className="px-4 py-2">Requests</th>
+                  <th className="px-4 py-2">Errors</th>
+                  <th className="px-4 py-2">Rate</th>
+                  <th className="px-4 py-2">Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {endpointStats.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-2 text-center text-muted-foreground">No traffic data available</td>
+                  </tr>
+                ) : (
+                  endpointStats.map((stat, i) => (
+                    <tr key={i} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="px-4 py-2 font-mono text-xs">{stat.endpoint}</td>
+                      <td className="px-4 py-2 text-xs">{stat.method}</td>
+                      <td className="px-4 py-2">{stat.count}</td>
+                      <td className={cn("px-4 py-2", stat.errors > 0 ? "text-destructive font-bold" : "")}>{stat.errors}</td>
+                      <td className={cn("px-4 py-2", stat.error_rate > 5 ? "text-destructive font-bold" : "")}>{stat.error_rate}%</td>
+                      <td className="px-4 py-2">{stat.avg_response_time_ms}ms</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <Tabs defaultValue="latency" className="space-y-4">

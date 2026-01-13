@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
 
 from app.database.models_historical import PriceHistory
+from app.database.models_quad import QUADDecision, PillarScores
 from app.services.risk_metrics_service import RiskMetricsService
 
 logger = logging.getLogger(__name__)
@@ -102,9 +103,34 @@ class TradeSignalsService:
         else:
             shares = 0
 
+        # 7. Fetch latest QUAD Decision for Reasoning
+        stmt = select(QUADDecision).where(
+            QUADDecision.symbol == symbol
+        ).order_by(QUADDecision.timestamp.desc()).limit(1)
+        
+        decision_result = await self.db.execute(stmt)
+        latest_decision = decision_result.scalar_one_or_none()
+        
+        analysis_data = None
+        if latest_decision:
+            analysis_data = {
+                "signal": latest_decision.signal,
+                "conviction": latest_decision.conviction,
+                "reasoning_summary": latest_decision.reasoning_summary,
+                "pillars": {
+                    "trend": latest_decision.trend_score,
+                    "momentum": latest_decision.momentum_score,
+                    "volatility": latest_decision.volatility_score,
+                    "liquidity": latest_decision.liquidity_score,
+                    "sentiment": latest_decision.sentiment_score,
+                    "regime": latest_decision.regime_score
+                }
+            }
+
         return {
             "symbol": symbol,
             "current_price": current_price,
+            "analysis": analysis_data,
             "pivots": pivots,
             "zones": {
                 "support": support_zones,
@@ -131,10 +157,11 @@ class TradeSignalsService:
         """Fetch price history from PostgreSQL"""
         result = await self.db.execute(
             text("""
-                SELECT open, high, low, close, volume, date
-                FROM price_history
+                SELECT open, high, low, close, volume, timestamp as date
+                FROM historical_ohlc
                 WHERE symbol = :symbol
-                ORDER BY date DESC
+                AND interval = '1d'
+                ORDER BY timestamp DESC
                 LIMIT :limit
             """),
             {"symbol": symbol, "limit": limit}

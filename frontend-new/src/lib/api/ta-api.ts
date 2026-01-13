@@ -2,7 +2,7 @@
  * TA Aggregator Configuration API Service
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = '/api/v1';
 
 class TAConfigAPI {
     private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -23,22 +23,22 @@ class TAConfigAPI {
     }
 
     async getAllWeights(): Promise<Record<string, Record<string, number>>> {
-        return this.request<Record<string, Record<string, number>>>('/api/v1/ta/weights');
+        return this.request<Record<string, Record<string, number>>>('/ta/weights');
     }
 
     async updateRegimeWeights(regime: string, weights: Record<string, number>): Promise<any> {
-        return this.request<any>(`/api/v1/ta/weights/${regime}`, {
+        return this.request<any>(`/ta/weights/${regime}`, {
             method: 'PUT',
             body: JSON.stringify(weights),
         });
     }
 
     async getAccuracyMetrics(days: number = 30): Promise<any> {
-        return this.request<any>(`/api/v1/ta/accuracy?days=${days}`);
+        return this.request<any>(`/ta/accuracy?days=${days}`);
     }
 
     async getIndicatorPerformance(): Promise<any[]> {
-        return this.request<any[]>('/api/v1/ta/performance');
+        return this.request<any[]>('/ta/performance');
     }
 }
 

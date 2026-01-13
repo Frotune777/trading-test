@@ -43,6 +43,19 @@ class NseUtils:
         self.session.get("https://www.nseindia.com", headers=self.headers, timeout=10)
         self.cookies = self.session.cookies.get_dict()
 
+        self.cookies = self.session.cookies.get_dict()
+
+    def _get_redirect_ref(self, symbol, type='equity'):
+        """
+        Helper: Hits the old 'get-quotes' URL, allows redirect to the new 'get-quote' URL (with slug),
+        and returns the response object containing the valid Referer (final URL) and cookies.
+        """
+        symbol = symbol.replace(' ', '%20').replace('&', '%26')
+        base_url = "https://www.nseindia.com"
+        # The old plural 'get-quotes' endpoint redirects to the new singular 'get-quote' + slug URL
+        ref_url = f"{base_url}/get-quotes/{type}?symbol={symbol}"
+        return self.session.get(ref_url, headers=self.headers, timeout=10)
+
     def pre_market_info(self, category='All'):
         pre_market_xref = {"NIFTY 50": "NIFTY", "Nifty Bank": "BANKNIFTY", "Emerge": "SME", "Securities in F&O": "FO",
                            "Others": "OTHERS", "All": "ALL"}
@@ -158,18 +171,106 @@ class NseUtils:
         """
         symbol = symbol.replace(' ', '%20').replace('&', '%26')
 
-        # Fetch primary details
-        ref_url = 'https://www.nseindia.com/get-quotes/equity?symbol=' + symbol
-        ref = requests.get(ref_url, headers=self.headers)
-        url = 'https://www.nseindia.com/api/quote-equity?symbol=' + symbol
-        data = requests.get(url, headers=self.headers, cookies=ref.cookies.get_dict()).json()
+        # Fetch primary details using NextApi
+        # This endpoint seems to be the new stable one provided by user
+        url = f"https://www.nseindia.com/api/NextApi/apiClient/GetQuoteApi?functionName=getSymbolData&marketType=N&series=EQ&symbol={symbol}"
+        
+        # We still need a valid Referer, the redirect method works for getting valid cookies/referer string
+        ref = self._get_redirect_ref(symbol, 'equity')
+        headers_with_ref = self.headers.copy()
+        headers_with_ref['Referer'] = ref.url
+        
+        response = self.session.get(url, headers=headers_with_ref, cookies=ref.cookies.get_dict())
+        json_data = response.json()
+        
+        # NextApi returns structure: {"equityResponse": [{...data...}]}
+        # We need to unwrap this to match the old flat structure expected by callers
+        if "equityResponse" in json_data and len(json_data["equityResponse"]) > 0:
+            data = json_data["equityResponse"][0]
+        else:
+            data = json_data # Fallback or empty
 
-        # Fetch Trade Data for symbol  ('Trade Information' tab on NSE website)
-        url = 'https://www.nseindia.com/api/quote-equity?symbol=' + symbol + "&section=trade_info"
-        trade_data = self.session.get(url, headers=self.headers, cookies=ref.cookies.get_dict()).json()
+        # API might not support section=trade_info anymore or it's included?
+        # The NextApi response seems to include 'tradeInfo' key already.
+        # So we might not need the second call.
+        # Let's check keys. user-provided json has 'tradeInfo'.
+        # Merging logic:
+        # Old code: data['tradeData'] = trade_data
+        # New code: data already has 'tradeInfo', we can alias it if needed, or callers adapt.
+        # Caller get_market_depth uses data['tradeData']['marketDeptOrderBook']
+        # NextApi response has 'orderBook'. We might need to map it.
+        
+        if 'tradeInfo' in data:
+             data['tradeData'] = data['tradeInfo'] # Alias for compatibility
+        
+        # orderBook mapping for get_market_depth
+        if 'orderBook' in data:
+             # Old structure for marketDeptOrderBook: { 'ask': [...], 'bid': [...] }
+             # NextApi orderBook: { buyPrice1, ... sellPrice1 ... } (Flat structure)
+             # We need to reconstruct it if we want to keep get_market_depth working without changes there
+             # But let's just attach it as is for now and see what breaks or fix get_market_depth later.
+             # Actually, let's try to polyfill marketDeptOrderBook for safety.
+             
+             bids = []
+             asks = []
+             for i in range(1, 6): # 5 depth
+                 bids.append({
+                     "price": data['orderBook'].get(f"buyPrice{i}", 0),
+                     "quantity": data['orderBook'].get(f"buyQuantity{i}", 0)
+                 })
+                 asks.append({
+                     "price": data['orderBook'].get(f"sellPrice{i}", 0),
+                     "quantity": data['orderBook'].get(f"sellQuantity{i}", 0)
+                 })
+             
+             data['tradeData'] = data.get('tradeInfo', {})
+             data['tradeData']['marketDeptOrderBook'] = {
+                 "bid": bids,
+                 "ask": asks,
+                 "tradeInfo": {
+                     "totalTradedVolume": data.get('tradeInfo', {}).get('totalTradedVolume'),
+                     "totalTradedValue": data.get('tradeInfo', {}).get('totalTradedValue'),
+                     "lastPrice": data.get('tradeInfo', {}).get('lastPrice')
+                 }
+             }
+        
+        # Polyfill priceInfo to match legacy expectations
+        # Legacy often expected: lastPrice, change, pChange, open, close, intraDayHighLow
+        if 'priceInfo' in data and 'metaData' in data:
+             # NextApi priceInfo has week high/low but not daily OHLC sometimes
+             # metaData has open, dayHigh, dayLow, previousClose, lastPrice, change, pChange
+             
+             # Copy from metaData to priceInfo if missing
+             meta = data.get('metaData', {})
+             pi = data.get('priceInfo', {})
+             
+             pi['lastPrice'] = meta.get('lastPrice') or data.get('orderBook', {}).get('lastPrice')
+             pi['change'] = meta.get('change')
+             pi['pChange'] = meta.get('pChange')
+             pi['open'] = meta.get('open')
+             pi['close'] = meta.get('closePrice') # metaData has closePrice
+             pi['previousClose'] = meta.get('previousClose')
+             
+             # IntraDayHighLow structure check
+             if 'intraDayHighLow' not in pi:
+                  pi['intraDayHighLow'] = {
+                      'max': meta.get('dayHigh'),
+                      'min': meta.get('dayLow')
+                  }
+                  
+             # VWAP? 'averagePrice' in metaData
+             pi['vwap'] = meta.get('averagePrice')
+             
+             # upper/lower circuit? Not explicitly in metaData sample, but might be in priceBand?
+             # priceBand: "2941.20-3594.80"
+             if 'priceBand' in pi and isinstance(pi['priceBand'], str) and '-' in pi['priceBand']:
+                  try:
+                      low, high = pi['priceBand'].split('-')
+                      pi['lowerCP'] = float(low.strip())
+                      pi['upperCP'] = float(high.strip())
+                  except:
+                      pass
 
-        # Merge Meta data with Trade Information into final dataset
-        data['tradeData'] = trade_data
         return data
 
     def price_info(self, symbol):
@@ -180,10 +281,15 @@ class NseUtils:
         :return:
         """
         symbol = symbol.replace(' ', '%20').replace('&', '%26')
-        ref_url = 'https://www.nseindia.com/get-quotes/equity?symbol=' + symbol
-        ref = requests.get(ref_url, headers=self.headers)
+        symbol = symbol.replace(' ', '%20').replace('&', '%26')
+        
+        ref = self._get_redirect_ref(symbol, 'equity')
+        
+        headers_with_ref = self.headers.copy()
+        headers_with_ref['Referer'] = ref.url
+        
         url = 'https://www.nseindia.com/api/quote-equity?symbol=' + symbol
-        data = requests.get(url, headers=self.headers, cookies=ref.cookies.get_dict()).json()
+        data = self.session.get(url, headers=headers_with_ref, cookies=ref.cookies.get_dict()).json()
         if not data:
             return None
         if 'error' in data:
@@ -213,11 +319,14 @@ class NseUtils:
         """
         symbol = symbol.replace(' ', '%20').replace('&', '%26')
 
-        ref_url = 'https://www.nseindia.com/get-quotes/derivatives?symbol=' + symbol
-        ref = requests.get(ref_url, headers=self.headers)
-
+        # Redirect Logic for derivatives
+        ref = self._get_redirect_ref(symbol, 'derivatives')
+        
+        headers_with_ref = self.headers.copy()
+        headers_with_ref['Referer'] = ref.url
+        
         url = 'https://www.nseindia.com/api/quote-derivative?symbol=' + symbol
-        data = self.session.get(url, headers=self.headers, cookies=ref.cookies.get_dict()).json()
+        data = self.session.get(url, headers=headers_with_ref, cookies=ref.cookies.get_dict()).json()
 
         lst = []
         for i in data["stocks"]:
@@ -238,15 +347,28 @@ class NseUtils:
         base_url = "https://www.nseindia.com"
         
         if not indices:
-            ref_url = f'{base_url}/get-quotes/derivatives?symbol={symbol}'
+            # For Option Chain, we use the Equity redirect to find the slug, 
+            # then replace /equity/ with /optionchain/ to construct the correct new Referer.
+            ref = self._get_redirect_ref(symbol, 'equity')
+            if "/get-quote/equity/" in ref.url:
+                target_referer = ref.url.replace("/get-quote/equity/", "/get-quote/optionchain/")
+            else:
+                # Fallback to simple construction if redirect structure is unexpected
+                target_referer = f'{base_url}/get-quote/optionchain/TCS' # Fallback likely invalid but safe attempt
+
             api_url = f'{base_url}/api/option-chain-equities?symbol={symbol}'
+            
+            headers_with_ref = self.headers.copy()
+            headers_with_ref['Referer'] = target_referer
+            
+            response = self.session.get(api_url, headers=headers_with_ref, cookies=ref.cookies.get_dict(), timeout=10)
         else:
             ref_url = f'{base_url}/get-quotes/derivatives?symbol={symbol}'
+            ref = self.session.get(ref_url, headers=self.headers, timeout=10)
+            headers_with_ref = self.headers.copy()
+            headers_with_ref['Referer'] = ref.url
             api_url = f'{base_url}/api/option-chain-indices?symbol={symbol}'
-
-        # Ensure session has fresh cookies from the reference page
-        self.session.get(ref_url, headers=self.headers, timeout=10)
-        response = self.session.get(api_url, headers=self.headers, timeout=10)
+            response = self.session.get(api_url, headers=headers_with_ref, cookies=ref.cookies.get_dict(), timeout=10)
         
         if response.status_code != 200:
             return pd.DataFrame()

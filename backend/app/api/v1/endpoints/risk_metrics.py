@@ -175,15 +175,117 @@ async def get_risk_dashboard(db: AsyncSession = Depends(get_db)):
 @router.get("/{symbol}/latest")
 async def get_latest_risk_metrics(symbol: str, db: AsyncSession = Depends(get_db)):
     """
-    Alias for /{symbol} endpoint - returns latest risk metrics
+    Get latest cached risk metrics in frontend-compatible format
     """
-    return await get_risk_metrics(symbol, db)
+    try:
+        service = RiskMetricsService(db)
+        metric = await service.get_latest_metrics(symbol)
+        
+        if not metric:
+            # Return empty structure if no data
+            return {
+                "symbol": symbol,
+                "calculated_at": None,
+                "data_points_used": 0,
+                "var": {
+                    "95_30d": None,
+                    "99_30d": None,
+                    "95_60d": None,
+                    "99_60d": None,
+                    "95_90d": None,
+                    "99_90d": None
+                },
+                "beta": {
+                    "30d": None,
+                    "60d": None,
+                    "252d": None
+                },
+                "sharpe": {
+                    "30d": None,
+                    "60d": None,
+                    "252d": None
+                },
+                "volatility": {
+                    "30d": None,
+                    "60d": None,
+                    "252d": None
+                }
+            }
+        
+        return {
+            "symbol": metric.symbol,
+            "calculated_at": metric.calculated_at.isoformat() if metric.calculated_at else None,
+            "data_points_used": metric.data_points_used or 0,
+            "var": {
+                "95_30d": float(metric.var_95_30d) if metric.var_95_30d is not None else None,
+                "99_30d": float(metric.var_99_30d) if metric.var_99_30d is not None else None,
+                "95_60d": float(metric.var_95_60d) if metric.var_95_60d is not None else None,
+                "99_60d": float(metric.var_99_60d) if metric.var_99_60d is not None else None,
+                "95_90d": float(metric.var_95_90d) if metric.var_95_90d is not None else None,
+                "99_90d": float(metric.var_99_90d) if metric.var_99_90d is not None else None
+            },
+            "beta": {
+                "30d": float(metric.beta_30d) if metric.beta_30d is not None else None,
+                "60d": float(metric.beta_60d) if metric.beta_60d is not None else None,
+                "252d": float(metric.beta_252d) if metric.beta_252d is not None else None
+            },
+            "sharpe": {
+                "30d": float(metric.sharpe_30d) if metric.sharpe_30d is not None else None,
+                "60d": float(metric.sharpe_60d) if metric.sharpe_60d is not None else None,
+                "252d": float(metric.sharpe_252d) if metric.sharpe_252d is not None else None
+            },
+            "volatility": {
+                "30d": float(metric.volatility_30d) if metric.volatility_30d is not None else None,
+                "60d": float(metric.volatility_60d) if metric.volatility_60d is not None else None,
+                "252d": float(metric.volatility_252d) if metric.volatility_252d is not None else None
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fetching latest risk metrics for {symbol}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{symbol}/all")
 async def get_all_risk_metrics(symbol: str, db: AsyncSession = Depends(get_db)):
     """
-    Returns all available risk metrics for a symbol
-    Same as /latest - returns most recent calculated metrics
+    Calculate and return all risk metrics in frontend-compatible format
     """
-    return await get_risk_metrics(symbol, db)
+    try:
+        service = RiskMetricsService(db)
+        metric = await service.calculate_all_metrics(symbol)
+        
+        if not metric:
+            raise HTTPException(status_code=400, detail="Insufficient historical data to calculate risk metrics")
+        
+        return {
+            "symbol": metric.symbol,
+            "calculated_at": metric.calculated_at.isoformat() if metric.calculated_at else None,
+            "data_points_used": metric.data_points_used or 0,
+            "var": {
+                "95_30d": float(metric.var_95_30d) if metric.var_95_30d is not None else None,
+                "99_30d": float(metric.var_99_30d) if metric.var_99_30d is not None else None,
+                "95_60d": float(metric.var_95_60d) if metric.var_95_60d is not None else None,
+                "99_60d": float(metric.var_99_60d) if metric.var_99_60d is not None else None,
+                "95_90d": float(metric.var_95_90d) if metric.var_95_90d is not None else None,
+                "99_90d": float(metric.var_99_90d) if metric.var_99_90d is not None else None
+            },
+            "beta": {
+                "30d": float(metric.beta_30d) if metric.beta_30d is not None else None,
+                "60d": float(metric.beta_60d) if metric.beta_60d is not None else None,
+                "252d": float(metric.beta_252d) if metric.beta_252d is not None else None
+            },
+            "sharpe": {
+                "30d": float(metric.sharpe_30d) if metric.sharpe_30d is not None else None,
+                "60d": float(metric.sharpe_60d) if metric.sharpe_60d is not None else None,
+                "252d": float(metric.sharpe_252d) if metric.sharpe_252d is not None else None
+            },
+            "volatility": {
+                "30d": float(metric.volatility_30d) if metric.volatility_30d is not None else None,
+                "60d": float(metric.volatility_60d) if metric.volatility_60d is not None else None,
+                "252d": float(metric.volatility_252d) if metric.volatility_252d is not None else None
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error calculating risk metrics for {symbol}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 

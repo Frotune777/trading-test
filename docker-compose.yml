@@ -47,8 +47,8 @@ services:
     environment:
       - USE_SQLITE=false
       - SQLITE_DB_PATH=/app/data/stock_data.db
-      - OPENALGO_WS_URL=ws://host.docker.internal:8765
-      - OPENALGO_API_URL=http://host.docker.internal:8765/api
+      - OPENALGO_WS_URL=ws://openalgo:8765
+      - OPENALGO_API_URL=http://openalgo:5000/api
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
@@ -88,6 +88,29 @@ services:
       backend:
         condition: service_healthy
 
+  openalgo:
+    build:
+      context: ./openalgo
+      dockerfile: Dockerfile
+    container_name: openalgo-web
+    ports:
+      - "5000:5000"
+      - "8765:8765"
+    volumes:
+      - openalgo_db:/app/db
+      - openalgo_logs:/app/logs
+      - openalgo_strategies:/app/strategies
+      - openalgo_keys:/app/keys
+      - ./openalgo/.env:/app/.env:ro
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+    restart: unless-stopped
+
 volumes:
   quad_db_data:
   stock_data:
+  openalgo_db:
+  openalgo_logs:
+  openalgo_strategies:
+  openalgo_keys:

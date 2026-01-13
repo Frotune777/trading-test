@@ -4,18 +4,18 @@
  */
 
 // Backend API base URL (adjust based on environment)
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = '/api/v1';
 
 // API Endpoints
 export const API_ENDPOINTS = {
   // QUAD Reasoning Engine
-  reasoning: (symbol: string) => `/api/v1/recommendations/${symbol}/reasoning`,
-  
+  reasoning: (symbol: string) => `/recommendations/${symbol}/reasoning`,
+
   // Legacy endpoints (existing)
-  stockData: (symbol: string) => `/api/v1/stocks/${symbol}`,
-  technicals: (symbol: string) => `/api/v1/technicals/${symbol}`,
-  derivatives: (symbol: string) => `/api/v1/derivatives/${symbol}`,
-  insider: (symbol: string) => `/api/v1/insider/${symbol}`,
+  stockData: (symbol: string) => `/stocks/${symbol}`,
+  technicals: (symbol: string) => `/technicals/${symbol}`,
+  derivatives: (symbol: string) => `/derivatives/${symbol}`,
+  insider: (symbol: string) => `/insider/${symbol}`,
 } as const;
 
 // Helper function to build full URL

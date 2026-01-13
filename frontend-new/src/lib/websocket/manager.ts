@@ -55,7 +55,8 @@ class WebSocketManager {
         }
 
         // Backend has a single WebSocket endpoint at /api/v1/ws
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+        // Use environment variable for the base URL, defaulting to local backend
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://127.0.0.1:8000';
         const url = `${wsUrl}/api/v1/ws`;
 
         this.connectionStatus.set(channel, 'connecting');
@@ -65,11 +66,28 @@ class WebSocketManager {
             reconnectionDelayGrowFactor: 1.3,
             maxReconnectionDelay: 10000,
             minReconnectionDelay: 1000,
+            debug: false,
         });
 
         ws.addEventListener('open', () => {
             console.log(`[WebSocket] Connected to ${channel}`);
             this.connectionStatus.set(channel, 'connected');
+
+            // Resend active subscriptions upon reconnection/open
+            if (channel === 'market') {
+                const subscribers = this.subscribers.get('market');
+                if (subscribers && subscribers.size > 0) {
+                    const symbols = Array.from(subscribers.keys());
+                    console.log(`[WebSocket] Resending subscriptions: ${symbols}`);
+                    ws.send(JSON.stringify({
+                        action: 'subscribe',
+                        symbols: symbols
+                    }));
+                }
+            } else {
+                // For alerts/orders, we might just need to authenticate or say "hello"
+                // But simplified here as they use 'all' mapping typically
+            }
         });
 
         ws.addEventListener('close', () => {
@@ -84,6 +102,9 @@ class WebSocketManager {
         ws.addEventListener('message', (event) => {
             try {
                 const data = JSON.parse(event.data) as WebSocketMessage;
+                // Handle pong
+                if ((data as any).type === 'pong') return;
+
                 this.handleMessage(channel, data);
             } catch (error) {
                 console.error(`[WebSocket] Failed to parse message on ${channel}:`, error);
@@ -111,7 +132,8 @@ class WebSocketManager {
     subscribeToMarket(symbol: string, callback: MessageCallback) {
         this.subscribe('market', symbol, callback);
 
-        // Send subscription message to server
+        // Send subscription message to server IF open
+        // If not open, the 'open' listener added in connect() will handle it
         const ws = this.connections.get('market');
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
@@ -130,6 +152,7 @@ class WebSocketManager {
         // Send unsubscribe message to server
         const subscribers = this.subscribers.get('market')?.get(symbol);
         if (!subscribers || subscribers.size === 0) {
+            // Only send unsubscribe to server if NO ONE is listening to this symbol anymore locally
             const ws = this.connections.get('market');
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
@@ -227,6 +250,12 @@ class WebSocketManager {
             const subscribers = channelSubscribers.get(message.symbol);
             if (subscribers) {
                 subscribers.forEach(callback => callback(message));
+            }
+
+            // Also notify 'ALL' subscribers if any (could be a dashboard overview)
+            const allSubscribers = channelSubscribers.get('ALL');
+            if (allSubscribers) {
+                allSubscribers.forEach(callback => callback(message));
             }
         }
         // For alerts and orders, route to 'all' subscribers

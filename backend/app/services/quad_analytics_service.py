@@ -613,11 +613,12 @@ class QUADAnalyticsService:
                 # Fetch price from price_history closest to target_date
                 # Using a 3-day buffer for weekends
                 price_stmt = text("""
-                    SELECT close, date
-                    FROM price_history
+                    SELECT close, timestamp
+                    FROM historical_ohlc
                     WHERE symbol = :symbol 
-                    AND date >= :target_date
-                    ORDER BY date ASC
+                    AND timestamp >= :target_date
+                    AND interval = '1d'
+                    ORDER BY timestamp ASC
                     LIMIT 1
                 """)
                 

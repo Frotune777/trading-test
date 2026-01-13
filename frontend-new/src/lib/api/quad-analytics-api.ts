@@ -127,7 +127,7 @@ class QUADAnalyticsAPI {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${API_BASE_URL}/api/v1/quad`;
+    this.baseUrl = `${API_BASE_URL}/quad`;
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {

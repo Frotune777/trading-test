@@ -73,7 +73,7 @@ class RiskAPI {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${API_BASE_URL}/api/v1/risk`;
+    this.baseUrl = `${API_BASE_URL}/risk`;
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {

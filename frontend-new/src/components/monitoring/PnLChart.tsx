@@ -59,9 +59,8 @@ export function PnLChart() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-bold ${
-                (current?.total_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
+              className={`text-2xl font-bold ${(current?.total_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
             >
               ₹{current?.total_pnl.toLocaleString()}
             </div>
@@ -74,9 +73,8 @@ export function PnLChart() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-bold ${
-                (current?.day_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
+              className={`text-2xl font-bold ${(current?.day_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
             >
               ₹{current?.day_pnl.toLocaleString()}
             </div>
@@ -89,7 +87,7 @@ export function PnLChart() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {performance?.win_rate.toFixed(1)}%
+              {performance?.win_rate?.toFixed(1) ?? '0.0'}%
             </div>
             <p className="text-xs text-muted-foreground">
               {performance?.winning_trades}/{performance?.total_trades} trades
@@ -103,11 +101,10 @@ export function PnLChart() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-bold ${
-                (performance?.avg_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
+              className={`text-2xl font-bold ${(performance?.avg_pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
             >
-              ₹{performance?.avg_pnl.toFixed(2)}
+              ₹{performance?.avg_pnl?.toFixed(2) ?? '0.00'}
             </div>
           </CardContent>
         </Card>
@@ -151,19 +148,19 @@ export function PnLChart() {
             <div>
               <div className="text-sm text-muted-foreground">Best Trade</div>
               <div className="text-2xl font-bold text-green-600">
-                ₹{performance?.best_trade.toFixed(2)}
+                ₹{performance?.best_trade?.toFixed(2) ?? '0.00'}
               </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Worst Trade</div>
               <div className="text-2xl font-bold text-red-600">
-                ₹{performance?.worst_trade.toFixed(2)}
+                ₹{performance?.worst_trade?.toFixed(2) ?? '0.00'}
               </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Avg Holding Time</div>
               <div className="text-2xl font-bold">
-                {performance?.avg_holding_time_minutes.toFixed(0)} min
+                {performance?.avg_holding_time_minutes?.toFixed(0) ?? '0'} min
               </div>
             </div>
           </div>

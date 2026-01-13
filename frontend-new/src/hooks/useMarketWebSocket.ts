@@ -23,14 +23,15 @@ export const useMarketWebSocket = (symbols: string[] = ['ALL']) => {
         if (ws.current?.readyState === WebSocket.OPEN) return;
 
         // Backend WebSocket is at /api/v1/ws
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+        // Force 127.0.0.1 to avoid IPv6 localhost issues and env var caching problems
+        const wsUrl = 'ws://127.0.0.1:8000';
         const url = `${wsUrl}/api/v1/ws`;
 
         console.log('Connecting to WebSocket:', url);
         ws.current = new WebSocket(url);
 
         ws.current.onopen = () => {
-            console.log('Market WebSocket connected');
+            console.log('✅ Market WebSocket connected');
             setIsConnected(true);
             // Subscribe to requested symbols
             ws.current?.send(JSON.stringify({
@@ -53,8 +54,8 @@ export const useMarketWebSocket = (symbols: string[] = ['ALL']) => {
             }
         };
 
-        ws.current.onclose = () => {
-            console.log('Market WebSocket disconnected');
+        ws.current.onclose = (event) => {
+            console.log('Market WebSocket disconnected:', event.code, event.reason);
             setIsConnected(false);
             // Exponential backoff or simple retry
             reconnectTimeout.current = setTimeout(connect, 5000);

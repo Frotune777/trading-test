@@ -54,6 +54,10 @@ manager = ConnectionManager()
 
 async def redis_listener():
     """Listens to Redis Pub/Sub and broadcasts ticks through ConnectionManager."""
+    if redis_client is None:
+        logger.warning("Redis client unavailable. WebSocket market ticks will not be broadcast.")
+        return
+
     pubsub = redis_client.pubsub()
     # Subscribe to all market tick channels
     await pubsub.psubscribe("market_ticks:*")
@@ -83,6 +87,7 @@ async def startup_event():
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    logger.info(f"WS_MARKET: Connection attempt from {websocket.client}")
     await manager.connect(websocket)
     try:
         while True:

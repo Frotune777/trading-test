@@ -127,7 +127,21 @@ async def get_pnl_snapshot(
     snapshot = tracker.get_latest_snapshot(user_id)
     
     if not snapshot:
-        raise HTTPException(status_code=404, detail="No P&L data found")
+        # Return empty snapshot instead of 404 to prevent frontend crash
+        from datetime import datetime
+        import pytz
+        IST = pytz.timezone('Asia/Kolkata')
+        
+        return {
+            "user_id": user_id,
+            "realized_pnl": 0.0,
+            "unrealized_pnl": 0.0,
+            "total_pnl": 0.0,
+            "day_pnl": 0.0,
+            "positions_count": 0,
+            "trades_count": 0,
+            "timestamp": datetime.now(IST).isoformat()
+        }
     
     return {
         "user_id": snapshot.user_id,

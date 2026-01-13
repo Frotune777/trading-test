@@ -3,16 +3,16 @@
  * Risk, Analytics, Sandbox, Monitoring, Audit
  */
 
-import { 
-  RiskValidationResult, 
-  BrokerAnalytics, 
+import {
+  RiskValidationResult,
+  BrokerAnalytics,
   StrategyAnalytics,
   SandboxPortfolio,
   SystemHealth,
   AuditLog
 } from '@/types/production';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = '/api/v1';
 
 class ProductionAPI {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -34,7 +34,7 @@ class ProductionAPI {
 
   // Risk Management
   async validateOrderRisk(order: any): Promise<RiskValidationResult> {
-    return this.request<RiskValidationResult>('/api/v1/production/risk/validate', {
+    return this.request<RiskValidationResult>('/production/risk/validate', {
       method: 'POST',
       body: JSON.stringify(order),
     });
@@ -42,43 +42,43 @@ class ProductionAPI {
 
   // Execution Analytics
   async getBrokerAnalytics(broker: string, hours: number = 24): Promise<BrokerAnalytics> {
-    return this.request<BrokerAnalytics>(`/api/v1/production/analytics/broker/${broker}?hours=${hours}`);
+    return this.request<BrokerAnalytics>(`/production/analytics/broker/${broker}?hours=${hours}`);
   }
 
   async getStrategyAnalytics(strategyId: number, days: number = 7): Promise<StrategyAnalytics> {
-    return this.request<StrategyAnalytics>(`/api/v1/production/analytics/strategy/${strategyId}?days=${days}`);
+    return this.request<StrategyAnalytics>(`/production/analytics/strategy/${strategyId}?days=${days}`);
   }
 
   // Sandbox Mode
   async enableSandbox(): Promise<{ status: string; message: string }> {
-    return this.request('/api/v1/production/sandbox/enable', {
+    return this.request('/production/sandbox/enable', {
       method: 'POST',
     });
   }
 
   async disableSandbox(): Promise<{ status: string; message: string }> {
-    return this.request('/api/v1/production/sandbox/disable', {
+    return this.request('/production/sandbox/disable', {
       method: 'POST',
     });
   }
 
   async getSandboxPortfolio(): Promise<SandboxPortfolio> {
-    return this.request<SandboxPortfolio>('/api/v1/production/sandbox/portfolio');
+    return this.request<SandboxPortfolio>('/production/sandbox/portfolio');
   }
 
   async resetSandbox(): Promise<{ status: string; message: string }> {
-    return this.request('/api/v1/production/sandbox/reset', {
+    return this.request('/production/sandbox/reset', {
       method: 'POST',
     });
   }
 
   // Monitoring
   async getSystemHealth(): Promise<SystemHealth> {
-    return this.request<SystemHealth>('/api/v1/production/monitoring/health');
+    return this.request<SystemHealth>('/monitoring/health');
   }
 
   async getSystemMetrics(): Promise<any> {
-    return this.request('/api/v1/production/monitoring/metrics');
+    return this.request('/monitoring/latency/stats');
   }
 
   // Audit Logs
@@ -94,7 +94,7 @@ class ProductionAPI {
     if (params.hours) searchParams.append('hours', params.hours.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
 
-    return this.request(`/api/v1/production/audit/logs?${searchParams}`);
+    return this.request(`/production/audit/logs?${searchParams}`);
   }
 }
 

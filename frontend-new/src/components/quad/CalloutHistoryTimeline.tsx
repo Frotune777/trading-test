@@ -28,7 +28,7 @@ const CalloutHistoryTimeline: React.FC<TimelineProps> = ({ symbol, days }) => {
 
     const fetchAlerts = async () => {
         try {
-            const response = await api.get('/api/v1/alerts/recent?limit=50');
+            const response = await api.get('/alerts/recent?limit=50');
             const data: Alert[] = response.data;
 
             // Filter for Callouts AND Symbol if provided

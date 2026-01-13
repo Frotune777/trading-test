@@ -29,7 +29,7 @@ export default function SignalAccuracy({ symbol }: SignalAccuracyProps) {
       if (!symbol) return;
       try {
         setLoading(true);
-        const response = await api.get(`/api/v1/quad/${symbol}/accuracy`);
+        const response = await api.get(`/quad/${symbol}/accuracy`);
         setMetrics(response.data);
       } catch (err) {
         console.error('Failed to load signal accuracy', err);
