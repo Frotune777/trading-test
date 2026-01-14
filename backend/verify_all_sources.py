@@ -64,6 +64,8 @@ def audit_nse_utils():
         ("get_etf_list", [], {}),
         ("get_bulk_deals", [], {}),
         ("get_block_deals", [], {}),
+        ("get_short_selling", [], {}),
+        ("get_upcoming_results_calendar", [], {}),
     ]
 
     for name, args, kwargs in methods_to_test:

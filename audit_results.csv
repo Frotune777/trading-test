@@ -20,3 +20,5 @@ most_active_options_contracts_by_volume,PASS,DataFrame rows: 20
 get_etf_list,PASS,DataFrame rows: 306
 get_bulk_deals,PASS,DataFrame rows: 2429
 get_block_deals,PASS,DataFrame rows: 47
+get_short_selling,PASS,DataFrame rows: 1931
+get_upcoming_results_calendar,PASS,DataFrame rows: 374

@@ -16,8 +16,8 @@ This document outlines the data sources available in the `quad_trading` project,
 - **Details**: Fetches timestamped price data for periodic analysis (52-week High/Low).
 
 ## 3. Derivatives & Option Chain
-- **Option Chain**: `get_option_chain(symbol)` (✅ **Fixed**)
-    - *Status*: Working. Requires visiting the Option Chain page to initialize session cookies, which is now handled automatically.
+- **Option Chain**: `get_option_chain(symbol)` (✅ **Active**)
+    - *Status*: Working. Requires visiting the Option Chain page to initialize session cookies (auto-handled).
 - **Most Active Derivatives**: (✅ Active)
     - `most_active_index_calls()`, `most_active_index_puts()`
     - `most_active_stock_calls()`, `most_active_stock_puts()`
@@ -27,11 +27,14 @@ This document outlines the data sources available in the `quad_trading` project,
 - **Corporate Actions**: `get_corporate_action()` (✅ Active)
 - **Insider Trading**: `get_insider_trading()` (✅ Active)
 - **Most Active Equities**: `most_active_equity_stocks_by_volume()` (✅ Active)
+- **Results Calendar**: `get_upcoming_results_calendar()` (✅ Active)
 
-## 5. Other
-- **Bulk/Block Deals**: `get_bulk_deals()`, `get_block_deals()` (Untested but likely active)
-- **ETF List**: `get_etf_list()` (Untested)
+## 5. Other Data
+- **Bulk Deals**: `get_bulk_deals()` (✅ Active)
+- **Block Deals**: `get_block_deals()` (✅ Active)
+- **Short Selling**: `get_short_selling()` (✅ Active)
+- **ETF List**: `get_etf_list()` (✅ Active)
 
 ## File References
 - **Script**: `backend/app/data_sources/nse_utils.py`
-- **Verification**: `backend/verify_all_sources.py`, `backend/verify_corporate_insider.py`
+- **Verification**: `backend/verify_all_sources.py`
