@@ -53,6 +53,9 @@ class NseUtils:
             self.session.get("https://www.nseindia.com", headers=self.headers, timeout=10)
             # 2. Hit a generic quote page to solidify cookies
             self.session.get("https://www.nseindia.com/get-quote/equity?symbol=TCS", headers=self.headers, timeout=10)
+            # 3. Hit option chain page to ensure derivatives cookies are set
+            self.session.get("https://www.nseindia.com/option-chain", headers=self.headers, timeout=10)
+            
             self.cookies = self.session.cookies.get_dict()
         except requests.RequestException as e:
             print(f"Error establishing session: {e}")
@@ -241,6 +244,8 @@ class NseUtils:
         
         # 1. Get Referer
         ref = self._get_redirect_ref(symbol, 'equity')
+        if ref is None:
+            return {}
         
         # 2. Prepare headers with Referer
         headers_with_ref = self.headers.copy()
@@ -442,7 +447,11 @@ class NseUtils:
              response = self.session.get(api_url, headers=headers_with_ref, cookies=self.session.cookies.get_dict(), timeout=10)
              
              if response.status_code == 401:
+                 # Re-establish session AND visit option chain page specifically
                  self._establish_session()
+                 self.session.get("https://www.nseindia.com/option-chain", headers=self.headers, timeout=10)
+                 
+                 # Refetch with fresh cookies
                  response = self.session.get(api_url, headers=headers_with_ref, cookies=self.session.cookies.get_dict(), timeout=10)
 
              if response.status_code != 200:

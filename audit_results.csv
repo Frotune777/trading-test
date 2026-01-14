@@ -1,0 +1,22 @@
+Method,Status,Details
+equity_info,FAIL,No data or missing 'priceInfo'
+get_historical_data,FAIL,Empty DataFrame
+get_option_chain,FAIL,Empty DataFrame (Likely API issue)
+get_gainers_losers,PASS,Data found
+get_index_pe_ratio,PASS,DataFrame rows: 115
+get_index_pb_ratio,PASS,DataFrame rows: 115
+get_index_div_yield,PASS,DataFrame rows: 115
+get_advance_decline,PASS,DataFrame rows: 113
+most_active_equity_stocks_by_volume,PASS,DataFrame rows: 20
+most_active_equity_stocks_by_value,PASS,DataFrame rows: 20
+most_active_index_calls,PASS,DataFrame rows: 20
+most_active_index_puts,PASS,DataFrame rows: 20
+most_active_stock_calls,PASS,DataFrame rows: 20
+most_active_stock_puts,PASS,DataFrame rows: 20
+most_active_contracts_by_oi,PASS,DataFrame rows: 20
+most_active_contracts_by_volume,PASS,DataFrame rows: 20
+most_active_futures_contracts_by_volume,PASS,DataFrame rows: 33
+most_active_options_contracts_by_volume,PASS,DataFrame rows: 20
+get_etf_list,PASS,DataFrame rows: 306
+get_bulk_deals,PASS,DataFrame rows: 2429
+get_block_deals,PASS,DataFrame rows: 47
